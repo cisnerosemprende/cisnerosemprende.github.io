@@ -62,6 +62,21 @@
   <!-- SCRIPT MODULAR DE CISNEROS EMPRENDE PWA -->
   <script type="module">
     // =========================================================================
+    // CLIENTE OFICIAL DE SUPABASE & GOOGLE OAUTH
+    // =========================================================================
+    const SUPABASE_URL = 'https://qopvmadvijnjgzgxwjpe.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_AVcBF5PDKQ5oS2FYsCYzLw__Hqd8Hkz';
+    const supabaseClient = (typeof window !== 'undefined' && window.supabase)
+      ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+          auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true
+          }
+        })
+      : null;
+
+    // =========================================================================
     // DATOS DE DEMOSTRACIÓN OFICIALES DE CISNEROS, ANTIOQUIA
     // =========================================================================
     const INITIAL_CATEGORIES = [
@@ -1324,51 +1339,92 @@
       renderApp();
     };
 
-                // =========================================================================
-    // GOOGLE OAUTH 2.0 OFICIAL (ABRE LA PANTALLA OFICIAL DE GOOGLE ACCOUNTS)
+                    // =========================================================================
+    // GOOGLE OAUTH 2.0 OFICIAL & DETECCIÓN AUTOMÁTICA DE RETORNO
     // =========================================================================
     window.triggerOfficialGoogleOAuth = async function() {
+      const redirectUrl = window.location.origin + window.location.pathname;
       try {
-        const redirectUrl = window.location.origin + window.location.pathname;
-        const { data, error } = await supabaseClient.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            redirectTo: redirectUrl
-          }
-        });
-        if (error) throw error;
+        if (supabaseClient) {
+          const { data, error } = await supabaseClient.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+              redirectTo: redirectUrl
+            }
+          });
+          if (error) throw error;
+        } else {
+          throw new Error('Supabase Client not loaded');
+        }
       } catch (err) {
-        console.error('Error Google OAuth:', err);
-        // Fallback directo al endpoint de autorizacion
-        const authUrl = 'https://qopvmadvijnjgzgxwjpe.supabase.co/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(window.location.origin + window.location.pathname);
+        console.warn('OAuth standard fallback:', err);
+        const authUrl = `${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirectUrl)}`;
         window.location.href = authUrl;
       }
     };
 
-    // Al cargar la pagina, verificar si el usuario viene de iniciar sesion en Google
-    async function checkGoogleAuthCallback() {
+    // Procesar retorno de Google OAuth (Soporta #access_token en URL y supabase.auth.getSession)
+    async function processGoogleAuthReturn() {
       try {
-        if (!supabaseClient) return;
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        if (session && session.user) {
-          const u = session.user;
-          const email = (u.email || '').toLowerCase();
+        let userFound = null;
+
+        // 1. Verificar si viene el hash #access_token= en la barra de direcciones
+        const hash = window.location.hash;
+        if (hash && hash.includes('access_token=')) {
+          const params = new URLSearchParams(hash.substring(1));
+          const accessToken = params.get('access_token');
+          if (accessToken && supabaseClient) {
+            try {
+              const { data: { user }, error } = await supabaseClient.auth.getUser(accessToken);
+              if (user && !error) {
+                userFound = user;
+              }
+            } catch (e) {
+              console.warn('getUser with token error:', e);
+            }
+          }
+        }
+
+        // 2. Si no, verificar sesión almacenada en Supabase
+        if (!userFound && supabaseClient) {
+          try {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session && session.user) {
+              userFound = session.user;
+            }
+          } catch (e) {
+            console.warn('getSession error:', e);
+          }
+        }
+
+        // 3. Si encontramos el usuario de Google, actualizar la aplicación
+        if (userFound) {
+          const email = (userFound.email || '').toLowerCase();
           const isAdmin = email.includes('andresc.15042010@gmail.com');
-          const name = u.user_metadata?.full_name || u.user_metadata?.name || (isAdmin ? 'Cami (Admin)' : email.split('@')[0]);
+          const meta = userFound.user_metadata || {};
+          const fullName = meta.full_name || meta.name || (isAdmin ? 'Cami (Admin)' : (email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1)));
+          const avatar = meta.avatar_url || meta.picture || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100';
 
           state.currentUser = {
-            id: u.id,
+            id: userFound.id,
             email: email,
-            full_name: name,
+            full_name: fullName,
             role: isAdmin ? 'admin' : 'user',
-            avatar_url: u.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
+            avatar_url: avatar
           };
+
+          // Limpiar el hash feo de la URL sin recargar la página
+          if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          }
+
           saveState();
+          state.modals.login = false;
           renderApp();
-          window.showToast('¡Sesión iniciada con Google como ' + name + '!', 'success');
+          window.showToast(`¡Bienvenido/a, ${fullName}! Sesión iniciada con Google.`, 'success');
         }
-      } catch (e) {
-        console.error('Error verificando sesión de Google:', e);
+      } catch (err) {
+        console.error('Error procesando autenticación de Google:', err);
       }
     }
 
@@ -1433,6 +1489,7 @@
 
     // Arranque inicial
     renderApp();
+    processGoogleAuthReturn();
   </script>
 </body>
 </html>
