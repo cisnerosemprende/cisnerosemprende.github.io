@@ -107,6 +107,34 @@
       });
     }
   </script>
+  <!-- Blindaje de Seguridad: Bloqueo de Clic Derecho, F12 e Inspección -->
+  <script>
+    // Deshabilitar Clic Derecho / Menú Contextual
+    document.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+      return false;
+    });
+
+    // Deshabilitar teclas de Inspección (F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+U)
+    document.addEventListener('keydown', function(e) {
+      if (
+        e.keyCode === 123 || // F12
+        (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || // Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C
+        (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83)) // Ctrl+U (Ver código fuente), Ctrl+S
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+    });
+
+    // Deshabilitar arrastre indebido de imágenes para evitar descargas no deseadas
+    document.addEventListener('dragstart', function(e) {
+      if (e.target.nodeName === 'IMG') {
+        e.preventDefault();
+      }
+    });
+  </script>
 </head>
 <body class="min-h-screen w-full max-w-full overflow-x-hidden flex flex-col text-slate-900 selection:bg-emerald-200 bg-slate-50">
 
@@ -190,6 +218,8 @@
       transporterFilter: 'todos',
       filterOnlyOpen: false,
       contactStats: safeJsonParse('cis_contact_stats', {}),
+      bannedUsers: safeJsonParse('cis_banned_users', []),
+      inspectingUser: null,
       canInstallApp: false,
       searchTerm: '',
       activeView: 'home', // 'home', 'detail'
@@ -239,6 +269,7 @@
       localStorage.setItem('cis_cart_biz', JSON.stringify(state.currentBusinessInCart));
       localStorage.setItem('cis_user', JSON.stringify(state.currentUser));
       localStorage.setItem('cis_transporters', JSON.stringify(state.transporters));
+      localStorage.setItem('cis_banned_users', JSON.stringify(state.bannedUsers));
     }
 
     // =========================================================================
@@ -1057,12 +1088,33 @@
 
               <div class="space-y-3">
                 ${bizReviews.map(r => `
-                  <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs space-y-1">
+                  <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs space-y-1.5 hover:border-slate-300 transition-colors">
                     <div class="flex justify-between items-center font-bold text-slate-800">
-                      <span>${r.user_name}</span>
+                      <div class="flex items-center gap-2">
+                        <span>${r.user_name}</span>
+                        ${(state.currentUser?.role === 'admin') ? `
+                          <span class="text-[10px] font-semibold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded-md">
+                            ${r.user_email || 'Email privado'}
+                          </span>
+                        ` : ''}
+                      </div>
                       <span class="text-amber-500">${'★'.repeat(r.rating)}</span>
                     </div>
                     <p class="text-slate-600">"${r.comment}"</p>
+                    
+                    ${(state.currentUser?.role === 'admin') ? `
+                      <div class="pt-2 border-t border-slate-200 flex items-center justify-between text-[11px]">
+                        <span class="text-slate-400 font-mono text-[10px] truncate max-w-[200px]">ID: ${r.user_id || 'ID no reg.'}</span>
+                        <div class="flex items-center gap-2">
+                          <button onclick="window.inspectUser('${r.user_id || r.user_email}', '${encodeURIComponent(r.user_name)}', '${r.user_email || ''}')" class="text-indigo-700 hover:text-indigo-900 font-bold bg-indigo-50 hover:bg-indigo-100 px-2 py-0.5 rounded-lg transition-colors flex items-center gap-1">
+                            🔍 <span>Historial / Ban</span>
+                          </button>
+                          <button onclick="window.deleteReview('${r.id}')" class="text-rose-600 hover:text-rose-800 font-bold p-0.5" title="Eliminar reseña">
+                            🗑️
+                          </button>
+                        </div>
+                      </div>
+                    ` : ''}
                   </div>
                 `).join('')}
               </div>
@@ -1536,6 +1588,59 @@
                       `).join('')}
                     `}
                   </div>
+                </div>
+
+                <!-- SECCIÓN EXCLUSIVA DE CONTROL: RESEÑAS, HISTORIAL Y BANEOS -->
+                <div class="pt-3 border-t">
+                  <div class="flex items-center justify-between mb-2">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1">
+                      <span>🛡️</span> <span>Auditoría de Reseñas de Usuarios (${state.reviews.length}):</span>
+                    </h4>
+                  </div>
+                  <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
+                    ${state.reviews.length === 0 ? `
+                      <p class="text-xs text-slate-400 italic">No hay reseñas registradas aún.</p>
+                    ` : `
+                      ${state.reviews.map(r => `
+                        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs flex justify-between items-start gap-2">
+                          <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2">
+                              <span class="font-black text-slate-900">${r.user_name}</span>
+                              <span class="text-[10px] text-slate-500">(${r.user_email || 'Sin correo'})</span>
+                              <span class="text-amber-500 font-bold">${'★'.repeat(r.rating)}</span>
+                            </div>
+                            <p class="text-slate-600 truncate mt-0.5">"${r.comment}"</p>
+                            <p class="text-[10px] text-slate-400 font-mono mt-0.5">Negocio: ${r.business_name || r.business_id}</p>
+                          </div>
+                          <div class="flex items-center gap-1.5 shrink-0">
+                            <button onclick="window.inspectUser('${r.user_id || r.user_email}', '${encodeURIComponent(r.user_name)}', '${r.user_email || ''}')" class="text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-800 px-2 py-1 rounded-lg">
+                              🔍 Historial
+                            </button>
+                            <button onclick="window.deleteReview('${r.id}')" class="text-rose-600 hover:text-rose-800 p-1 font-bold text-xs" title="Borrar reseña">🗑️</button>
+                          </div>
+                        </div>
+                      `).join('')}
+                    `}
+                  </div>
+                </div>
+
+                <!-- LISTA DE USUARIOS BLOQUEADOS / BANEADOS -->
+                <div class="pt-3 border-t">
+                  <h4 class="text-xs font-bold uppercase tracking-wider text-rose-700 flex items-center gap-1 mb-2">
+                    <span>⛔</span> <span>Usuarios Bloqueados / Baneados (${state.bannedUsers.length}):</span>
+                  </h4>
+                  ${state.bannedUsers.length === 0 ? `
+                    <p class="text-xs text-slate-400 italic">No hay usuarios bloqueados actualmente.</p>
+                  ` : `
+                    <div class="flex flex-wrap gap-2">
+                      ${state.bannedUsers.map(u => `
+                        <div class="flex items-center gap-1.5 bg-rose-50 border border-rose-200 text-rose-800 px-2.5 py-1 rounded-xl text-xs font-bold">
+                          <span>${u}</span>
+                          <button onclick="window.unbanUser('${u}')" class="text-rose-600 hover:text-rose-900 ml-1 font-black" title="Desbanear usuario">✕</button>
+                        </div>
+                      `).join('')}
+                    </div>
+                  `}
                 </div>
 
                 <div class="pt-3 border-t">
@@ -2701,13 +2806,24 @@
         return;
       }
 
+      // Verificar si el usuario está baneado
+      if (state.currentUser && (state.bannedUsers.includes(state.currentUser.id) || state.bannedUsers.includes(state.currentUser.email))) {
+        window.showToast('⛔ Tu cuenta se encuentra bloqueada para emitir opiniones.', 'error');
+        return;
+      }
+
       state.reviews.unshift({
         id: 'rev-' + Date.now(),
         business_id: b.id,
+        business_name: b.name,
+        user_id: state.currentUser?.id || 'anon-' + Date.now(),
+        user_email: state.currentUser?.email || 'anonimo@cisneros.gov',
         user_name: state.currentUser?.full_name || 'Usuario Cisneros',
+        user_avatar: state.currentUser?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100',
+        user_agent: navigator.userAgent.substring(0, 60),
         rating,
         comment,
-        created_at: new Date().toISOString().split('T')[0]
+        created_at: new Date().toISOString()
       });
 
       // Recalcular promedio del negocio
@@ -2719,6 +2835,71 @@
       saveState();
       window.showToast('¡Tu reseña ha sido publicada con éxito!', "info");
       state.modals.review = false;
+      renderApp();
+    };
+
+        // =========================================================================
+    // ADMINISTRACIÓN DE USUARIOS: INSPECCIÓN, BANEOS Y MODERACIÓN (CAMI)
+    // =========================================================================
+    window.inspectUser = function(id, name, email) {
+      state.inspectingUser = { id, name, email };
+      renderApp();
+    };
+
+    window.closeInspector = function() {
+      state.inspectingUser = null;
+      renderApp();
+    };
+
+    window.banUser = async function(id, email) {
+      if (!confirm(`¿Deseas bloquear y banear a este usuario? Ya no podrá iniciar sesión ni dejar opiniones.`)) return;
+
+      if (id && !state.bannedUsers.includes(id)) state.bannedUsers.push(id);
+      if (email && !state.bannedUsers.includes(email)) state.bannedUsers.push(email);
+      saveState();
+
+      if (supabaseClient) {
+        try {
+          await supabaseClient.from('banned_users').insert([{ user_id: id, email: email, banned_at: new Date().toISOString() }]);
+        } catch (e) {
+          console.warn('Notice saving ban to cloud:', e);
+        }
+      }
+
+      window.showToast('⛔ Usuario bloqueado exitosamente.', 'warning');
+      renderApp();
+    };
+
+    window.unbanUser = async function(target) {
+      state.bannedUsers = state.bannedUsers.filter(u => u !== target);
+      saveState();
+
+      if (supabaseClient) {
+        try {
+          await supabaseClient.from('banned_users').delete().or(`user_id.eq.${target},email.eq.${target}`);
+        } catch (e) {
+          console.warn('Notice removing ban from cloud:', e);
+        }
+      }
+
+      window.showToast('✓ Usuario desbloqueado.', 'success');
+      renderApp();
+    };
+
+    window.deleteReview = async function(id) {
+      if (!confirm('¿Deseas eliminar permanentemente esta reseña?')) return;
+      state.reviews = state.reviews.filter(r => r.id !== id);
+      saveState();
+
+      if (supabaseClient) {
+        try {
+          await supabaseClient.from('reviews').delete().eq('id', id);
+        } catch (e) {
+          console.warn('Notice deleting review in cloud:', e);
+        }
+      }
+
+      window.showToast('Reseña eliminada.', 'info');
       renderApp();
     };
 
@@ -2919,6 +3100,11 @@
           const fullName = meta.full_name || meta.name || (isAdmin ? 'Cami (Admin)' : (email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1)));
           const avatar = meta.avatar_url || meta.picture || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100';
 
+          if (state.bannedUsers.includes(userFound.id) || state.bannedUsers.includes(email)) {
+            window.showToast('⛔ Esta cuenta ha sido suspendida o bloqueada por la administración de Cisneros Emprende.', 'error');
+            return;
+          }
+
           state.currentUser = {
             id: userFound.id,
             email: email,
@@ -2993,7 +3179,7 @@
     // =========================================================================
     // GESTIÓN DE CACHÉ Y REGISTRO DE SERVICE WORKER PWA
     // =========================================================================
-    const CURRENT_SW_VERSION = 'cisneros-emprende-v16';
+    const CURRENT_SW_VERSION = 'cisneros-emprende-v17';
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
