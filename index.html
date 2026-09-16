@@ -2351,21 +2351,23 @@
         const isLogo = state.imageAdjustState.type === 'logo';
         html += `
           <div class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
-            <div class="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col max-h-[95vh]">
-              <div class="bg-slate-900 text-white p-4 flex justify-between items-center">
+            <div class="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[95vh]">
+              <div class="bg-slate-900 text-white px-5 py-4 flex justify-between items-center">
                 <div>
-                  <h3 class="font-bold text-sm sm:text-base">✂️ Ajustar ${isLogo ? 'Logo (Círculo)' : 'Foto de Portada'}</h3>
-                  <p class="text-[10px] text-slate-400">Arrastra la imagen para moverla y usa el zoom para agrandar o achicar</p>
+                  <h3 class="font-bold text-base sm:text-lg flex items-center gap-2">
+                    <span>✂️</span> Ajustar ${isLogo ? 'Logo (Círculo)' : 'Foto de Portada'}
+                  </h3>
+                  <p class="text-xs text-slate-400 mt-0.5">Arrastra libremente para encuadrar y usa el zoom para agrandar o achicar</p>
                 </div>
-                <button onclick="window.closeImageAdjuster()" class="font-bold text-lg text-slate-300 hover:text-white">✕</button>
+                <button onclick="window.closeImageAdjuster()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center font-bold text-sm text-slate-300 hover:text-white transition-colors">✕</button>
               </div>
 
-              <div class="p-5 flex-1 flex flex-col items-center justify-center space-y-4 select-none">
-                <!-- Visor / Viewport de recorte con máscara -->
+              <div class="p-5 sm:p-6 flex-1 flex flex-col items-center justify-center space-y-4 select-none">
+                <!-- Visor / Viewport de recorte espacioso y cómodo -->
                 <div 
                   id="crop-viewport"
-                  class="relative overflow-hidden bg-slate-950 flex items-center justify-center cursor-move touch-none shadow-inner ${
-                    isLogo ? 'w-56 h-56 rounded-full border-4 border-emerald-500' : 'w-full h-52 rounded-2xl border-4 border-emerald-500'
+                  class="relative overflow-hidden bg-slate-950 flex items-center justify-center cursor-move touch-none shadow-2xl ${
+                    isLogo ? 'w-72 h-72 sm:w-80 sm:h-80 rounded-full border-4 border-emerald-500 ring-4 ring-emerald-500/30' : 'w-full h-64 sm:h-72 rounded-2xl border-4 border-emerald-500 ring-4 ring-emerald-500/30'
                   }"
                   onmousedown="window.startImageDrag(event)"
                   ontouchstart="window.startImageDrag(event)"
@@ -3000,7 +3002,9 @@
 
     window.closeImageAdjuster = function() {
       state.modals.imageAdjust = false;
-      renderApp();
+      window.preserveAndRestoreRegisterForm(() => {
+        renderApp();
+      });
     };
 
     window.setImageZoom = function(val) {
@@ -3063,7 +3067,103 @@
       window.addEventListener('touchend', upHandler);
     };
 
-    window.applyImageCrop = function() {
+        // Guarda y restaura los valores del formulario de registro cuando se re-renderiza
+    window.preserveAndRestoreRegisterForm = function(callback) {
+      const snap = {
+        name: document.getElementById('reg-name')?.value || '',
+        cat: document.getElementById('reg-cat')?.value || '',
+        wa: document.getElementById('reg-wa')?.value || '',
+        desc: document.getElementById('reg-desc')?.value || '',
+        cover: document.getElementById('reg-cover')?.value || '',
+        logo: document.getElementById('reg-logo')?.value || '',
+        addr: document.getElementById('reg-addr')?.value || '',
+        ref: document.getElementById('reg-ref')?.value || '',
+        locPhoto: document.getElementById('reg-loc-photo')?.value || '',
+        hasDel: document.getElementById('reg-has-delivery')?.value || 'si',
+        delCost: document.getElementById('reg-delivery-cost')?.value || '0',
+        delMin: document.getElementById('reg-delivery-min')?.value || '',
+        open: document.getElementById('reg-open')?.value || '08:00',
+        close: document.getElementById('reg-close')?.value || '20:00',
+        web: document.getElementById('reg-web')?.value || '',
+        insta: document.getElementById('reg-insta')?.value || '',
+        notes: document.getElementById('reg-notes')?.value || '',
+        scheduleMode: document.querySelector('input[name="schedule_mode"]:checked')?.value || 'same',
+        dayHours: {}
+      };
+
+      ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'].forEach(k => {
+        snap.dayHours[k] = {
+          active: document.getElementById(`reg-day-${k}-active`)?.checked ?? true,
+          open: document.getElementById(`reg-day-${k}-open`)?.value || '08:00',
+          close: document.getElementById(`reg-day-${k}-close`)?.value || '20:00'
+        };
+      });
+
+      if (callback) callback();
+
+      // Restaurar en el nuevo tick del DOM
+      setTimeout(() => {
+        if (!state.modals.register) return;
+        if (document.getElementById('reg-name')) document.getElementById('reg-name').value = snap.name;
+        if (document.getElementById('reg-cat')) document.getElementById('reg-cat').value = snap.cat;
+        if (document.getElementById('reg-wa')) document.getElementById('reg-wa').value = snap.wa;
+        if (document.getElementById('reg-desc')) document.getElementById('reg-desc').value = snap.desc;
+        if (document.getElementById('reg-addr')) document.getElementById('reg-addr').value = snap.addr;
+        if (document.getElementById('reg-ref')) document.getElementById('reg-ref').value = snap.ref;
+        if (document.getElementById('reg-loc-photo')) document.getElementById('reg-loc-photo').value = snap.locPhoto;
+        if (document.getElementById('reg-has-delivery')) document.getElementById('reg-has-delivery').value = snap.hasDel;
+        if (document.getElementById('reg-delivery-cost')) document.getElementById('reg-delivery-cost').value = snap.delCost;
+        if (document.getElementById('reg-delivery-min')) document.getElementById('reg-delivery-min').value = snap.delMin;
+        if (document.getElementById('reg-open')) document.getElementById('reg-open').value = snap.open;
+        if (document.getElementById('reg-close')) document.getElementById('reg-close').value = snap.close;
+        if (document.getElementById('reg-web')) document.getElementById('reg-web').value = snap.web;
+        if (document.getElementById('reg-insta')) document.getElementById('reg-insta').value = snap.insta;
+        if (document.getElementById('reg-notes')) document.getElementById('reg-notes').value = snap.notes;
+
+        // Restaurar portada
+        if (snap.cover && document.getElementById('reg-cover')) {
+          document.getElementById('reg-cover').value = snap.cover;
+          const pc = document.getElementById('preview-cover');
+          const ph = document.getElementById('preview-cover-placeholder');
+          const btn = document.getElementById('btn-adjust-cover');
+          if (pc) { pc.src = snap.cover; pc.classList.remove('hidden'); }
+          if (ph) ph.classList.add('hidden');
+          if (btn) { btn.classList.remove('hidden'); btn.classList.add('inline-flex'); }
+        }
+
+        // Restaurar logo
+        if (snap.logo && document.getElementById('reg-logo')) {
+          document.getElementById('reg-logo').value = snap.logo;
+          const pl = document.getElementById('preview-logo');
+          const ph = document.getElementById('preview-logo-placeholder');
+          const btn = document.getElementById('btn-adjust-logo');
+          if (pl) { pl.src = snap.logo; pl.classList.remove('hidden'); }
+          if (ph) ph.classList.add('hidden');
+          if (btn) { btn.classList.remove('hidden'); btn.classList.add('inline-flex'); }
+        }
+
+        // Restaurar modo de horario
+        if (snap.scheduleMode === 'custom') {
+          const radioCustom = document.querySelector('input[name="schedule_mode"][value="custom"]');
+          if (radioCustom) radioCustom.checked = true;
+          window.toggleScheduleMode('custom');
+        }
+
+        // Restaurar días individuales
+        Object.keys(snap.dayHours).forEach(k => {
+          const conf = snap.dayHours[k];
+          const cb = document.getElementById(`reg-day-${k}-active`);
+          const openIn = document.getElementById(`reg-day-${k}-open`);
+          const closeIn = document.getElementById(`reg-day-${k}-close`);
+          if (cb) cb.checked = conf.active;
+          if (openIn) openIn.value = conf.open;
+          if (closeIn) closeIn.value = conf.close;
+          window.toggleDaySchedule(k);
+        });
+      }, 20);
+    };
+
+window.applyImageCrop = function() {
       const img = new Image();
       img.onload = function() {
         const canvas = document.createElement('canvas');
@@ -3127,8 +3227,59 @@
         }
 
         state.modals.imageAdjust = false;
-        renderApp();
-        window.showToast('¡Imagen ajustada y recortada a la perfección!', 'success');
+        
+        // Si el formulario de registro está abierto en el DOM, actualizamos directamente sin resetear inputs
+        const targetInput = document.getElementById(state.imageAdjustState.targetInputId);
+        const previewEl = document.getElementById(state.imageAdjustState.previewId);
+        
+        if (targetInput) targetInput.value = croppedBase64;
+        
+        if (state.imageAdjustState.previewId === 'preview-logo') {
+          const pl = document.getElementById('preview-logo');
+          const ph = document.getElementById('preview-logo-placeholder');
+          const btn = document.getElementById('btn-adjust-logo');
+          if (pl) {
+            pl.src = croppedBase64;
+            pl.classList.remove('hidden');
+          }
+          if (ph) ph.classList.add('hidden');
+          if (btn) {
+            btn.classList.remove('hidden');
+            btn.classList.add('inline-flex');
+          }
+        } else if (state.imageAdjustState.previewId === 'preview-cover') {
+          const pc = document.getElementById('preview-cover');
+          const ph = document.getElementById('preview-cover-placeholder');
+          const btn = document.getElementById('btn-adjust-cover');
+          if (pc) {
+            pc.src = croppedBase64;
+            pc.classList.remove('hidden');
+          }
+          if (ph) ph.classList.add('hidden');
+          if (btn) {
+            btn.classList.remove('hidden');
+            btn.classList.add('inline-flex');
+          }
+        } else if (state.imageAdjustState.previewId === 'preview-trans-photo') {
+          const pt = document.getElementById('preview-trans-photo');
+          if (pt) {
+            pt.src = croppedBase64;
+            pt.classList.remove('hidden');
+          }
+        }
+
+        // Si el modal de recorte está montado como elemento modal, cerramos solo ese modal
+        const adjustModalEl = document.getElementById('modal-image-adjust-container');
+        if (adjustModalEl) {
+          adjustModalEl.remove();
+        } else {
+          // Si no había contenedor dedicado, guardar valores actuales del form antes de renderApp
+          window.preserveAndRestoreRegisterForm(() => {
+            renderApp();
+          });
+        }
+
+        window.showToast('¡Imagen ajustada y guardada con éxito!', 'success');
       };
       img.src = state.imageAdjustState.rawImageSrc;
     };
@@ -4446,7 +4597,7 @@
     // =========================================================================
     // GESTIÓN DE CACHÉ Y REGISTRO DE SERVICE WORKER PWA
     // =========================================================================
-    const CURRENT_SW_VERSION = 'cisneros-emprende-v31';
+    const CURRENT_SW_VERSION = 'cisneros-emprende-v32';
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
