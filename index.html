@@ -115,10 +115,11 @@
       selectedBusiness: null,
       currentUser: JSON.parse(localStorage.getItem('cis_user')) || null,
       menuDraft: [],
-            // Estado de Autenticación
-      authTab: 'login', // 'login' | 'register' | 'otp'
+      editingBusinessId: null, // Si tiene un ID, el modal de registro actúa como 'Gestionar Negocio'
+      // Estado de Autenticación
+      authTab: 'login',
       authPendingEmail: '',
-      authPendingType: 'signup', // 'signup' | 'login'
+      authPendingType: 'signup',
       authLoading: false,
       modals: {
         login: false,
@@ -248,9 +249,22 @@
                 <span>📬</span> <span class="hidden md:inline">Buzón</span>
               </button>
 
-              <button id="btn-register-biz" class="text-xs font-bold bg-emerald-700 text-white px-3 py-1.5 rounded-xl hover:bg-emerald-800 flex items-center gap-1 shadow-xs transition-colors">
-                <span>🏪</span> <span>Registrar Negocio</span>
-              </button>
+              ${(() => {
+                const myBiz = state.businesses.find(b => state.currentUser && (b.owner_id === state.currentUser.id || b.owner_id === state.currentUser.email));
+                if (myBiz) {
+                  return `
+                    <button onclick="window.editBusiness('${myBiz.id}')" class="text-xs font-black bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-sm transition-colors border border-emerald-600 animate-fade-in">
+                      <span>⚙️</span> <span>Gestionar Mi Negocio</span>
+                    </button>
+                  `;
+                } else {
+                  return `
+                    <button id="btn-register-biz" onclick="window.startRegisterBusiness()" class="text-xs font-bold bg-emerald-700 text-white px-3 py-1.5 rounded-xl hover:bg-emerald-800 flex items-center gap-1 shadow-xs transition-colors">
+                      <span>🏪</span> <span>Registrar Negocio</span>
+                    </button>
+                  `;
+                }
+              })()}
 
               ${state.currentUser?.role === 'admin' ? `
                 <button id="btn-admin-panel" class="text-xs font-black bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-amber-950 px-3 py-1.5 rounded-xl shadow-xs flex items-center gap-1.5 transition-all">
@@ -378,17 +392,24 @@
 
                   return `
                     <article class="bg-white rounded-2xl border border-slate-200 shadow-2xs hover:shadow-md transition-all flex flex-col overflow-hidden hover:border-emerald-300 group">
-                      <!-- Carrusel de fotos -->
+                      <!-- Portada e imagen con logo circular superpuesto -->
                       <div class="relative h-48 bg-slate-900 overflow-hidden cursor-pointer" onclick="window.selectBusiness('${b.id}')">
-                        <img src="${b.cover_images[0] || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                        <img src="${(b.cover_images && b.cover_images[0]) || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" alt="${b.name}" />
                         
                         <button onclick="event.stopPropagation(); window.toggleFavorite('${b.id}')" class="absolute top-2.5 left-2.5 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-md shadow ${isFav ? 'bg-red-500 text-white' : 'bg-black/40 text-white'}">
                           <span class="text-sm">${isFav ? '❤️' : '🤍'}</span>
                         </button>
 
                         ${isOrgullo ? `
-                          <div class="absolute bottom-2 left-2 bg-gradient-to-r from-amber-500 to-yellow-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow flex items-center gap-1">
+                          <div class="absolute top-2.5 right-2.5 bg-gradient-to-r from-amber-500 to-yellow-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow flex items-center gap-1">
                             <span>🏅</span> Orgullo Cisneros
+                          </div>
+                        ` : ''}
+
+                        <!-- Logo circular superpuesto en la esquina inferior derecha -->
+                        ${b.logo_url ? `
+                          <div class="absolute bottom-2 right-2 w-12 h-12 rounded-full border-2 border-white shadow-md overflow-hidden bg-white flex items-center justify-center shrink-0">
+                            <img src="${b.logo_url}" class="w-full h-full object-cover" alt="Logo ${b.name}" />
                           </div>
                         ` : ''}
                       </div>
@@ -476,15 +497,43 @@
 
           <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
             <div class="relative h-64 sm:h-80 bg-slate-900">
-              <img src="${b.cover_images[0]}" class="w-full h-full object-cover" />
+              <img src="${(b.cover_images && b.cover_images[0]) || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5'}" class="w-full h-full object-cover" alt="${b.name}" />
               <button onclick="window.toggleFavorite('${b.id}')" class="absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-md shadow ${isFav ? 'bg-red-500 text-white' : 'bg-black/50 text-white'}">
                 <span class="text-lg">${isFav ? '❤️' : '🤍'}</span>
               </button>
+
+              ${b.logo_url ? `
+                <div class="absolute -bottom-6 left-6 w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-white shadow-xl overflow-hidden bg-white flex items-center justify-center z-10">
+                  <img src="${b.logo_url}" class="w-full h-full object-cover" alt="Logo ${b.name}" />
+                </div>
+              ` : ''}
             </div>
 
-            <div class="p-6 space-y-4">
+            <div class="p-6 ${b.logo_url ? 'pt-8' : ''} space-y-4">
               <div>
-                <div class="flex items-center gap-2 flex-wrap mb-2">
+                <div class="flex items-center justify-between flex-wrap gap-2 mb-2">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-md">${b.category_name}</span>
+                    ${isOrgullo ? `
+                      <span class="inline-flex items-center gap-1 text-xs font-black text-amber-900 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full">
+                        🏅 Sello Orgullo Cisneros
+                      </span>
+                    ` : ''}
+                    <span class="text-xs font-bold px-2.5 py-0.5 rounded-md border ${status.color}">${status.label}</span>
+                  </div>
+
+                  <!-- Botón de Gestión para el dueño o admin -->
+                  ${(state.currentUser && (b.owner_id === state.currentUser.id || b.owner_id === state.currentUser.email || state.currentUser.role === 'admin')) ? `
+                    <div class="flex items-center gap-2">
+                      <button onclick="window.editBusiness('${b.id}')" class="text-xs font-bold bg-slate-800 hover:bg-slate-900 text-white px-3 py-1.5 rounded-xl flex items-center gap-1 shadow-2xs transition-colors">
+                        <span>✏️</span> <span>Modificar Negocio</span>
+                      </button>
+                      <button onclick="window.deleteBusiness('${b.id}')" class="text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-3 py-1.5 rounded-xl flex items-center gap-1 transition-colors">
+                        <span>🗑️</span> <span>Eliminar</span>
+                      </button>
+                    </div>
+                  ` : ''}
+                </div>
                   <span class="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-md">${b.category_name}</span>
                   ${isOrgullo ? `
                     <span class="inline-flex items-center gap-1 text-xs font-black text-amber-900 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full">
@@ -556,12 +605,29 @@
 
             <!-- Vitrina de Productos y Servicios -->
             <div class="border-t border-slate-200 p-6 bg-slate-50/50 space-y-4">
-              <div class="flex items-center justify-between">
+              <div class="flex items-center justify-between flex-wrap gap-2">
                 <div>
-                  <h3 class="font-bold text-slate-900 text-base">🍽️ Menú, Productos y Servicios</h3>
-                  <p class="text-xs text-slate-500">Consulta precios y pide directamente por WhatsApp</p>
+                  <h3 class="font-bold text-slate-900 text-base">🍽️ Menú, Carta y Servicios</h3>
+                  <p class="text-xs text-slate-500">Consulta fotos, precios y pide directamente por WhatsApp</p>
                 </div>
               </div>
+
+              <!-- Foto de la carta o menú completo si fue subida -->
+              ${b.menu_image_url ? `
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-2">
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                      <span>📜</span> Carta / Menú Completo del Comercio
+                    </span>
+                    <a href="${b.menu_image_url}" target="_blank" class="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1">
+                      <span>Ver en tamaño completo ↗</span>
+                    </a>
+                  </div>
+                  <div class="rounded-xl overflow-hidden border border-slate-200 max-h-96 sm:max-h-[500px] flex items-center justify-center bg-slate-100">
+                    <img src="${b.menu_image_url}" class="w-full h-full object-contain max-h-[500px] cursor-pointer hover:scale-[1.01] transition-transform" onclick="window.open('${b.menu_image_url}', '_blank')" alt="Menú de ${b.name}" />
+                  </div>
+                </div>
+              ` : ''}
 
               ${(!b.products || b.products.length === 0) ? `
                 <div class="p-6 text-center text-slate-400 bg-white rounded-2xl border border-slate-200">
@@ -703,8 +769,8 @@
                     <img src="icons/icon-192.svg" class="w-full h-full object-contain" alt="Cisneros" onerror="this.src='public/icons/icon-192.svg'" />
                   </div>
                   <div>
-                    <h3 class="font-extrabold text-sm sm:text-base leading-tight">Registrar Mi Emprendimiento</h3>
-                    <p class="text-[10px] text-emerald-200">Vitrina comercial 100% gratuita de Cisneros, Antioquia</p>
+                    <h3 class="font-extrabold text-sm sm:text-base leading-tight">${state.editingBusinessId ? '⚙️ Gestionar Mi Emprendimiento' : 'Registrar Mi Emprendimiento'}</h3>
+                    <p class="text-[10px] text-emerald-200">${state.editingBusinessId ? 'Modifica datos, fotos, menú o elimina tu negocio' : 'Vitrina comercial 100% gratuita de Cisneros, Antioquia'}</p>
                   </div>
                 </div>
                 <button onclick="window.closeModal('register')" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center font-bold text-sm transition-colors">✕</button>
@@ -760,7 +826,13 @@
                       </label>
                       <input id="reg-logo" type="text" placeholder="https://... o selecciona archivo abajo" class="w-full p-2 rounded-lg border border-slate-300 bg-white text-[11px]" />
                       <input type="file" id="reg-logo-file" accept="image/*" onchange="window.handleImageUpload(event, 'reg-logo', 'preview-logo')" class="mt-1.5 block w-full text-[10px] text-slate-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[10px] file:font-bold file:bg-emerald-700 file:text-white hover:file:bg-emerald-800 cursor-pointer" />
-                      <img id="preview-logo" class="hidden mt-2 w-16 h-16 object-cover rounded-xl border border-emerald-300 shadow-2xs mx-auto" alt="Vista previa logo" />
+                      <div class="flex items-center gap-2 mt-2">
+                        <div class="w-14 h-14 rounded-full border-2 border-emerald-500 overflow-hidden bg-slate-100 flex items-center justify-center shrink-0 shadow-xs">
+                          <img id="preview-logo" class="w-full h-full object-cover hidden" alt="Vista previa circular logo" />
+                          <span id="preview-logo-placeholder" class="text-xs text-slate-400 font-bold">Logo</span>
+                        </div>
+                        <span class="text-[10px] text-slate-500 leading-tight">Se adaptará automáticamente en forma circular perfecta sin deformarse.</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -815,34 +887,46 @@
                   </div>
                 </div>
 
-                <!-- SECCIÓN 5: PRODUCTOS / MENÚ CON PRECIOS -->
-                <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2.5">
-                  <div class="flex items-center justify-between">
+                <!-- SECCIÓN 5: CARTA / MENÚ (FOTO COMPLETA Y/O PLATOS INDIVIDUALES) -->
+                <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-3">
+                  <div>
                     <label class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
-                      <span>🍽️</span> <span>Menú, Productos o Servicios:</span>
+                      <span>📜</span> <span>Foto de la Carta / Menú Completo (Opcional pero muy recomendado):</span>
                     </label>
-                    <button type="button" onclick="window.addDraftProduct()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-2.5 py-1 rounded-lg text-[11px] shadow-2xs flex items-center gap-1">
-                      <span>+</span> Agregar Plato/Producto
-                    </button>
+                    <p class="text-[10px] text-slate-500 mt-0.5">Puedes subir una foto de tu carta, pendón o lista de precios tomada con tu celular:</p>
+                    <input id="reg-menu-img" type="text" placeholder="https://... o sube la foto del menú abajo" class="mt-1.5 w-full p-2 rounded-lg border border-slate-300 bg-white text-[11px]" />
+                    <input type="file" id="reg-menu-img-file" accept="image/*" onchange="window.handleImageUpload(event, 'reg-menu-img', 'preview-menu-img')" class="mt-1.5 block w-full text-[10px] text-slate-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[10px] file:font-bold file:bg-emerald-700 file:text-white hover:file:bg-emerald-800 cursor-pointer" />
+                    <img id="preview-menu-img" class="hidden mt-2 w-full max-h-48 object-contain rounded-xl border border-emerald-300 bg-white p-1 shadow-2xs" alt="Vista previa carta/menú" />
                   </div>
-                  <p class="text-[10px] text-slate-500">Agrega tus productos con nombre y precio para que los clientes puedan pedirlos fácilmente.</p>
 
-                  <!-- Lista de productos añadidos -->
-                  <div id="draft-products-list" class="space-y-1.5">
-                    ${(state.menuDraft && state.menuDraft.length > 0) ? state.menuDraft.map((p, idx) => `
-                      <div class="bg-white p-2.5 rounded-xl border border-slate-200 flex items-center justify-between gap-2 shadow-2xs">
-                        <div class="flex-1">
-                          <span class="font-bold text-slate-800 block">${p.name}</span>
-                          <span class="text-[10px] text-emerald-700 font-bold">$${Number(p.price).toLocaleString('es-CO')}</span>
-                          ${p.description ? `<span class="text-[10px] text-slate-500 block">${p.description}</span>` : ''}
+                  <div class="pt-2 border-t border-slate-200">
+                    <div class="flex items-center justify-between mb-1">
+                      <label class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                        <span>🍽️</span> <span>O Escribe Tus Platos/Servicios Individualmente:</span>
+                      </label>
+                      <button type="button" onclick="window.addDraftProduct()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-2.5 py-1 rounded-lg text-[11px] shadow-2xs flex items-center gap-1">
+                        <span>+</span> Agregar Plato
+                      </button>
+                    </div>
+                    <p class="text-[10px] text-slate-500 mb-2">Agrega productos con precio para pedidos directos a tu WhatsApp:</p>
+
+                    <!-- Lista de productos añadidos -->
+                    <div id="draft-products-list" class="space-y-1.5">
+                      ${(state.menuDraft && state.menuDraft.length > 0) ? state.menuDraft.map((p, idx) => `
+                        <div class="bg-white p-2.5 rounded-xl border border-slate-200 flex items-center justify-between gap-2 shadow-2xs">
+                          <div class="flex-1">
+                            <span class="font-bold text-slate-800 block">${p.name}</span>
+                            <span class="text-[10px] text-emerald-700 font-bold">$${Number(p.price).toLocaleString('es-CO')}</span>
+                            ${p.description ? `<span class="text-[10px] text-slate-500 block">${p.description}</span>` : ''}
+                          </div>
+                          <button type="button" onclick="window.removeDraftProduct(${idx})" class="text-rose-600 hover:text-rose-800 font-bold text-xs p-1">🗑️</button>
                         </div>
-                        <button type="button" onclick="window.removeDraftProduct(${idx})" class="text-rose-600 hover:text-rose-800 font-bold text-xs p-1">🗑️</button>
-                      </div>
-                    `).join('') : `
-                      <div class="bg-white p-3 rounded-xl border border-dashed border-slate-300 text-center text-slate-400 text-[11px]">
-                        No has agregado productos aún. Toca "+ Agregar Plato/Producto" arriba.
-                      </div>
-                    `}
+                      `).join('') : `
+                        <div class="bg-white p-2.5 rounded-xl border border-dashed border-slate-300 text-center text-slate-400 text-[11px]">
+                          (Opcional) Toca "+ Agregar Plato" para listar productos individuales con precio.
+                        </div>
+                      `}
+                    </div>
                   </div>
                 </div>
 
@@ -867,10 +951,18 @@
                   </div>
                 </div>
 
-                <!-- BOTÓN DE ENVÍO -->
-                <button type="submit" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold py-3.5 rounded-2xl text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2">
-                  <span>🚀</span> <span>Registrar y Publicar Mi Emprendimiento</span>
-                </button>
+                <!-- BOTÓN DE GUARDAR / ACTUALIZAR -->
+                <div class="space-y-2 pt-1">
+                  <button type="submit" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold py-3.5 rounded-2xl text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2">
+                    <span>💾</span> <span>${state.editingBusinessId ? 'Guardar Cambios del Negocio' : 'Registrar y Publicar Mi Emprendimiento'}</span>
+                  </button>
+
+                  ${state.editingBusinessId ? `
+                    <button type="button" onclick="window.deleteBusiness('${state.editingBusinessId}')" class="w-full bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold py-2.5 rounded-2xl text-xs transition-colors flex items-center justify-center gap-2">
+                      <span>🗑️</span> <span>Eliminar Este Negocio Definitivamente</span>
+                    </button>
+                  ` : ''}
+                </div>
               </form>
             </div>
           </div>
@@ -962,18 +1054,40 @@
                 </div>
 
                 <div class="pt-3 border-t">
-                  <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
-                    ⭐ Destacado de la Semana (Banner Superior):
-                  </h4>
-                  <div class="space-y-1.5 max-h-48 overflow-y-auto">
-                    ${state.businesses.filter(b => b.status === 'approved').map(b => `
-                      <div class="flex justify-between items-center p-2 rounded-lg border border-slate-100 text-xs">
-                        <span class="font-medium">${b.name}</span>
-                        <button onclick="window.setFeatured('${b.id}')" class="text-xs font-bold px-2.5 py-1 rounded-lg ${b.is_featured ? 'bg-amber-400 text-amber-950' : 'bg-slate-100 text-slate-600'}">
-                          ${b.is_featured ? '⭐ Destacado Activo' : 'Hacer Destacado'}
-                        </button>
-                      </div>
-                    `).join('')}
+                  <div class="flex items-center justify-between mb-2">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500">
+                      🏬 Comercios Aprobados en la Vitrina (${state.businesses.filter(b => b.status === 'approved').length}):
+                    </h4>
+                  </div>
+                  <div class="space-y-2 max-h-60 overflow-y-auto pr-1">
+                    ${state.businesses.filter(b => b.status === 'approved').length === 0 ? `
+                      <p class="text-xs text-slate-400 italic">No hay negocios aprobados todavía.</p>
+                    ` : `
+                      ${state.businesses.filter(b => b.status === 'approved').map(b => `
+                        <div class="flex items-center justify-between p-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs gap-2">
+                          <div class="flex items-center gap-2.5 min-w-0">
+                            <div class="w-9 h-9 rounded-lg overflow-hidden bg-slate-200 shrink-0 border border-slate-300">
+                              <img src="${(b.cover_images && b.cover_images[0]) || b.logo_url || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=100'}" class="w-full h-full object-cover" alt="${b.name}" />
+                            </div>
+                            <div class="truncate">
+                              <span class="font-bold text-slate-900 block truncate">${b.name}</span>
+                              <span class="text-[10px] text-slate-500 block truncate">${b.written_address}</span>
+                            </div>
+                          </div>
+                          <div class="flex items-center gap-1.5 shrink-0">
+                            <button onclick="window.setFeatured('${b.id}')" class="text-[11px] font-bold px-2.5 py-1 rounded-lg ${b.is_featured ? 'bg-amber-400 text-amber-950 font-black' : 'bg-white text-slate-700 border border-slate-300'}">
+                              ${b.is_featured ? '⭐ Destacado' : 'Destacar'}
+                            </button>
+                            <button onclick="window.editBusiness('${b.id}')" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-lg font-bold text-[11px] transition-colors" title="Editar comercio">
+                              ✏️
+                            </button>
+                            <button onclick="window.deleteBusiness('${b.id}')" class="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-2.5 py-1 rounded-lg font-bold text-[11px] transition-colors" title="Eliminar definitivamente">
+                              🗑️
+                            </button>
+                          </div>
+                        </div>
+                      `).join('')}
+                    `}
                   </div>
                 </div>
 
@@ -1230,6 +1344,10 @@
             previewEl.src = compressedBase64;
             previewEl.classList.remove('hidden');
           }
+          if (previewId === 'preview-logo') {
+            const ph = document.getElementById('preview-logo-placeholder');
+            if (ph) ph.classList.add('hidden');
+          }
           window.showToast('¡Foto cargada y optimizada con éxito!', 'success');
         };
         img.src = e.target.result;
@@ -1294,6 +1412,91 @@
       }
     };
 
+    window.startRegisterBusiness = function() {
+      state.editingBusinessId = null;
+      state.menuDraft = [];
+      window.openModal('register');
+    };
+
+    window.editBusiness = function(id) {
+      const b = state.businesses.find(item => item.id === id);
+      if (!b) return;
+      state.editingBusinessId = id;
+      state.menuDraft = (b.products && Array.isArray(b.products)) ? JSON.parse(JSON.stringify(b.products)) : [];
+      window.openModal('register');
+
+      // Prellenar campos en el siguiente tick del DOM
+      setTimeout(() => {
+        if (document.getElementById('reg-name')) document.getElementById('reg-name').value = b.name || '';
+        if (document.getElementById('reg-cat')) document.getElementById('reg-cat').value = b.category_slug || 'gastronomia';
+        if (document.getElementById('reg-desc')) document.getElementById('reg-desc').value = b.description || '';
+        if (document.getElementById('reg-addr')) document.getElementById('reg-addr').value = b.written_address || '';
+        if (document.getElementById('reg-ref')) document.getElementById('reg-ref').value = b.reference_point || '';
+        if (document.getElementById('reg-wa')) document.getElementById('reg-wa').value = b.whatsapp_number || '';
+        if (document.getElementById('reg-cover')) {
+          document.getElementById('reg-cover').value = (b.cover_images && b.cover_images[0]) || '';
+          if (b.cover_images && b.cover_images[0]) {
+            const pc = document.getElementById('preview-cover');
+            if (pc) { pc.src = b.cover_images[0]; pc.classList.remove('hidden'); }
+          }
+        }
+        if (document.getElementById('reg-logo')) {
+          document.getElementById('reg-logo').value = b.logo_url || '';
+          if (b.logo_url) {
+            const pl = document.getElementById('preview-logo');
+            const ph = document.getElementById('preview-logo-placeholder');
+            if (pl) { pl.src = b.logo_url; pl.classList.remove('hidden'); }
+            if (ph) ph.classList.add('hidden');
+          }
+        }
+        if (document.getElementById('reg-menu-img')) {
+          document.getElementById('reg-menu-img').value = b.menu_image_url || '';
+          if (b.menu_image_url) {
+            const pm = document.getElementById('preview-menu-img');
+            if (pm) { pm.src = b.menu_image_url; pm.classList.remove('hidden'); }
+          }
+        }
+        if (document.getElementById('reg-has-delivery')) document.getElementById('reg-has-delivery').value = b.delivery_available ? 'si' : 'no';
+        if (document.getElementById('reg-delivery-cost')) document.getElementById('reg-delivery-cost').value = b.delivery_cost || 0;
+        if (document.getElementById('reg-delivery-min')) document.getElementById('reg-delivery-min').value = b.delivery_minimum || b.delivery_min_order || 0;
+        if (document.getElementById('reg-open') && b.schedule?.lunes?.open) document.getElementById('reg-open').value = b.schedule.lunes.open;
+        if (document.getElementById('reg-close') && b.schedule?.lunes?.close) document.getElementById('reg-close').value = b.schedule.lunes.close;
+        if (document.getElementById('reg-web')) document.getElementById('reg-web').value = b.website_url || '';
+        if (document.getElementById('reg-insta')) document.getElementById('reg-insta').value = b.instagram_url || '';
+        if (document.getElementById('reg-notes')) document.getElementById('reg-notes').value = b.order_notes || '';
+      }, 50);
+    };
+
+    window.deleteBusiness = async function(id) {
+      const b = state.businesses.find(item => item.id === id);
+      const name = b ? b.name : 'este negocio';
+      if (!confirm(`¿Estás completamente seguro de que deseas eliminar permanentemente "${name}"? Esta acción no se puede deshacer.`)) {
+        return;
+      }
+
+      // Remover del estado local
+      state.businesses = state.businesses.filter(item => item.id !== id);
+      if (state.selectedBusiness && state.selectedBusiness.id === id) {
+        state.selectedBusiness = null;
+        state.activeView = 'home';
+      }
+      state.modals.register = false;
+      saveState();
+
+      // Eliminar de Supabase Cloud
+      if (supabaseClient) {
+        try {
+          const { error } = await supabaseClient.from('businesses').delete().eq('id', id);
+          if (error) console.warn('Supabase delete error:', error);
+        } catch (e) {
+          console.warn('Error deleting business in cloud:', e);
+        }
+      }
+
+      window.showToast(`El negocio "${name}" ha sido eliminado exitosamente.`, 'info');
+      renderApp();
+    };
+
     window.submitBusiness = async function() {
       const name = document.getElementById('reg-name')?.value.trim();
       const cat = document.getElementById('reg-cat')?.value;
@@ -1303,6 +1506,7 @@
       const wa = document.getElementById('reg-wa')?.value.trim();
       const coverUrl = document.getElementById('reg-cover')?.value.trim();
       const logoUrl = document.getElementById('reg-logo')?.value.trim();
+      const menuImgUrl = document.getElementById('reg-menu-img')?.value.trim();
       const locPhoto = document.getElementById('reg-loc-photo')?.value.trim();
       const hasDel = document.getElementById('reg-has-delivery')?.value === 'si';
       const delCost = Number(document.getElementById('reg-delivery-cost')?.value || 0);
@@ -1317,13 +1521,17 @@
       const covers = coverUrl ? [coverUrl] : [defaultCover];
       if (locPhoto) covers.push(locPhoto);
 
-      const generatedId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : ('biz-' + Date.now());
       const categoryItem = state.categories.find(c => c.slug === cat);
-      const statusValue = (state.currentUser?.role === 'admin') ? 'approved' : 'pending';
+      const isEditing = Boolean(state.editingBusinessId);
+      const targetId = isEditing ? state.editingBusinessId : ((typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : ('biz-' + Date.now()));
 
-      const newBiz = {
-        id: generatedId,
-        owner_id: state.currentUser?.id || null,
+      // Si es Cami admin o ya estaba aprobado, mantiene 'approved'; si es nuevo registro de usuario, 'pending'
+      const existingBiz = isEditing ? state.businesses.find(b => b.id === targetId) : null;
+      let statusValue = existingBiz ? existingBiz.status : ((state.currentUser?.role === 'admin') ? 'approved' : 'pending');
+
+      const bizData = {
+        id: targetId,
+        owner_id: existingBiz?.owner_id || state.currentUser?.id || state.currentUser?.email || null,
         name,
         category_slug: cat,
         category_name: categoryItem?.name || 'Comercio',
@@ -1332,6 +1540,7 @@
         reference_point: ref,
         whatsapp_number: wa,
         logo_url: logoUrl || null,
+        menu_image_url: menuImgUrl || null,
         website_url: web || null,
         instagram_url: insta || null,
         order_notes: notes || null,
@@ -1340,10 +1549,10 @@
         delivery_minimum: delMin,
         delivery_min_order: delMin,
         status: statusValue,
-        is_featured: false,
-        avg_rating: 0,
-        total_reviews: 0,
-        total_favorites: 0,
+        is_featured: existingBiz ? existingBiz.is_featured : false,
+        avg_rating: existingBiz ? existingBiz.avg_rating : 0,
+        total_reviews: existingBiz ? existingBiz.total_reviews : 0,
+        total_favorites: existingBiz ? existingBiz.total_favorites : 0,
         cover_images: covers,
         schedule: {
           lunes: { open: openTime, close: closeTime, closed: false },
@@ -1357,51 +1566,70 @@
         products: state.menuDraft ? [...state.menuDraft] : []
       };
 
-      // Guardar en Supabase Cloud si está disponible
+      // Guardar en Supabase Cloud
       if (supabaseClient) {
         try {
           const dbPayload = {
-            id: newBiz.id,
-            owner_id: newBiz.owner_id,
-            name: newBiz.name,
-            category_slug: newBiz.category_slug,
-            category_name: newBiz.category_name,
-            description: newBiz.description,
-            written_address: newBiz.written_address,
-            reference_point: newBiz.reference_point,
-            whatsapp_number: newBiz.whatsapp_number,
-            logo_url: newBiz.logo_url,
-            website_url: newBiz.website_url,
-            instagram_url: newBiz.instagram_url,
-            order_notes: newBiz.order_notes,
-            delivery_available: newBiz.delivery_available,
-            delivery_cost: newBiz.delivery_cost,
-            delivery_minimum: newBiz.delivery_minimum,
-            status: newBiz.status,
-            is_featured: false,
-            avg_rating: 0,
-            total_reviews: 0,
-            total_favorites: 0,
-            cover_images: newBiz.cover_images,
-            schedule: newBiz.schedule,
-            products: newBiz.products
+            id: bizData.id,
+            owner_id: bizData.owner_id,
+            name: bizData.name,
+            category_slug: bizData.category_slug,
+            category_name: bizData.category_name,
+            description: bizData.description,
+            written_address: bizData.written_address,
+            reference_point: bizData.reference_point,
+            whatsapp_number: bizData.whatsapp_number,
+            logo_url: bizData.logo_url,
+            menu_image_url: bizData.menu_image_url,
+            website_url: bizData.website_url,
+            instagram_url: bizData.instagram_url,
+            order_notes: bizData.order_notes,
+            delivery_available: bizData.delivery_available,
+            delivery_cost: bizData.delivery_cost,
+            delivery_minimum: bizData.delivery_minimum,
+            status: bizData.status,
+            is_featured: bizData.is_featured,
+            avg_rating: bizData.avg_rating,
+            total_reviews: bizData.total_reviews,
+            total_favorites: bizData.total_favorites,
+            cover_images: bizData.cover_images,
+            schedule: bizData.schedule,
+            products: bizData.products
           };
-          const { error } = await supabaseClient.from('businesses').insert([dbPayload]);
-          if (error) console.warn('Supabase insert warning:', error);
+
+          if (isEditing) {
+            const { error } = await supabaseClient.from('businesses').update(dbPayload).eq('id', targetId);
+            if (error) console.warn('Supabase update warning:', error);
+          } else {
+            const { error } = await supabaseClient.from('businesses').insert([dbPayload]);
+            if (error) console.warn('Supabase insert warning:', error);
+          }
         } catch (e) {
           console.warn('Error saving business to cloud:', e);
         }
       }
 
-      state.businesses.unshift(newBiz);
-      state.menuDraft = []; // reset draft
-      saveState();
-
-      if (newBiz.status === 'approved') {
-        window.showToast('¡Excelente Cami! Tu negocio ha quedado aprobado y publicado en la vitrina comercial.', 'success');
+      if (isEditing) {
+        const idx = state.businesses.findIndex(b => b.id === targetId);
+        if (idx !== -1) {
+          state.businesses[idx] = bizData;
+        }
+        if (state.selectedBusiness && state.selectedBusiness.id === targetId) {
+          state.selectedBusiness = bizData;
+        }
+        window.showToast('¡Negocio actualizado correctamente!', 'success');
       } else {
-        window.showToast('¡Emprendimiento registrado! Ha quedado en "Pendiente" para revisión y aprobación de Cami en el Panel Admin.', 'info');
+        state.businesses.unshift(bizData);
+        if (bizData.status === 'approved') {
+          window.showToast('¡Excelente! Tu negocio ha sido registrado y publicado en la vitrina comercial.', 'success');
+        } else {
+          window.showToast('¡Emprendimiento registrado! Ha quedado en "Pendiente" para revisión y aprobación de Cami en el Panel Admin.', 'info');
+        }
       }
+
+      state.menuDraft = [];
+      state.editingBusinessId = null;
+      saveState();
 
       state.modals.register = false;
       renderApp();
@@ -1662,7 +1890,7 @@
       if (btnSug) btnSug.onclick = () => window.openModal('suggestion');
 
       const btnReg = document.getElementById('btn-register-biz');
-      if (btnReg) btnReg.onclick = () => window.openModal('register');
+      if (btnReg) btnReg.onclick = () => window.startRegisterBusiness();
 
       const btnAdm = document.getElementById('btn-admin-panel');
       if (btnAdm) btnAdm.onclick = () => window.openModal('admin');
@@ -1715,7 +1943,7 @@
     if (typeof caches !== 'undefined') {
       caches.keys().then(names => {
         for (let name of names) {
-          if (name !== 'cisneros-emprende-v4') {
+          if (name !== 'cisneros-emprende-v5') {
             caches.delete(name);
           }
         }
