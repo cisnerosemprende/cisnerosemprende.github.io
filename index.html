@@ -2,28 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <!-- ═══════════════════════════════════════════════════
-       SEGURIDAD: Content Security Policy y cabeceras de seguridad
-       Previene XSS, clickjacking, sniffing de MIME y más
-       ═══════════════════════════════════════════════════ -->
-  <meta http-equiv="Content-Security-Policy" content="
-    default-src 'self';
-    script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://accounts.google.com https://apis.google.com;
-    style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://fonts.googleapis.com;
-    img-src 'self' data: blob: https: http:;
-    font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdn.tailwindcss.com;
-    connect-src 'self' https://qopvmadvijnjgzgxwjpe.supabase.co https://*.supabase.co wss://*.supabase.co https://accounts.google.com https://apis.google.com https://fonts.googleapis.com https://fonts.gstatic.com https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://images.unsplash.com;
-    frame-src https://accounts.google.com;
-    frame-ancestors 'none';
-    object-src 'none';
-    base-uri 'self';
-    form-action 'self' https://qopvmadvijnjgzgxwjpe.supabase.co;
-    worker-src 'self' blob:;
-  ">
-  <meta http-equiv="X-Content-Type-Options" content="nosniff">
-  <meta http-equiv="X-Frame-Options" content="DENY">
-  <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
-  <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
+  <!-- Seguridad gestionada nativamente por GitHub Pages & HTTPS -->
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Cisneros Emprende | Directorio Comercial & Vitrina Digital PWA</title>
@@ -171,18 +150,7 @@
       : null;
 
 
-    // =========================================================================
-    // SEGURIDAD: Protección anti-clickjacking
-    // Si esta página se carga dentro de un iframe, forzar redireccionamiento
-    // =========================================================================
-    if (window.top !== window.self) {
-      try {
-        window.top.location.href = window.self.location.href;
-      } catch(e) {
-        // Si no se puede redirigir (cross-origin iframe), ocultar la página
-        document.body.style.display = 'none';
-      }
-    }
+
 
     // =========================================================================
     // SEGURIDAD: Función de escape HTML para prevenir XSS
@@ -316,6 +284,11 @@
         startY: 0
       }
     };
+
+    // Render inmediato de arranque
+    setTimeout(() => {
+      try { renderApp(); } catch(e) { console.warn('Early render:', e); }
+    }, 10);
 
     function saveState() {
       localStorage.setItem('cis_businesses', JSON.stringify(state.businesses));
@@ -3993,7 +3966,7 @@
     // =========================================================================
     // GESTIÓN DE CACHÉ Y REGISTRO DE SERVICE WORKER PWA
     // =========================================================================
-    const CURRENT_SW_VERSION = 'cisneros-emprende-v27';
+    const CURRENT_SW_VERSION = 'cisneros-emprende-v28';
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
