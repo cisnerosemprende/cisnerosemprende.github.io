@@ -1132,10 +1132,12 @@
     window.openModal = function(name) {
       if (name === 'register' && !state.currentUser) {
         window.showToast('🔐 Para registrar tu emprendimiento en Cisneros Emprende, primero debes ingresar con tu cuenta de Google.', "info");
+        Object.keys(state.modals).forEach(k => state.modals[k] = false);
         state.modals.login = true;
         renderApp();
         return;
       }
+      Object.keys(state.modals).forEach(k => state.modals[k] = false);
       state.modals[name] = true;
       renderApp();
     };
@@ -1706,6 +1708,17 @@
             reg.update();
           })
           .catch(err => console.log('[PWA] Service Worker no registrado (normal en preview local):', err));
+      });
+    }
+
+    // Limpieza activa de caches obsoletas del navegador
+    if (typeof caches !== 'undefined') {
+      caches.keys().then(names => {
+        for (let name of names) {
+          if (name !== 'cisneros-emprende-v4') {
+            caches.delete(name);
+          }
+        }
       });
     }
 
