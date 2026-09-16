@@ -104,9 +104,7 @@
       businesses: JSON.parse(localStorage.getItem('cis_businesses')) || INITIAL_BUSINESSES,
       categories: INITIAL_CATEGORIES,
       reviews: JSON.parse(localStorage.getItem('cis_reviews')) || INITIAL_REVIEWS,
-      suggestions: JSON.parse(localStorage.getItem('cis_suggestions')) || [
-        { id: 's1', sender_name: 'Valeria Henao', sender_email: 'valeria@gmail.com', message: 'Sería genial agregar los horarios de las ferias campesinas en Cisneros.', created_at: '2026-09-11' }
-      ],
+      suggestions: JSON.parse(localStorage.getItem('cis_suggestions')) || [],
       reports: JSON.parse(localStorage.getItem('cis_reports')) || [],
       favorites: JSON.parse(localStorage.getItem('cis_favs')) || ['cis-001'],
       cart: JSON.parse(localStorage.getItem('cis_cart')) || [],
@@ -255,8 +253,11 @@
               </button>
 
               ${state.currentUser?.role === 'admin' ? `
-                <button id="btn-admin-panel" class="text-xs font-black bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 px-2.5 py-1.5 rounded-xl shadow-xs flex items-center gap-1">
+                <button id="btn-admin-panel" class="text-xs font-black bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-amber-950 px-3 py-1.5 rounded-xl shadow-xs flex items-center gap-1.5 transition-all">
                   <span>👑</span> <span>Panel Cami</span>
+                  ${state.businesses.filter(b => b.status === 'pending').length > 0 ? `
+                    <span class="bg-rose-600 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full animate-pulse">${state.businesses.filter(b => b.status === 'pending').length}</span>
+                  ` : ''}
                 </button>
               ` : ''}
 
@@ -441,6 +442,10 @@
               <button onclick="window.openModal('suggestion')" class="hover:text-white">Buzón de Sugerencias</button>
               <span>•</span>
               <button onclick="window.openModal('register')" class="hover:text-white">Registrar Mi Negocio</button>
+              ${state.currentUser?.role === 'admin' ? `
+                <span>•</span>
+                <button onclick="window.openModal('admin')" class="text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1">👑 Panel Cami (${state.businesses.filter(b => b.status === 'pending').length} pendientes)</button>
+              ` : ''}
             </div>
           </div>
         </footer>
@@ -732,22 +737,78 @@
                 </div>
 
                 <!-- SECCIÓN 2: LOGO Y FOTOS DEL LOCAL -->
+                <script>
+                  window.handleImageUpload = function(event, targetInputId, previewId) {
+                    const file = event.target.files && event.target.files[0];
+                    if (!file) return;
+                    if (!file.type.startsWith('image/')) {
+                      window.showToast('Por favor selecciona un archivo de imagen válido (JPG, PNG, WebP).', 'warning');
+                      return;
+                    }
+                    if (file.size > 8 * 1024 * 1024) {
+                      window.showToast('La imagen no debe superar los 8MB.', 'warning');
+                      return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                      const img = new Image();
+                      img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const maxDim = 1200;
+                        let width = img.width;
+                        let height = img.height;
+                        if (width > maxDim || height > maxDim) {
+                          if (width > height) {
+                            height = Math.round((height * maxDim) / width);
+                            width = maxDim;
+                          } else {
+                            width = Math.round((width * maxDim) / height);
+                            height = maxDim;
+                          }
+                        }
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.82);
+                        const targetInput = document.getElementById(targetInputId);
+                        if (targetInput) targetInput.value = compressedBase64;
+                        const previewEl = document.getElementById(previewId);
+                        if (previewEl) {
+                          previewEl.src = compressedBase64;
+                          previewEl.classList.remove('hidden');
+                        }
+                        window.showToast('¡Foto cargada y optimizada con éxito!', 'success');
+                      };
+                      img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                  };
+                </script>
                 <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2.5">
                   <label class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
                     <span>🖼️</span> <span>Logo y Fotos del Negocio / Local:</span>
                   </label>
                   <p class="text-[10px] text-slate-500">Pega enlaces de fotos de tu negocio, o usa el selector para cargar fotos desde tu celular/PC.</p>
                   
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label class="block text-[10px] font-semibold text-slate-600 mb-0.5">Foto de Portada / Fachada:</label>
-                      <input id="reg-cover" type="text" placeholder="https://... o sube abajo" class="w-full p-2 rounded-lg border border-slate-300 bg-white text-[11px]" />
-                      <input type="file" id="reg-cover-file" accept="image/*" class="mt-1 block w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100" />
+                      <label class="block text-[10px] font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                        <span>Foto Portada / Fachada:</span>
+                        <span class="text-[9px] text-emerald-700 font-bold">Subir desde galería o PC</span>
+                      </label>
+                      <input id="reg-cover" type="text" placeholder="https://... o selecciona archivo abajo" class="w-full p-2 rounded-lg border border-slate-300 bg-white text-[11px]" />
+                      <input type="file" id="reg-cover-file" accept="image/*" onchange="window.handleImageUpload(event, 'reg-cover', 'preview-cover')" class="mt-1.5 block w-full text-[10px] text-slate-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[10px] file:font-bold file:bg-emerald-700 file:text-white hover:file:bg-emerald-800 cursor-pointer" />
+                      <img id="preview-cover" class="hidden mt-2 w-full h-24 object-cover rounded-xl border border-emerald-300 shadow-2xs" alt="Vista previa portada" />
                     </div>
                     <div>
-                      <label class="block text-[10px] font-semibold text-slate-600 mb-0.5">Logo del Negocio (Opcional):</label>
-                      <input id="reg-logo" type="text" placeholder="https://... o sube abajo" class="w-full p-2 rounded-lg border border-slate-300 bg-white text-[11px]" />
-                      <input type="file" id="reg-logo-file" accept="image/*" class="mt-1 block w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100" />
+                      <label class="block text-[10px] font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                        <span>Logo del Negocio (Opcional):</span>
+                        <span class="text-[9px] text-emerald-700 font-bold">Subir desde galería o PC</span>
+                      </label>
+                      <input id="reg-logo" type="text" placeholder="https://... o selecciona archivo abajo" class="w-full p-2 rounded-lg border border-slate-300 bg-white text-[11px]" />
+                      <input type="file" id="reg-logo-file" accept="image/*" onchange="window.handleImageUpload(event, 'reg-logo', 'preview-logo')" class="mt-1.5 block w-full text-[10px] text-slate-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[10px] file:font-bold file:bg-emerald-700 file:text-white hover:file:bg-emerald-800 cursor-pointer" />
+                      <img id="preview-logo" class="hidden mt-2 w-16 h-16 object-cover rounded-xl border border-emerald-300 shadow-2xs mx-auto" alt="Vista previa logo" />
                     </div>
                   </div>
                 </div>
@@ -759,7 +820,13 @@
                   </label>
                   <input id="reg-addr" type="text" placeholder="Dirección exacta o Barrio (ej: Calle 19 # 20-14, Barrio El Uno)" class="w-full p-2.5 rounded-xl border border-slate-300 bg-white" required />
                   <input id="reg-ref" type="text" placeholder="Punto de referencia clave (ej: diagonal a la Estación, junto al Túnel)" class="w-full p-2 rounded-lg border border-slate-300 bg-white" />
-                  <input id="reg-loc-photo" type="text" placeholder="Foto o video de la fachada/ubicación (Enlace de Facebook, TikTok o foto)" class="w-full p-2 rounded-lg border border-slate-300 bg-white text-[11px]" />
+                  
+                  <div>
+                    <label class="block text-[10px] font-semibold text-emerald-900 mb-0.5">Foto de la Fachada / Referencia del Local (Opcional):</label>
+                    <input id="reg-loc-photo" type="text" placeholder="Foto o video de fachada (enlace o sube archivo abajo)" class="w-full p-2 rounded-lg border border-slate-300 bg-white text-[11px]" />
+                    <input type="file" id="reg-loc-photo-file" accept="image/*" onchange="window.handleImageUpload(event, 'reg-loc-photo', 'preview-loc-photo')" class="mt-1.5 block w-full text-[10px] text-slate-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[10px] file:font-bold file:bg-emerald-700 file:text-white hover:file:bg-emerald-800 cursor-pointer" />
+                    <img id="preview-loc-photo" class="hidden mt-2 w-full h-24 object-cover rounded-xl border border-emerald-300 shadow-2xs" alt="Vista previa fachada" />
+                  </div>
                 </div>
 
                 <!-- SECCIÓN 4: DOMICILIOS & HORARIOS -->
@@ -912,16 +979,29 @@
                   ${pending.length === 0 ? `
                     <p class="text-xs text-slate-400 italic">No hay comercios pendientes por aprobar.</p>
                   ` : `
-                    <div class="space-y-2">
+                    <div class="space-y-2.5">
                       ${pending.map(b => `
-                        <div class="border border-slate-200 p-3 rounded-xl flex justify-between items-center text-xs">
-                          <div>
-                            <span class="font-bold text-slate-900">${b.name}</span>
-                            <span class="text-slate-500 block">📍 ${b.written_address}</span>
+                        <div class="border border-slate-200 p-3 rounded-2xl flex flex-col sm:flex-row justify-between sm:items-center gap-3 text-xs bg-slate-50/70 hover:bg-slate-50 transition-colors">
+                          <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-xl bg-slate-200 overflow-hidden shrink-0 border border-slate-300">
+                              <img src="${(b.cover_images && b.cover_images[0]) || b.logo_url || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=100'}" class="w-full h-full object-cover" alt="${b.name}" />
+                            </div>
+                            <div>
+                              <div class="flex items-center gap-1.5 mb-0.5">
+                                <span class="font-bold text-slate-900 text-sm">${b.name}</span>
+                                <span class="text-[10px] font-bold text-emerald-800 bg-emerald-100/80 px-2 py-0.2 rounded-md">${b.category_name || 'Comercio'}</span>
+                              </div>
+                              <span class="text-slate-600 block text-[11px]">📍 ${b.written_address}</span>
+                              <span class="text-slate-500 block text-[10px]">📱 WhatsApp: ${b.whatsapp_number}</span>
+                            </div>
                           </div>
-                          <div class="flex gap-2">
-                            <button onclick="window.approveBusiness('${b.id}')" class="bg-emerald-700 text-white px-3 py-1 rounded-lg font-bold">Aprobar ✓</button>
-                            <button onclick="window.rejectBusiness('${b.id}')" class="bg-rose-100 text-rose-700 px-2 py-1 rounded-lg font-bold">Rechazar</button>
+                          <div class="flex items-center gap-2 self-end sm:self-center">
+                            <button onclick="window.approveBusiness('${b.id}')" class="bg-emerald-700 hover:bg-emerald-800 text-white px-3.5 py-1.5 rounded-xl font-bold shadow-2xs flex items-center gap-1 transition-colors">
+                              <span>✓</span> <span>Aprobar</span>
+                            </button>
+                            <button onclick="window.rejectBusiness('${b.id}')" class="bg-rose-100 hover:bg-rose-200 text-rose-700 px-3 py-1.5 rounded-xl font-bold transition-colors">
+                              <span>Rechazar</span>
+                            </button>
                           </div>
                         </div>
                       `).join('')}
@@ -949,16 +1029,22 @@
                   <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                     📬 Mensajes en el Buzón Ciudadano (${state.suggestions.length}):
                   </h4>
-                  <div class="space-y-2">
-                    ${state.suggestions.map(s => `
-                      <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs">
-                        <div class="flex justify-between font-bold text-slate-800">
-                          <span>${s.sender_name} (${s.sender_email || 'Sin contacto'})</span>
-                          <span class="text-slate-400 font-normal">${s.created_at}</span>
+                    ${state.suggestions.length === 0 ? `
+                      <p class="text-xs text-slate-400 italic">No hay mensajes pendientes en el buzón.</p>
+                    ` : `
+                      ${state.suggestions.map(s => `
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs flex justify-between items-start gap-2">
+                          <div class="flex-1">
+                            <div class="flex justify-between font-bold text-slate-800">
+                              <span>${s.sender_name} (${s.sender_email || 'Sin contacto'})</span>
+                              <span class="text-slate-400 font-normal">${s.created_at || ''}</span>
+                            </div>
+                            <p class="text-slate-600 mt-1">"${s.message}"</p>
+                          </div>
+                          <button onclick="window.deleteSuggestion('${s.id}')" class="text-rose-600 hover:text-rose-800 p-1 font-bold text-xs" title="Eliminar mensaje">🗑️</button>
                         </div>
-                        <p class="text-slate-600 mt-1">"${s.message}"</p>
-                      </div>
-                    `).join('')}
+                      `).join('')}
+                    `}
                   </div>
                 </div>
               </div>
@@ -1150,20 +1236,35 @@
       renderApp();
     };
 
-    window.submitSuggestion = function() {
+    window.submitSuggestion = async function() {
       const name = document.getElementById('sug-name')?.value.trim();
       const email = document.getElementById('sug-email')?.value.trim();
       const msg = document.getElementById('sug-msg')?.value.trim();
 
-      state.suggestions.unshift({
-        id: 'sug-' + Date.now(),
+      const newSug = {
+        id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : ('sug-' + Date.now()),
         sender_name: name || 'Ciudadano Cisneros',
-        sender_email: email,
+        sender_email: email || null,
         message: msg,
         created_at: new Date().toISOString().split('T')[0]
-      });
+      };
+
+      if (supabaseClient) {
+        try {
+          await supabaseClient.from('suggestions').insert([{
+            id: newSug.id,
+            sender_name: newSug.sender_name,
+            sender_email: newSug.sender_email,
+            message: newSug.message
+          }]);
+        } catch (e) {
+          console.warn('Error sending suggestion to Supabase:', e);
+        }
+      }
+
+      state.suggestions.unshift(newSug);
       saveState();
-      window.showToast('¡Muchas gracias! Tu sugerencia ha sido recibida.', "info");
+      window.showToast('¡Muchas gracias! Tu sugerencia ha sido recibida en el buzón ciudadano.', "success");
       state.modals.suggestion = false;
       renderApp();
     };
@@ -1192,7 +1293,7 @@
       }
     };
 
-    window.submitBusiness = function() {
+    window.submitBusiness = async function() {
       const name = document.getElementById('reg-name')?.value.trim();
       const cat = document.getElementById('reg-cat')?.value;
       const desc = document.getElementById('reg-desc')?.value.trim();
@@ -1215,24 +1316,29 @@
       const covers = coverUrl ? [coverUrl] : [defaultCover];
       if (locPhoto) covers.push(locPhoto);
 
+      const generatedId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : ('biz-' + Date.now());
+      const categoryItem = state.categories.find(c => c.slug === cat);
+      const statusValue = (state.currentUser?.role === 'admin') ? 'approved' : 'pending';
+
       const newBiz = {
-        id: 'biz-' + Date.now(),
-        owner_id: state.currentUser?.email || 'local',
+        id: generatedId,
+        owner_id: state.currentUser?.id || null,
         name,
         category_slug: cat,
-        category_name: state.categories.find(c => c.slug === cat)?.name || 'Comercio',
+        category_name: categoryItem?.name || 'Comercio',
         description: desc,
         written_address: addr,
         reference_point: ref,
         whatsapp_number: wa,
         logo_url: logoUrl || null,
         website_url: web || null,
-        instagram: insta || null,
+        instagram_url: insta || null,
         order_notes: notes || null,
         delivery_available: hasDel,
         delivery_cost: delCost,
+        delivery_minimum: delMin,
         delivery_min_order: delMin,
-        status: (state.currentUser?.role === 'admin') ? 'approved' : 'pending',
+        status: statusValue,
         is_featured: false,
         avg_rating: 0,
         total_reviews: 0,
@@ -1250,14 +1356,50 @@
         products: state.menuDraft ? [...state.menuDraft] : []
       };
 
-      state.businesses.push(newBiz);
+      // Guardar en Supabase Cloud si está disponible
+      if (supabaseClient) {
+        try {
+          const dbPayload = {
+            id: newBiz.id,
+            owner_id: newBiz.owner_id,
+            name: newBiz.name,
+            category_slug: newBiz.category_slug,
+            category_name: newBiz.category_name,
+            description: newBiz.description,
+            written_address: newBiz.written_address,
+            reference_point: newBiz.reference_point,
+            whatsapp_number: newBiz.whatsapp_number,
+            logo_url: newBiz.logo_url,
+            website_url: newBiz.website_url,
+            instagram_url: newBiz.instagram_url,
+            order_notes: newBiz.order_notes,
+            delivery_available: newBiz.delivery_available,
+            delivery_cost: newBiz.delivery_cost,
+            delivery_minimum: newBiz.delivery_minimum,
+            status: newBiz.status,
+            is_featured: false,
+            avg_rating: 0,
+            total_reviews: 0,
+            total_favorites: 0,
+            cover_images: newBiz.cover_images,
+            schedule: newBiz.schedule,
+            products: newBiz.products
+          };
+          const { error } = await supabaseClient.from('businesses').insert([dbPayload]);
+          if (error) console.warn('Supabase insert warning:', error);
+        } catch (e) {
+          console.warn('Error saving business to cloud:', e);
+        }
+      }
+
+      state.businesses.unshift(newBiz);
       state.menuDraft = []; // reset draft
       saveState();
 
       if (newBiz.status === 'approved') {
-        window.showToast('¡Excelente Cami! Al ser administradora, tu negocio ha quedado Aprobado y publicado de inmediato en la vitrina.', "info");
+        window.showToast('¡Excelente Cami! Tu negocio ha quedado aprobado y publicado en la vitrina comercial.', 'success');
       } else {
-        window.showToast('¡Emprendimiento registrado con éxito! Ha quedado en estado "Pendiente" para revisión y aprobación de Cami.', "info");
+        window.showToast('¡Emprendimiento registrado! Ha quedado en "Pendiente" para revisión y aprobación de Cami en el Panel Admin.', 'info');
       }
 
       state.modals.register = false;
@@ -1316,27 +1458,105 @@
       renderApp();
     };
 
-    window.approveBusiness = function(id) {
+    window.approveBusiness = async function(id) {
       const b = state.businesses.find(item => item.id === id);
       if (b) {
         b.status = 'approved';
         saveState();
+        if (supabaseClient) {
+          try {
+            await supabaseClient.from('businesses').update({ status: 'approved' }).eq('id', id);
+          } catch (e) {
+            console.warn('Error approving in Supabase:', e);
+          }
+        }
+        window.showToast(`¡El comercio "${b.name}" ha sido aprobado y ya es visible en Cisneros!`, 'success');
         renderApp();
       }
     };
 
-    window.rejectBusiness = function(id) {
+    window.rejectBusiness = async function(id) {
+      const b = state.businesses.find(item => item.id === id);
+      const name = b ? b.name : 'comercio';
       state.businesses = state.businesses.filter(item => item.id !== id);
       saveState();
+      if (supabaseClient) {
+        try {
+          await supabaseClient.from('businesses').delete().eq('id', id);
+        } catch (e) {
+          console.warn('Error rejecting in Supabase:', e);
+        }
+      }
+      window.showToast(`Se ha retirado el comercio "${name}".`, 'info');
       renderApp();
     };
 
-    window.setFeatured = function(id) {
+    window.setFeatured = async function(id) {
       state.businesses.forEach(b => {
         b.is_featured = (b.id === id);
       });
       saveState();
+      if (supabaseClient) {
+        try {
+          await supabaseClient.from('businesses').update({ is_featured: false }).neq('id', id);
+          await supabaseClient.from('businesses').update({ is_featured: true }).eq('id', id);
+        } catch (e) {
+          console.warn('Error setting featured in Supabase:', e);
+        }
+      }
       renderApp();
+    };
+
+    window.deleteSuggestion = async function(id) {
+      state.suggestions = state.suggestions.filter(s => s.id !== id);
+      saveState();
+      if (supabaseClient) {
+        try {
+          await supabaseClient.from('suggestions').delete().eq('id', id);
+        } catch (e) {
+          console.warn('Error deleting suggestion in Supabase:', e);
+        }
+      }
+      window.showToast('Mensaje eliminado del buzón.', 'info');
+      renderApp();
+    };
+
+    window.syncWithSupabase = async function() {
+      if (!supabaseClient) return;
+      try {
+        // 1. Cargar negocios de la nube
+        const { data: cloudBiz, error: errBiz } = await supabaseClient
+          .from('businesses')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (!errBiz && cloudBiz && cloudBiz.length > 0) {
+          // Fusionar con negocios locales
+          const merged = [...cloudBiz];
+          state.businesses.forEach(localB => {
+            if (!merged.some(cb => cb.id === localB.id)) {
+              merged.push(localB);
+            }
+          });
+          state.businesses = merged;
+          saveState();
+        }
+
+        // 2. Cargar sugerencias de la nube
+        const { data: cloudSug, error: errSug } = await supabaseClient
+          .from('suggestions')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (!errSug && cloudSug) {
+          state.suggestions = cloudSug;
+          saveState();
+        }
+
+        renderApp();
+      } catch (err) {
+        console.warn('Supabase sync notice:', err);
+      }
     };
 
                     // =========================================================================
@@ -1490,6 +1710,7 @@
     // Arranque inicial
     renderApp();
     processGoogleAuthReturn();
+    if (window.syncWithSupabase) window.syncWithSupabase();
   </script>
 </body>
 </html>
