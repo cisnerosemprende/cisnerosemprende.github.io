@@ -602,10 +602,10 @@
     function renderModals() {
       let html = '';
 
-                  // MODAL ACCESO PURO CON GOOGLE (CERO FORMULARIOS MANUALES, CERO COMPLICACIONES)
+                  // MODAL OFICIAL GOOGLE OAUTH
       if (state.modals.login) {
         html += `
-          <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
+          <div class="fixed inset-0 z-50 bg-black/65 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
             <div class="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl border border-slate-100">
               <!-- Encabezado con marca Cisneros -->
               <div class="bg-gradient-to-r from-emerald-900 via-emerald-800 to-emerald-900 text-white p-5 flex justify-between items-center">
@@ -621,44 +621,26 @@
                 <button onclick="window.closeModal('login')" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-sm font-bold transition-colors">✕</button>
               </div>
 
-              <!-- Mensaje si hay aviso -->
-              ${state.authNotice ? `
-                <div class="mx-5 mt-4 p-2.5 rounded-xl text-[11px] font-medium ${state.authNoticeType === 'error' ? 'bg-rose-50 text-rose-800 border border-rose-200' : 'bg-emerald-50 text-emerald-800 border border-emerald-200'}">
-                  ${state.authNotice}
-                </div>
-              ` : ''}
-
-              <!-- Contenido Directo Google -->
+              <!-- Contenido Directo Oficial Google -->
               <div class="p-6 space-y-5 text-center">
                 <div class="space-y-1.5">
-                  <div class="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 mx-auto flex items-center justify-center shadow-xs">
-                    <svg class="w-6 h-6" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                  <div class="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-200 mx-auto flex items-center justify-center shadow-xs">
+                    <svg class="w-7 h-7" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
                   </div>
-                  <h4 class="font-bold text-slate-800 text-sm">Bienvenido a la vitrina local</h4>
+                  <h4 class="font-bold text-slate-800 text-base">Inicia sesión con Google</h4>
                   <p class="text-slate-500 text-xs leading-relaxed">
-                    Accede directamente con tu cuenta de Google para registrar tu negocio, calificar y gestionar tus publicaciones.
+                    Identifícate con tu cuenta oficial de Google para publicar tu negocio, calificar y apoyar el comercio de Cisneros.
                   </p>
                 </div>
 
-                <form onsubmit="event.preventDefault(); window.submitGoogleDirect();" class="space-y-3 text-left">
-                  <div>
-                    <label class="block text-[11px] font-bold text-slate-600 mb-1">Tu Cuenta de Google (@gmail.com)</label>
-                    <div class="relative">
-                      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg class="w-4 h-4 text-slate-400" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-                      </div>
-                      <input id="google-email-direct" type="email" required placeholder="ejemplo@gmail.com" autofocus class="w-full pl-9 pr-3 py-2.5 text-xs rounded-xl border border-slate-300 focus:outline-hidden focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 text-slate-800" />
-                    </div>
-                  </div>
-
-                  <button type="submit" ${state.authLoading ? 'disabled' : ''} class="w-full bg-slate-900 hover:bg-black text-white font-bold py-3 px-4 rounded-xl shadow-md flex items-center justify-center gap-2.5 text-xs transition-all active:scale-[0.98] disabled:opacity-50">
-                    <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-                    <span>${state.authLoading ? 'Verificando cuenta...' : 'Continuar con Google'}</span>
-                  </button>
-                </form>
+                <!-- Botón Oficial de Google que abre la pantalla de Cuentas de Google -->
+                <button onclick="window.triggerOfficialGoogleOAuth()" class="w-full bg-white hover:bg-slate-50 text-slate-800 font-bold py-3.5 px-4 rounded-2xl border-2 border-slate-200 shadow-sm hover:shadow-md flex items-center justify-center gap-3 text-xs transition-all active:scale-[0.98]">
+                  <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                  <span class="text-sm font-extrabold text-slate-800">Continuar con Google</span>
+                </button>
 
                 <div class="text-[10px] text-center text-slate-400 bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex items-center justify-center gap-1.5">
-                  <span>🔒</span> <span>Autenticación oficial y segura para Cisneros</span>
+                  <span>🔒</span> <span>Autenticación oficial OAuth 2.0 de Google</span>
                 </div>
               </div>
             </div>
@@ -1342,45 +1324,57 @@
       renderApp();
     };
 
-            // =========================================================================
-    // ACCESO CON GOOGLE DIRECTO Y FLUIDO
+                // =========================================================================
+    // GOOGLE OAUTH 2.0 OFICIAL (ABRE LA PANTALLA OFICIAL DE GOOGLE ACCOUNTS)
     // =========================================================================
-        // =========================================================================
-    // ACCESO CON GOOGLE INMEDIATO Y GARANTIZADO
-    // =========================================================================
-    window.submitGoogleDirect = function() {
-      const input = document.getElementById('google-email-direct');
-      const email = (input ? input.value : '').trim().toLowerCase();
-
-      if (!email || !email.includes('@')) {
-        state.authNotice = 'Por favor ingresa un correo de Google válido (@gmail.com).';
-        state.authNoticeType = 'error';
-        renderApp();
-        return;
+    window.triggerOfficialGoogleOAuth = async function() {
+      try {
+        const redirectUrl = window.location.origin + window.location.pathname;
+        const { data, error } = await supabaseClient.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: redirectUrl
+          }
+        });
+        if (error) throw error;
+      } catch (err) {
+        console.error('Error Google OAuth:', err);
+        // Fallback directo al endpoint de autorizacion
+        const authUrl = 'https://qopvmadvijnjgzgxwjpe.supabase.co/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(window.location.origin + window.location.pathname);
+        window.location.href = authUrl;
       }
-
-      const isAdmin = email.includes('andresc.15042010@gmail.com');
-      const displayName = isAdmin ? 'Cami (Admin)' : (email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1));
-
-      // Guardar usuario autenticado
-      state.currentUser = {
-        email: email,
-        full_name: displayName,
-        role: isAdmin ? 'admin' : 'user',
-        avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
-      };
-
-      saveState();
-      state.modals.login = false;
-      state.authNotice = null;
-      renderApp();
-
-      window.showToast('¡Sesión iniciada con éxito! Bienvenido/a ' + displayName, 'success');
     };
 
+    // Al cargar la pagina, verificar si el usuario viene de iniciar sesion en Google
+    async function checkGoogleAuthCallback() {
+      try {
+        if (!supabaseClient) return;
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session && session.user) {
+          const u = session.user;
+          const email = (u.email || '').toLowerCase();
+          const isAdmin = email.includes('andresc.15042010@gmail.com');
+          const name = u.user_metadata?.full_name || u.user_metadata?.name || (isAdmin ? 'Cami (Admin)' : email.split('@')[0]);
+
+          state.currentUser = {
+            id: u.id,
+            email: email,
+            full_name: name,
+            role: isAdmin ? 'admin' : 'user',
+            avatar_url: u.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
+          };
+          saveState();
+          renderApp();
+          window.showToast('¡Sesión iniciada con Google como ' + name + '!', 'success');
+        }
+      } catch (e) {
+        console.error('Error verificando sesión de Google:', e);
+      }
+    }
+
     window.loginWithGoogle = function() {
-      state.authNotice = null;
-      window.openModal('login');
+      state.modals.login = true;
+      renderApp();
     };
 
     function bindEvents() {
