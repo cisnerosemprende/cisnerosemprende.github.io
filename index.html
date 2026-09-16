@@ -888,7 +888,7 @@
               <button onclick="window.openModal('terms')" class="hover:text-white">Términos, Cookies & Datos</button>
               ${state.currentUser?.role === 'admin' ? `
                 <span>•</span>
-                <button onclick="window.openModal('admin')" class="text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1">👑 Panel Cami (${state.businesses.filter(b => b.status === 'pending').length} pendientes)</button>
+                <button onclick="window.openModal('admin')" class="text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1">👑 Panel Admin (${state.businesses.filter(b => b.status === 'pending').length} pendientes)</button>
               ` : ''}
             </div>
           </div>
@@ -1186,7 +1186,7 @@
                 <button onclick="window.closeModal('suggestion')" class="font-bold text-lg">✕</button>
               </div>
               <form onsubmit="event.preventDefault(); window.submitSuggestion();" class="p-5 space-y-3">
-                <p class="text-xs text-slate-600">Envía ideas para apoyar el comercio local o sugiere nuevos emprendimientos a Cami:</p>
+                <p class="text-xs text-slate-600">Envía ideas para apoyar el comercio local o sugiere nuevos emprendimientos al Administrador:</p>
                 <input id="sug-name" type="text" placeholder="Tu nombre" class="w-full text-xs p-2.5 rounded-xl border border-slate-300" />
                 <input id="sug-email" type="text" placeholder="WhatsApp o Correo" class="w-full text-xs p-2.5 rounded-xl border border-slate-300" />
                 <textarea id="sug-msg" rows="4" placeholder="Escribe aquí tu sugerencia..." class="w-full text-xs p-2.5 rounded-xl border border-slate-300 resize-none" required></textarea>
@@ -1446,7 +1446,7 @@
                   <span class="text-base">🛡️</span>
                   <div>
                     <span class="font-bold text-emerald-950 block">Revisión de Seguridad:</span>
-                    Todo negocio nuevo se registra en estado <strong>Pendiente</strong> para revisión de Cami antes de publicarse. Una vez aprobado, tus actualizaciones serán automáticas.
+                    Todo negocio nuevo se registra en estado <strong>Pendiente</strong> para revisión del Administrador antes de publicarse. Una vez aprobado, tus actualizaciones serán automáticas.
                   </div>
                 </div>
 
@@ -1510,7 +1510,7 @@
               <div class="bg-emerald-900 text-white p-4 flex justify-between items-center">
                 <div class="flex items-center gap-2">
                   <span class="text-xl">👑</span>
-                  <h3 class="font-bold text-base">Panel de Administradora (Cami)</h3>
+                  <h3 class="font-bold text-base">Panel del Administrador</h3>
                 </div>
                 <button onclick="window.closeModal('admin')" class="font-bold text-lg">✕</button>
               </div>
@@ -1928,7 +1928,7 @@
                     Al registrar tu comercio, servicio o actividad de transporte en Cisneros Emprende, autorizas expresamente de manera voluntaria, previa e informada el uso y publicación de los datos suministrados (Nombre comercial, WhatsApp, teléfono, dirección descriptiva, horarios de atención y fotografías).
                   </p>
                   <p>
-                    Los datos son utilizados con la única finalidad de ponerte en contacto con clientes potenciales y dinamizar la economía del municipio. El titular puede en cualquier momento solicitar la rectificación, actualización o eliminación completa de sus datos a través de la opción "Gestionar Mi Negocio" o mediante el buzón ciudadano de la administradora.
+                    Los datos son utilizados con la única finalidad de ponerte en contacto con clientes potenciales y dinamizar la economía del municipio. El titular puede en cualquier momento solicitar la rectificación, actualización o eliminación completa de sus datos a través de la opción "Gestionar Mi Negocio" o mediante el buzón ciudadano del administrador.
                   </p>
                 </div>
 
@@ -2682,7 +2682,7 @@
       const isEditing = Boolean(state.editingBusinessId);
       const targetId = isEditing ? state.editingBusinessId : ((typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : ('biz-' + Date.now()));
 
-      // Si es Cami admin o ya estaba aprobado, mantiene 'approved'; si es nuevo registro de usuario, 'pending'
+      // Si es admin o ya estaba aprobado, mantiene 'approved'; si es nuevo registro de usuario, 'pending'
       const existingBiz = isEditing ? state.businesses.find(b => b.id === targetId) : null;
       let statusValue = existingBiz ? existingBiz.status : ((state.currentUser?.role === 'admin') ? 'approved' : 'pending');
 
@@ -2782,7 +2782,7 @@
         if (bizData.status === 'approved') {
           window.showToast('¡Excelente! Tu negocio ha sido registrado y publicado en la vitrina comercial.', 'success');
         } else {
-          window.showToast('¡Emprendimiento registrado! Ha quedado en "Pendiente" para revisión y aprobación de Cami en el Panel Admin.', 'info');
+          window.showToast('¡Emprendimiento registrado! Ha quedado en "Pendiente" para revisión y aprobación del Administrador en el Panel Admin.', 'info');
         }
       }
 
@@ -2839,7 +2839,7 @@
     };
 
         // =========================================================================
-    // ADMINISTRACIÓN DE USUARIOS: INSPECCIÓN, BANEOS Y MODERACIÓN (CAMI)
+    // ADMINISTRACIÓN DE USUARIOS: INSPECCIÓN, BANEOS Y MODERACIÓN
     // =========================================================================
     window.inspectUser = function(id, name, email) {
       state.inspectingUser = { id, name, email };
@@ -3097,7 +3097,7 @@
           const email = (userFound.email || '').toLowerCase();
           const isAdmin = email.includes('andresc.15042010@gmail.com');
           const meta = userFound.user_metadata || {};
-          const fullName = meta.full_name || meta.name || (isAdmin ? 'Cami (Admin)' : (email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1)));
+          const fullName = meta.full_name || meta.name || (isAdmin ? 'Administrador' : (email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1)));
           const avatar = meta.avatar_url || meta.picture || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100';
 
           if (state.bannedUsers.includes(userFound.id) || state.bannedUsers.includes(email)) {
