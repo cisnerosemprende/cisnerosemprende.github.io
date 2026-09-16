@@ -1236,43 +1236,93 @@
 
       if (state.modals.login) {
         html += `
-          <div class="fixed inset-0 z-50 bg-black/65 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
-            <div class="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl border border-slate-100">
+          <div class="fixed inset-0 z-50 bg-black/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-fade-in">
+            <div class="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl border border-slate-100 flex flex-col max-h-[92vh]">
               <!-- Encabezado con marca Cisneros -->
-              <div class="bg-gradient-to-r from-emerald-900 via-emerald-800 to-emerald-900 text-white p-5 flex justify-between items-center">
+              <div class="bg-gradient-to-r from-emerald-950 via-emerald-800 to-teal-900 text-white px-5 py-4 flex justify-between items-center shrink-0 shadow-xs">
                 <div class="flex items-center gap-2.5">
                   <div class="w-9 h-9 rounded-xl bg-white/10 p-1 flex items-center justify-center border border-white/20">
                     <img src="icons/icon-192.svg" class="w-full h-full object-contain rounded-lg" alt="Cisneros Emprende" onerror="this.src='public/icons/icon-192.svg'" />
                   </div>
                   <div>
-                    <h3 class="font-extrabold text-sm sm:text-base leading-tight">Acceso Emprendedor</h3>
-                    <p class="text-[10px] text-emerald-200">Cisneros, Antioquia</p>
+                    <h3 class="font-extrabold text-sm sm:text-base leading-tight">Acceso a Cisneros Emprende</h3>
+                    <p class="text-[10px] text-emerald-200">Elige tu método preferido</p>
                   </div>
                 </div>
                 <button onclick="window.closeModal('login')" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-sm font-bold transition-colors">✕</button>
               </div>
 
-              <!-- Contenido Directo Oficial Google -->
-              <div class="p-6 space-y-5 text-center">
-                <div class="space-y-1.5">
-                  <div class="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-200 mx-auto flex items-center justify-center shadow-xs">
-                    <svg class="w-7 h-7" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-                  </div>
-                  <h4 class="font-bold text-slate-800 text-base">Inicia sesión con Google</h4>
-                  <p class="text-slate-500 text-xs leading-relaxed">
-                    Identifícate con tu cuenta oficial de Google para publicar tu negocio, calificar y apoyar el comercio de Cisneros.
-                  </p>
-                </div>
-
-                <!-- Botón Oficial de Google que abre la pantalla de Cuentas de Google -->
-                <button onclick="window.triggerOfficialGoogleOAuth()" class="w-full bg-white hover:bg-slate-50 text-slate-800 font-bold py-3.5 px-4 rounded-2xl border-2 border-slate-200 shadow-sm hover:shadow-md flex items-center justify-center gap-3 text-xs transition-all active:scale-[0.98]">
-                  <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-                  <span class="text-sm font-extrabold text-slate-800">Continuar con Google</span>
+              <!-- Pestañas: Google o Correo Electrónico -->
+              <div class="flex border-b border-slate-200 bg-slate-50 shrink-0 text-xs font-bold">
+                <button onclick="window.setAuthMethod('google')" class="flex-1 py-2.5 text-center transition-all flex items-center justify-center gap-1.5 ${state.authTab === 'google' || !state.authTab ? 'bg-white text-emerald-800 border-b-2 border-emerald-600 font-extrabold shadow-2xs' : 'text-slate-500 hover:text-slate-800'}">
+                  <span>Google</span>
                 </button>
+                <button onclick="window.setAuthMethod('email')" class="flex-1 py-2.5 text-center transition-all flex items-center justify-center gap-1.5 ${state.authTab === 'email' ? 'bg-white text-emerald-800 border-b-2 border-emerald-600 font-extrabold shadow-2xs' : 'text-slate-500 hover:text-slate-800'}">
+                  <span>✉️ Correo & Clave</span>
+                </button>
+              </div>
 
-                <div class="text-[10px] text-center text-slate-400 bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex items-center justify-center gap-1.5">
-                  <span>🔒</span> <span>Autenticación oficial OAuth 2.0 de Google</span>
-                </div>
+              <div class="p-5 overflow-y-auto space-y-4">
+                ${(state.authTab === 'google' || !state.authTab) ? `
+                  <!-- Pestaña 1: Google OAuth Oficial -->
+                  <div class="space-y-4 text-center">
+                    <div class="space-y-1">
+                      <div class="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 mx-auto flex items-center justify-center shadow-2xs">
+                        <svg class="w-6 h-6" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                      </div>
+                      <h4 class="font-bold text-slate-800 text-sm">Ingreso Rápido con Google</h4>
+                      <p class="text-slate-500 text-[11px] leading-relaxed">
+                        Conéctate con un solo toque y elige la cuenta de Google que deseas usar en tu dispositivo.
+                      </p>
+                    </div>
+
+                    <button onclick="window.triggerOfficialGoogleOAuth()" class="w-full bg-white hover:bg-slate-50 text-slate-800 font-extrabold py-3 px-4 rounded-2xl border-2 border-slate-200 shadow-xs hover:shadow-md flex items-center justify-center gap-2.5 text-xs transition-all active:scale-[0.98]">
+                      <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                      <span>Continuar con Google</span>
+                    </button>
+
+                    <div class="text-[10px] text-slate-400 bg-slate-50 p-2 rounded-xl border border-slate-100 flex items-center justify-center gap-1">
+                      <span>🔒</span> <span>Selector de cuentas oficial de Google</span>
+                    </div>
+                  </div>
+                ` : `
+                  <!-- Pestaña 2: Correo & Contraseña Tradicional -->
+                  <form onsubmit="event.preventDefault(); window.submitEmailAuth();" class="space-y-3 text-xs">
+                    <div class="flex rounded-xl bg-slate-100 p-1 gap-1">
+                      <button type="button" onclick="window.setEmailSubTab('login')" class="flex-1 py-1 rounded-lg font-bold text-center transition-all ${state.authPendingType !== 'signup' ? 'bg-white text-emerald-800 shadow-2xs' : 'text-slate-500'}">
+                        Iniciar Sesión
+                      </button>
+                      <button type="button" onclick="window.setEmailSubTab('signup')" class="flex-1 py-1 rounded-lg font-bold text-center transition-all ${state.authPendingType === 'signup' ? 'bg-white text-emerald-800 shadow-2xs' : 'text-slate-500'}">
+                        Crear Cuenta
+                      </button>
+                    </div>
+
+                    ${state.authPendingType === 'signup' ? `
+                      <div>
+                        <label class="block font-bold text-slate-700 mb-0.5">Nombre o Negocio: *</label>
+                        <input id="auth-full-name" type="text" placeholder="Ej: Juan Pérez / Café Cisneros" class="w-full p-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-emerald-600 bg-white" required />
+                      </div>
+                    ` : ''}
+
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-0.5">Correo Electrónico: *</label>
+                      <input id="auth-email" type="email" placeholder="correo@ejemplo.com (Hotmail, Yahoo, etc.)" class="w-full p-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-emerald-600 bg-white" required />
+                    </div>
+
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-0.5">Contraseña: *</label>
+                      <input id="auth-password" type="password" placeholder="Tu contraseña segura" minlength="6" class="w-full p-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-emerald-600 bg-white" required />
+                    </div>
+
+                    <button type="submit" id="btn-submit-auth" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold py-3 rounded-xl text-xs shadow-md transition-all flex items-center justify-center gap-2">
+                      <span>${state.authPendingType === 'signup' ? '✨ Crear Mi Cuenta' : '🔑 Entrar con Mi Correo'}</span>
+                    </button>
+
+                    <p class="text-[10px] text-slate-400 text-center leading-tight">
+                      ${state.authPendingType === 'signup' ? 'Al registrarte podrás vincular tus negocios o transportes de inmediato.' : '¿Olvidaste tu clave? Escribe tu correo para recuperar acceso.'}
+                    </p>
+                  </form>
+                `}
               </div>
             </div>
           </div>
@@ -3299,6 +3349,118 @@
       renderApp();
     };
 
+    
+    // Manejo de pestañas de autenticación
+    window.setAuthMethod = function(method) {
+      state.authTab = method;
+      renderApp();
+    };
+
+    window.setEmailSubTab = function(subTab) {
+      state.authPendingType = subTab;
+      renderApp();
+    };
+
+    // Procesar inicio de sesión y registro por Correo y Contraseña
+    window.submitEmailAuth = async function() {
+      const emailInput = document.getElementById('auth-email');
+      const passInput = document.getElementById('auth-password');
+      const nameInput = document.getElementById('auth-full-name');
+      const submitBtn = document.getElementById('btn-submit-auth');
+
+      if (!emailInput || !passInput) return;
+      const email = emailInput.value.trim().toLowerCase();
+      const password = passInput.value;
+      const fullName = nameInput ? nameInput.value.trim() : (email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1));
+
+      if (!email || !password) {
+        window.showToast('Por favor completa todos los campos requeridos.', 'error');
+        return;
+      }
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span>⏳ Conectando...</span>';
+      }
+
+      try {
+        if (!supabaseClient) throw new Error('Servicio de autenticación no disponible');
+
+        let authData = null;
+        let authError = null;
+
+        if (state.authPendingType === 'signup') {
+          // REGISTRO
+          const { data, error } = await supabaseClient.auth.signUp({
+            email: email,
+            password: password,
+            options: {
+              data: {
+                full_name: fullName,
+                name: fullName
+              }
+            }
+          });
+          authData = data;
+          authError = error;
+        } else {
+          // INICIO DE SESIÓN
+          const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+          });
+          authData = data;
+          authError = error;
+        }
+
+        if (authError) throw authError;
+
+        const user = authData.user;
+        if (user) {
+          const isAdmin = email.includes('andresc.15042010@gmail.com');
+          const finalName = fullName || (isAdmin ? 'Administrador' : 'Usuario Cisneros');
+          const finalAvatar = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100';
+
+          const newAccountObj = {
+            id: user.id,
+            email: email,
+            full_name: finalName,
+            role: isAdmin ? 'admin' : 'user',
+            avatar_url: finalAvatar
+          };
+
+          state.currentUser = newAccountObj;
+
+          if (!state.savedAccounts) state.savedAccounts = [];
+          const existsIdx = state.savedAccounts.findIndex(a => a.id === user.id || a.email === email);
+          if (existsIdx >= 0) {
+            state.savedAccounts[existsIdx] = newAccountObj;
+          } else {
+            state.savedAccounts.push(newAccountObj);
+          }
+
+          saveState();
+          state.modals.login = false;
+          renderApp();
+          window.showToast(`¡Bienvenido/a, ${finalName}! Sesión iniciada correctamente.`, 'success');
+        }
+      } catch (err) {
+        console.error('Error de autenticación por email:', err);
+        let msg = err.message || 'Error al autenticar';
+        if (msg.includes('Invalid login credentials')) {
+          msg = 'Correo o contraseña incorrectos. Si no tienes cuenta, pulsa "Crear Cuenta".';
+        } else if (msg.includes('User already registered')) {
+          msg = 'Este correo ya tiene cuenta. Pulsa "Iniciar Sesión" para ingresar con tu contraseña.';
+        }
+        window.showToast(msg, 'error');
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = `<span>${state.authPendingType === 'signup' ? '✨ Crear Mi Cuenta' : '🔑 Entrar con Mi Correo'}</span>`;
+        }
+      }
+    };
+
     function bindEvents() {
       const brand = document.getElementById('nav-brand');
       if (brand) brand.onclick = () => { state.activeView = 'home'; renderApp(); };
@@ -3349,7 +3511,7 @@
     // =========================================================================
     // GESTIÓN DE CACHÉ Y REGISTRO DE SERVICE WORKER PWA
     // =========================================================================
-    const CURRENT_SW_VERSION = 'cisneros-emprende-v19';
+    const CURRENT_SW_VERSION = 'cisneros-emprende-v20';
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
