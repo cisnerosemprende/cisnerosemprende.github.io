@@ -143,6 +143,9 @@
       mainTab: 'negocios', // 'negocios' | 'transportes'
       selectedCategory: 'all',
       transporterFilter: 'todos',
+      filterOnlyOpen: false,
+      contactStats: safeJsonParse('cis_contact_stats', {}),
+      canInstallApp: false,
       searchTerm: '',
       activeView: 'home', // 'home', 'detail'
       selectedBusiness: null,
@@ -205,16 +208,70 @@
       if (!dayConf || dayConf.closed) return { isOpen: false, label: 'Cerrado hoy', color: 'bg-rose-50 text-rose-700 border-rose-200' };
       
       const currentMin = (now.getHours() * 60) + now.getMinutes();
-      const [oh, om] = dayConf.open.split(':').map(Number);
-      const [ch, cm] = dayConf.close.split(':').map(Number);
+      const [oh, om] = dayConf.open ? dayConf.open.split(':').map(Number) : [8, 0];
+      const [ch, cm] = dayConf.close ? dayConf.close.split(':').map(Number) : [20, 0];
       const openMin = (oh * 60) + om;
       const closeMin = (ch * 60) + cm;
 
       if (currentMin >= openMin && currentMin < closeMin) {
-        return { isOpen: true, label: `🟢 Abierto hasta las ${dayConf.close}`, color: 'bg-emerald-50 text-emerald-800 border-emerald-300' };
+        return { isOpen: true, label: `🟢 Abierto ahora (hasta las ${dayConf.close || '20:00'})`, color: 'bg-emerald-50 text-emerald-800 border-emerald-300' };
       }
-      return { isOpen: false, label: `🔴 Cerrado (Abre hoy a las ${dayConf.open})`, color: 'bg-slate-100 text-slate-700 border-slate-300' };
+      return { isOpen: false, label: `🔴 Cerrado (Abre hoy a las ${dayConf.open || '08:00'})`, color: 'bg-slate-100 text-slate-700 border-slate-300' };
     }
+
+    function getTransporterStatus(t) {
+      if (!t) return { isOpen: true, label: '🟢 Disponible', color: 'bg-emerald-50 text-emerald-800 border-emerald-300' };
+      const now = new Date();
+      const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+      const today = dayNames[now.getDay()];
+
+      // Verificar si labora hoy
+      const worksToday = !t.work_days || t.work_days.includes('Todos') || t.work_days.includes(today);
+      if (!worksToday) {
+        return { isOpen: false, label: '🔴 No labora hoy', color: 'bg-rose-50 text-rose-700 border-rose-200' };
+      }
+
+      const openStr = t.work_open || '06:00';
+      const closeStr = t.work_close || '20:00';
+      const [oh, om] = openStr.split(':').map(Number);
+      const [ch, cm] = closeStr.split(':').map(Number);
+      const currentMin = (now.getHours() * 60) + now.getMinutes();
+      const openMin = (oh * 60) + om;
+      const closeMin = (ch * 60) + cm;
+
+      if (currentMin >= openMin && currentMin < closeMin) {
+        return { isOpen: true, label: `🟢 En servicio ahora (hasta ${closeStr})`, color: 'bg-emerald-50 text-emerald-800 border-emerald-300' };
+      }
+      return { isOpen: false, label: `🔴 Fuera de horario (Abre ${openStr})`, color: 'bg-slate-100 text-slate-700 border-slate-300' };
+    }
+
+    // =========================================================================
+    // CONTADOR DE CONTACTOS (MÉTRICAS PARA EL COMERCIANTE / CONDUCTOR)
+    // =========================================================================
+    window.trackContactClick = async function(type, id, name) {
+      if (!state.contactStats[id]) {
+        state.contactStats[id] = { total: 0, whatsapp: 0, calls: 0, lastContact: null };
+      }
+      state.contactStats[id].total = (state.contactStats[id].total || 0) + 1;
+      if (type === 'whatsapp') state.contactStats[id].whatsapp = (state.contactStats[id].whatsapp || 0) + 1;
+      if (type === 'call') state.contactStats[id].calls = (state.contactStats[id].calls || 0) + 1;
+      state.contactStats[id].lastContact = new Date().toISOString();
+
+      localStorage.setItem('cis_contact_stats', JSON.stringify(state.contactStats));
+
+      if (supabaseClient) {
+        try {
+          await supabaseClient.from('analytics_clicks').insert([{
+            target_id: id,
+            target_name: name,
+            click_type: type,
+            created_at: new Date().toISOString()
+          }]);
+        } catch (e) {
+          // Si la tabla no existe o falla, se guarda localmente sin interrumpir
+        }
+      }
+    };
 
     // =========================================================================
     // HELPER: WHATSAPP MINI-CARRO FORMATTER
@@ -260,6 +317,12 @@
           b.name.toLowerCase().includes(state.searchTerm.toLowerCase()) || 
           (b.description && b.description.toLowerCase().includes(state.searchTerm.toLowerCase())) ||
           (b.written_address && b.written_address.toLowerCase().includes(state.searchTerm.toLowerCase()));
+        
+        if (state.filterOnlyOpen) {
+          const st = getBusinessStatus(b.schedule);
+          if (!st.isOpen) return false;
+        }
+
         return matchesCategory && matchesSearch;
       });
 
@@ -297,6 +360,11 @@
             <div class="flex items-center gap-1 sm:gap-2 shrink-0">
               <button id="btn-suggestion" onclick="window.openModal('suggestion')" class="text-xs font-bold text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1.5 rounded-xl hidden sm:flex items-center gap-1 shadow-2xs transition-colors">
                 <span>📬</span> <span>Buzón</span>
+              </button>
+
+              <!-- Botón Instalar App Móvil PWA -->
+              <button id="btn-install-app" onclick="window.installAppPrompt()" class="${state.canInstallApp ? 'flex' : 'hidden'} text-[11px] sm:text-xs font-black bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-2.5 sm:px-3 py-1.5 rounded-xl items-center gap-1 shadow-xs hover:from-emerald-700 hover:to-teal-700 transition-all animate-bounce">
+                <span>📲</span> <span class="hidden sm:inline">Instalar</span> <span>App</span>
               </button>
 
               <!-- Botón Registrar o Gestionar Transporte en el Menú Superior -->
@@ -440,9 +508,22 @@
                 </div>
               ` : ''}
 
-              <!-- CHIPS DE CATEGORÍA DE NEGOCIOS -->
+              <!-- CHIPS DE CATEGORÍA DE NEGOCIOS CON FILTRO ABIERTO AHORA -->
               <div class="mb-4">
-                <div class="w-full overflow-x-auto scrollbar-none py-1 flex gap-2">
+                <div class="w-full overflow-x-auto scrollbar-none py-1 flex items-center gap-2">
+                  <!-- Botón Filtro Abierto Ahora -->
+                  <button
+                    onclick="window.toggleFilterOnlyOpen()"
+                    class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap shadow-xs flex items-center gap-1.5 ${
+                      state.filterOnlyOpen
+                        ? 'bg-emerald-600 text-white shadow-emerald-600/30 ring-2 ring-emerald-400'
+                        : 'bg-white text-slate-700 hover:bg-emerald-50 border border-emerald-300'
+                    }"
+                    title="Mostrar solo comercios con atención en este momento"
+                  >
+                    <span>🟢</span> <span>Abierto Ahora</span>
+                  </button>
+
                   <button
                     onclick="window.setCategory('all')"
                     class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap shadow-xs ${
@@ -571,8 +652,20 @@
                 </button>
               </div>
 
-              <!-- Filtros de Tipo de Vehículo: Solo Nombres Limpios -->
-              <div class="w-full overflow-x-auto scrollbar-none py-1 flex gap-2">
+              <!-- Filtros de Tipo de Vehículo: Solo Nombres Limpios + En Servicio -->
+              <div class="w-full overflow-x-auto scrollbar-none py-1 flex items-center gap-2">
+                <button
+                  onclick="window.toggleFilterOnlyOpen()"
+                  class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap shadow-xs flex items-center gap-1.5 ${
+                    state.filterOnlyOpen
+                      ? 'bg-amber-600 text-white shadow-amber-600/30 ring-2 ring-amber-400'
+                      : 'bg-white text-slate-700 hover:bg-amber-50 border border-amber-300'
+                  }"
+                  title="Mostrar solo transportes en servicio en este momento"
+                >
+                  <span>🟢</span> <span>En Servicio Ahora</span>
+                </button>
+
                 ${[
                   { id: 'todos', label: '🌟 Todos', filter: 'todos' },
                   { id: 'chivero', label: '🚙 Chivero', filter: 'chivero' },
@@ -596,9 +689,20 @@
               <!-- Lista de Transportadores -->
               ${(() => {
                 const list = state.transporters.filter(t => {
-                  if (state.transporterFilter === 'todos') return true;
-                  if (state.transporterFilter === 'chivero') return (t.vehicle_type === 'chivero' || t.vehicle_type === 'chiva' || t.vehicle_type === 'campero');
-                  return t.vehicle_type === state.transporterFilter;
+                  if (state.transporterFilter !== 'todos') {
+                    if (state.transporterFilter === 'chivero') {
+                      if (t.vehicle_type !== 'chivero' && t.vehicle_type !== 'chiva' && t.vehicle_type !== 'campero') return false;
+                    } else if (t.vehicle_type !== state.transporterFilter) {
+                      return false;
+                    }
+                  }
+
+                  if (state.filterOnlyOpen) {
+                    const st = getTransporterStatus(t);
+                    if (!st.isOpen) return false;
+                  }
+
+                  return true;
                 });
 
                 if (list.length === 0) {
@@ -653,18 +757,21 @@
                                 ${vehLabel}
                               </span>
                               <div class="text-[11px] text-slate-600 mt-1.5 space-y-0.5">
-                                <p class="truncate">📅 <strong>Días:</strong> ${t.work_days || 'Todos los días'}</p>
+                                ${(() => {
+                                  const tStatus = getTransporterStatus(t);
+                                  return `<p class="font-bold text-[10px]"><span class="px-2 py-0.5 rounded-md border ${tStatus.color}">${tStatus.label}</span></p>`;
+                                })()}
+                                <p class="truncate pt-1">📅 <strong>Días:</strong> ${t.work_days || 'Todos los días'}</p>
                                 <p class="truncate">⏰ <strong>Horario:</strong> ${t.work_hours || 'Consultar'}</p>
-
                               </div>
                             </div>
                           </div>
 
                           <div class="pt-2.5 border-t border-slate-100 flex items-center justify-between gap-2">
-                            <a href="${waLink}" target="_blank" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-2xs transition-colors">
+                            <a href="${waLink}" target="_blank" onclick="window.trackContactClick('whatsapp', '${t.id}', '${t.full_name}')" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-2xs transition-colors">
                               <span>💬</span> <span>WhatsApp</span>
                             </a>
-                            <a href="tel:${t.phone_number || t.whatsapp_number}" class="bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1 transition-colors">
+                            <a href="tel:${t.phone_number || t.whatsapp_number}" onclick="window.trackContactClick('call', '${t.id}', '${t.full_name}')" class="bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1 transition-colors">
                               <span>📞</span> <span>Llamar</span>
                             </a>
                             ${(state.currentUser && (t.owner_id === state.currentUser.id || t.owner_id === state.currentUser.email || state.currentUser.role === 'admin')) ? `
@@ -815,8 +922,8 @@
               <!-- Botones de Acción, Redes y Contacto -->
               <div class="space-y-2 pt-1">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <a href="https://wa.me/57${b.whatsapp_number.replace(/\D/g, '')}?text=Hola%2C%20los%20contacto%20desde%20Cisneros%20Emprende" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm transition-colors">
-                    <span>💬</span> WhatsApp: ${b.whatsapp_number}
+                  <a href="https://wa.me/57${b.whatsapp_number.replace(/\D/g, '')}?text=Hola%2C%20los%20contacto%20desde%20Cisneros%20Emprende" target="_blank" onclick="window.trackContactClick('whatsapp', '${b.id}', '${b.name}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm transition-colors">
+                    <span>💬</span> Pedir por WhatsApp: ${b.whatsapp_number}
                   </a>
 
                   <button onclick="window.openModal('report')" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold py-3 px-4 rounded-2xl text-xs flex items-center justify-center gap-1 transition-colors">
@@ -1016,6 +1123,23 @@
 
               <!-- Formulario modular con scroll -->
               <form onsubmit="event.preventDefault(); window.submitBusiness();" class="p-5 overflow-y-auto space-y-4 text-xs">
+                ${(() => {
+                  if (!state.editingBusinessId) return '';
+                  const stats = state.contactStats[state.editingBusinessId] || { total: 0, whatsapp: 0, calls: 0 };
+                  return `
+                    <div class="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-300 p-3.5 rounded-2xl flex items-center justify-between gap-3 shadow-2xs">
+                      <div>
+                        <span class="text-[10px] font-black uppercase tracking-wider text-emerald-900 block">📊 Métricas de Clientes en Cisneros:</span>
+                        <p class="text-xs font-bold text-slate-800 mt-0.5">
+                          <span class="text-emerald-700 font-extrabold text-sm">${stats.total}</span> personas han abierto tu contacto desde la web
+                        </p>
+                      </div>
+                      <div class="flex items-center gap-2 text-[11px] font-bold">
+                        <span class="bg-white px-2.5 py-1 rounded-xl border border-emerald-200 text-emerald-800">💬 ${stats.whatsapp} WhatsApp</span>
+                      </div>
+                    </div>
+                  `;
+                })()}
                 
                 <!-- SECCIÓN 1: DATOS BÁSICOS -->
                 <div class="space-y-2">
@@ -1515,6 +1639,24 @@
               </div>
 
               <form onsubmit="event.preventDefault(); window.submitTransporter();" class="p-4 sm:p-5 overflow-y-auto space-y-3.5 text-xs">
+                ${(() => {
+                  if (!state.editingTransporterId) return '';
+                  const stats = state.contactStats[state.editingTransporterId] || { total: 0, whatsapp: 0, calls: 0 };
+                  return `
+                    <div class="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-300 p-3.5 rounded-2xl flex items-center justify-between gap-3 shadow-2xs">
+                      <div>
+                        <span class="text-[10px] font-black uppercase tracking-wider text-amber-900 block">📊 Métricas de Carreras / Contactos:</span>
+                        <p class="text-xs font-bold text-slate-800 mt-0.5">
+                          <span class="text-amber-700 font-extrabold text-sm">${stats.total}</span> personas te han contactado para carreras
+                        </p>
+                      </div>
+                      <div class="flex items-center gap-1.5 text-[11px] font-bold">
+                        <span class="bg-white px-2 py-1 rounded-xl border border-amber-200 text-amber-900">💬 ${stats.whatsapp}</span>
+                        <span class="bg-white px-2 py-1 rounded-xl border border-amber-200 text-slate-800">📞 ${stats.calls}</span>
+                      </div>
+                    </div>
+                  `;
+                })()}
                 <div>
                   <label class="block font-bold text-slate-800 mb-1">Nombre Completo:</label>
                   <input id="trans-name" type="text" value="${t?.full_name || ''}" placeholder="ej: Carlos Mario Restrepo" class="w-full p-2.5 rounded-xl border border-slate-300 focus:border-amber-600 focus:outline-none" required />
@@ -1697,6 +1839,41 @@
       renderApp();
     };
 
+    window.toggleFilterOnlyOpen = function() {
+      state.filterOnlyOpen = !state.filterOnlyOpen;
+      if (state.filterOnlyOpen) {
+        window.showToast('🟢 Mostrando únicamente comercios y transportes disponibles en este momento.', 'success');
+      } else {
+        window.showToast('🌟 Mostrando todo el directorio de Cisneros.', 'info');
+      }
+      renderApp();
+    };
+
+    let deferredInstallPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      state.canInstallApp = true;
+      const btn = document.getElementById('btn-install-app');
+      if (btn) btn.classList.remove('hidden');
+      if (btn) btn.classList.add('flex');
+    });
+
+    window.installAppPrompt = async function() {
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        const { outcome } = await deferredInstallPrompt.userChoice;
+        if (outcome === 'accepted') {
+          window.showToast('¡Gracias por instalar la app oficial de Cisneros Emprende!', 'success');
+          state.canInstallApp = false;
+        }
+        deferredInstallPrompt = null;
+        renderApp();
+      } else {
+        window.showToast('📲 Para instalar en iPhone o Android: Toca los 3 puntos del navegador o el botón Compartir y elige "Agregar a la pantalla principal".', 'info');
+      }
+    };
+
     window.setTransporterFilter = function(filter) {
       state.transporterFilter = filter;
       renderApp();
@@ -1842,6 +2019,25 @@
     // =========================================================================
     // SISTEMA DE RECORTE, ZOOM Y POSICIONAMIENTO DE LOGO Y PORTADA (INTERACTIVO)
     // =========================================================================
+    window.uploadToSupabaseStorage = async function(blob, filename) {
+      if (!supabaseClient || !supabaseClient.storage) return null;
+      try {
+        const bucket = 'photos';
+        const path = `uploads/${Date.now()}-${filename.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        const { data, error } = await supabaseClient.storage.from(bucket).upload(path, blob, {
+          cacheControl: '3600',
+          upsert: true
+        });
+        if (!error && data) {
+          const { data: pubUrl } = supabaseClient.storage.from(bucket).getPublicUrl(path);
+          return pubUrl?.publicUrl || null;
+        }
+      } catch (err) {
+        console.warn('Storage upload fallback:', err);
+      }
+      return null;
+    };
+
     window.handleImageUpload = function(event, targetInputId, previewId, type = 'cover') {
       const file = event.target.files && event.target.files[0];
       if (!file) return;
@@ -1849,10 +2045,12 @@
         window.showToast('Por favor selecciona un archivo de imagen válido (JPG, PNG, WebP).', 'warning');
         return;
       }
-      if (file.size > 8 * 1024 * 1024) {
-        window.showToast('La imagen no debe superar los 8MB.', 'warning');
+      if (file.size > 10 * 1024 * 1024) {
+        window.showToast('La imagen no debe superar los 10MB.', 'warning');
         return;
       }
+
+      state.imageAdjustState.filename = file.name || 'image.jpg';
       const reader = new FileReader();
       reader.onload = function(e) {
         state.imageAdjustState.rawImageSrc = e.target.result;
@@ -1863,7 +2061,7 @@
         state.imageAdjustState.offsetX = 0;
         state.imageAdjustState.offsetY = 0;
 
-        // Abrir ajustador para que el usuario pueda encuadrarla inmediatamente
+        // Abrir ajustador para encuadrarla inmediatamente
         state.modals.imageAdjust = true;
         renderApp();
       };
@@ -1988,6 +2186,17 @@
           previewEl.src = croppedBase64;
           previewEl.classList.remove('hidden');
         }
+
+        // Intento asíncrono de subir a Supabase Storage en segundo plano
+        canvas.toBlob(async function(blob) {
+          if (blob && window.uploadToSupabaseStorage) {
+            const cloudUrl = await window.uploadToSupabaseStorage(blob, state.imageAdjustState.filename || 'img.jpg');
+            if (cloudUrl && targetInput) {
+              targetInput.value = cloudUrl;
+              console.log('[Supabase Storage] Foto guardada en la nube:', cloudUrl);
+            }
+          }
+        }, 'image/jpeg', 0.88);
 
         // Mostrar botones de ajuste rápido
         if (state.imageAdjustState.previewId === 'preview-logo') {
@@ -2739,7 +2948,7 @@
     // =========================================================================
     // GESTIÓN DE CACHÉ Y REGISTRO DE SERVICE WORKER PWA
     // =========================================================================
-    const CURRENT_SW_VERSION = 'cisneros-emprende-v14';
+    const CURRENT_SW_VERSION = 'cisneros-emprende-v15';
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
