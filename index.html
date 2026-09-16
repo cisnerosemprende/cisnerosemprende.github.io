@@ -655,7 +655,7 @@
                               <div class="text-[11px] text-slate-600 mt-1.5 space-y-0.5">
                                 <p class="truncate">📅 <strong>Días:</strong> ${t.work_days || 'Todos los días'}</p>
                                 <p class="truncate">⏰ <strong>Horario:</strong> ${t.work_hours || 'Consultar'}</p>
-                                ${t.reference_point ? `<p class="truncate text-slate-500 italic">📍 ${t.reference_point}</p>` : ''}
+
                               </div>
                             </div>
                           </div>
@@ -1580,10 +1580,7 @@
                   </div>
                 </div>
 
-                <div>
-                  <label class="block font-bold text-slate-800 mb-1">Acopio o Punto Habitual en Cisneros:</label>
-                  <input id="trans-ref" type="text" value="${t?.reference_point || ''}" placeholder="ej: Acopio parque principal, salida a Yolombó, frente a la estación" class="w-full p-2.5 rounded-xl border border-slate-300" />
-                </div>
+
 
                 <!-- Términos -->
                 <div class="bg-amber-50/70 p-3 rounded-2xl border border-amber-200">
@@ -2055,7 +2052,7 @@
           if (pt) { pt.src = t.photo_url; pt.classList.remove('hidden'); }
           if (ph) ph.classList.add('hidden');
         }
-        if (document.getElementById('trans-ref')) document.getElementById('trans-ref').value = t.reference_point || '';
+
       }, 50);
     };
 
@@ -2087,7 +2084,7 @@
       const openTime = document.getElementById('trans-open')?.value || '06:00';
       const closeTime = document.getElementById('trans-close')?.value || '20:00';
       const photo = document.getElementById('trans-photo')?.value.trim();
-      const ref = document.getElementById('trans-ref')?.value.trim();
+
 
       // Recoger los días seleccionados
       const selectedDays = [];
@@ -2112,7 +2109,7 @@
         work_open: openTime,
         work_close: closeTime,
         photo_url: photo || null,
-        reference_point: ref || null,
+        reference_point: null,
         status: 'approved'
       };
 
@@ -2742,7 +2739,7 @@
     // =========================================================================
     // GESTIÓN DE CACHÉ Y REGISTRO DE SERVICE WORKER PWA
     // =========================================================================
-    const CURRENT_SW_VERSION = 'cisneros-emprende-v13';
+    const CURRENT_SW_VERSION = 'cisneros-emprende-v14';
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
