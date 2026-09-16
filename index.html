@@ -43,6 +43,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <!-- Supabase JS Client Oficial -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -246,9 +247,12 @@
       authPendingEmail: '',
       authPendingType: 'signup',
       authLoading: false,
+      activeQrBusiness: null,
+      adminTab: 'pending', // 'pending', 'approved', 'analytics', 'reviews', 'banned', 'suggestions'
       modals: {
         login: false,
         accountSwitcher: false,
+        qrCode: false,
         review: false,
         suggestion: false,
         report: false,
@@ -678,11 +682,18 @@
                           <span class="text-sm">${isFav ? '❤️' : '🤍'}</span>
                         </button>
 
-                        ${isOrgullo ? `
-                          <div class="absolute top-2.5 right-2.5 bg-gradient-to-r from-amber-500 to-yellow-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow flex items-center gap-1">
-                            <span>🏅</span> Orgullo Cisneros
-                          </div>
-                        ` : ''}
+                        <div class="absolute top-2.5 right-2.5 flex items-center gap-1 flex-wrap justify-end">
+                          ${b.is_verified ? `
+                            <span class="bg-sky-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow flex items-center gap-0.5" title="Negocio Verificado por la Administración">
+                              <span>✓</span> Verificado
+                            </span>
+                          ` : ''}
+                          ${isOrgullo ? `
+                            <span class="bg-gradient-to-r from-amber-500 to-yellow-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow flex items-center gap-1">
+                              <span>🏅</span> Orgullo Cisneros
+                            </span>
+                          ` : ''}
+                        </div>
 
                         <!-- Logo circular superpuesto en la esquina inferior derecha -->
                         ${b.logo_url ? `
@@ -954,6 +965,11 @@
                 <div class="flex items-center justify-between flex-wrap gap-2 mb-2">
                   <div class="flex items-center gap-2 flex-wrap">
                     <span class="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-md">${b.category_name}</span>
+                    ${b.is_verified ? `
+                      <span class="inline-flex items-center gap-1 text-xs font-black text-sky-900 bg-sky-100 border border-sky-300 px-2.5 py-0.5 rounded-full shadow-2xs">
+                        <span>✓</span> Negocio Verificado
+                      </span>
+                    ` : ''}
                     ${isOrgullo ? `
                       <span class="inline-flex items-center gap-1 text-xs font-black text-amber-900 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full">
                         🏅 Sello Orgullo Cisneros
@@ -1015,12 +1031,23 @@
               <!-- Botones de Acción, Redes y Contacto -->
               <div class="space-y-2 pt-1">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <a href="https://wa.me/57${b.whatsapp_number.replace(/\D/g, '')}?text=Hola%2C%20los%20contacto%20desde%20Cisneros%20Emprende" target="_blank" onclick="window.trackContactClick('whatsapp', '${b.id}', '${b.name}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm transition-colors">
+                  <a href="https://wa.me/57${b.whatsapp_number.replace(/\D/g, '')}?text=Hola%2C%20los%20contacto%20desde%20Cisneros%20Emprende" target="_blank" onclick="window.trackContactClick('whatsapp', '${b.id}', '${b.name}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm transition-colors">
                     <span>💬</span> Pedir por WhatsApp: ${b.whatsapp_number}
                   </a>
 
-                  <button onclick="window.openModal('report')" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold py-3 px-4 rounded-2xl text-xs flex items-center justify-center gap-1 transition-colors">
-                    <span>⚠️</span> Reportar Información
+                  <div class="grid grid-cols-2 gap-2">
+                    <button onclick="window.shareBusinessOnWhatsApp('${b.id}')" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-300 font-bold py-3 px-2 rounded-2xl text-xs flex items-center justify-center gap-1.5 shadow-2xs transition-all">
+                      <span>📲</span> <span>Compartir</span>
+                    </button>
+                    <button onclick="window.showBusinessQr('${b.id}')" class="bg-slate-900 hover:bg-black text-white font-bold py-3 px-2 rounded-2xl text-xs flex items-center justify-center gap-1.5 shadow-2xs transition-all">
+                      <span>📱</span> <span>Código QR</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="pt-1">
+                  <button onclick="window.openModal('report')" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-500 font-medium py-2 rounded-xl text-[11px] flex items-center justify-center gap-1 transition-colors">
+                    <span>⚠️</span> Reportar información desactualizada o error
                   </button>
                 </div>
 
@@ -1232,6 +1259,62 @@
             </div>
           </div>
         `;
+      }
+
+      
+      // MODAL GENERADOR DE CÓDIGO QR PARA COMERCIOS (LISTO PARA IMPRIMIR)
+      if (state.modals.qrCode && state.activeQrBusiness) {
+        const b = state.activeQrBusiness;
+        const bizUrl = window.location.origin + window.location.pathname + '?biz=' + b.id;
+        html += `
+          <div class="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
+            <div class="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl border border-slate-100 flex flex-col text-center">
+              <div class="bg-gradient-to-r from-emerald-950 via-emerald-800 to-teal-900 text-white p-5 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                  <span class="text-xl">📱</span>
+                  <div class="text-left">
+                    <h3 class="font-extrabold text-sm sm:text-base leading-tight">Código QR del Negocio</h3>
+                    <p class="text-[10px] text-emerald-200">Para tu mostrador, mesas o vitrina</p>
+                  </div>
+                </div>
+                <button onclick="window.closeModal('qrCode')" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center font-bold text-sm">✕</button>
+              </div>
+
+              <div class="p-6 space-y-4">
+                <div class="bg-slate-50 border-2 border-dashed border-emerald-500/40 p-5 rounded-3xl flex flex-col items-center justify-center shadow-inner">
+                  <div id="qrcode-container" class="bg-white p-3 rounded-2xl shadow-md border border-slate-200"></div>
+                  <h4 class="font-black text-slate-900 text-base mt-3">${b.name}</h4>
+                  <p class="text-[11px] text-slate-500 font-medium">Escanea para ver menú, precios y pedir a domicilio</p>
+                  <span class="text-[10px] font-black text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full mt-1.5">Cisneros Emprende</span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 pt-1">
+                  <button onclick="window.downloadQrImage('${b.name}')" class="bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold py-2.5 px-3 rounded-xl text-xs shadow-sm flex items-center justify-center gap-1.5 transition-all">
+                    <span>⬇️</span> <span>Descargar QR</span>
+                  </button>
+                  <button onclick="window.printQrCard()" class="bg-slate-800 hover:bg-slate-900 text-white font-extrabold py-2.5 px-3 rounded-xl text-xs shadow-sm flex items-center justify-center gap-1.5 transition-all">
+                    <span>🖨️</span> <span>Imprimir</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        // Generar QR después de pintar el DOM
+        setTimeout(() => {
+          const container = document.getElementById('qrcode-container');
+          if (container && typeof QRCode !== 'undefined') {
+            container.innerHTML = '';
+            new QRCode(container, {
+              text: bizUrl,
+              width: 170,
+              height: 170,
+              colorDark : "#0f172a",
+              colorLight : "#ffffff",
+              correctLevel : QRCode.CorrectLevel.H
+            });
+          }
+        }, 60);
       }
 
       if (state.modals.login) {
@@ -1649,7 +1732,27 @@
                 </div>
                 <button onclick="window.closeModal('admin')" class="font-bold text-lg">✕</button>
               </div>
+              <!-- Barra de Pestañas del Panel Admin -->
+              <div class="flex border-b border-slate-200 bg-slate-50 overflow-x-auto scrollbar-none text-xs font-bold shrink-0">
+                <button onclick="window.setAdminTab('pending')" class="px-4 py-2.5 flex items-center gap-1.5 whitespace-nowrap transition-all ${state.adminTab === 'pending' || !state.adminTab ? 'bg-white text-emerald-800 border-b-2 border-emerald-600 font-extrabold shadow-2xs' : 'text-slate-500 hover:text-slate-800'}">
+                  <span>⏳ Pendientes (${pending.length})</span>
+                </button>
+                <button onclick="window.setAdminTab('approved')" class="px-4 py-2.5 flex items-center gap-1.5 whitespace-nowrap transition-all ${state.adminTab === 'approved' ? 'bg-white text-emerald-800 border-b-2 border-emerald-600 font-extrabold shadow-2xs' : 'text-slate-500 hover:text-slate-800'}">
+                  <span>🏬 Comercios (${state.businesses.filter(b => b.status === 'approved').length})</span>
+                </button>
+                <button onclick="window.setAdminTab('analytics')" class="px-4 py-2.5 flex items-center gap-1.5 whitespace-nowrap transition-all ${state.adminTab === 'analytics' ? 'bg-white text-emerald-800 border-b-2 border-emerald-600 font-extrabold shadow-2xs' : 'text-slate-500 hover:text-slate-800'}">
+                  <span>📈 Analítica en Vivo</span>
+                </button>
+                <button onclick="window.setAdminTab('reviews')" class="px-4 py-2.5 flex items-center gap-1.5 whitespace-nowrap transition-all ${state.adminTab === 'reviews' ? 'bg-white text-emerald-800 border-b-2 border-emerald-600 font-extrabold shadow-2xs' : 'text-slate-500 hover:text-slate-800'}">
+                  <span>🛡️ Reseñas & Baneos</span>
+                </button>
+                <button onclick="window.setAdminTab('suggestions')" class="px-4 py-2.5 flex items-center gap-1.5 whitespace-nowrap transition-all ${state.adminTab === 'suggestions' ? 'bg-white text-emerald-800 border-b-2 border-emerald-600 font-extrabold shadow-2xs' : 'text-slate-500 hover:text-slate-800'}">
+                  <span>📬 Buzón (${state.suggestions.length})</span>
+                </button>
+              </div>
+
               <div class="p-5 overflow-y-auto flex-1 space-y-4">
+                ${(state.adminTab === 'pending' || !state.adminTab) ? `
                 <div>
                   <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                     ⏳ Negocios Pendientes de Aprobación (${pending.length}):
@@ -1708,9 +1811,15 @@
                               <span class="text-[10px] text-slate-500 block truncate">${b.written_address}</span>
                             </div>
                           </div>
-                          <div class="flex items-center gap-1.5 shrink-0">
-                            <button onclick="window.setFeatured('${b.id}')" class="text-[11px] font-bold px-2.5 py-1 rounded-lg ${b.is_featured ? 'bg-amber-400 text-amber-950 font-black' : 'bg-white text-slate-700 border border-slate-300'}">
+                          <div class="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                            <button onclick="window.toggleVerifiedBusiness('${b.id}')" class="text-[10px] font-bold px-2 py-1 rounded-lg ${b.is_verified ? 'bg-sky-500 text-white font-black' : 'bg-white text-sky-700 border border-sky-300'}" title="Dar o quitar insignia de negocio verificado">
+                              ${b.is_verified ? '✓ Verificado' : '+ Verificar'}
+                            </button>
+                            <button onclick="window.setFeatured('${b.id}')" class="text-[10px] font-bold px-2 py-1 rounded-lg ${b.is_featured ? 'bg-amber-400 text-amber-950 font-black' : 'bg-white text-slate-700 border border-slate-300'}">
                               ${b.is_featured ? '⭐ Destacado' : 'Destacar'}
+                            </button>
+                            <button onclick="window.showBusinessQr('${b.id}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded-lg font-bold text-[10px]" title="Ver código QR">
+                              📱 QR
                             </button>
                             <button onclick="window.editBusiness('${b.id}')" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-lg font-bold text-[11px] transition-colors" title="Editar comercio">
                               ✏️
@@ -1725,8 +1834,63 @@
                   </div>
                 </div>
 
+                ` : ''}
+
+                ${state.adminTab === 'approved' ? `
+                <div>
+                  <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                    🏬 Todos los Comercios Aprobados (${state.businesses.filter(b => b.status === 'approved').length}):
+                  </h4>
+                </div>
+                ` : ''}
+
+                ${state.adminTab === 'analytics' ? `
+                <!-- PESTAÑA ANALÍTICA EN VIVO -->
+                <div class="space-y-4">
+                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl">
+                      <span class="text-[10px] font-bold text-emerald-800 uppercase block">Total Negocios</span>
+                      <span class="text-2xl font-black text-emerald-950">${state.businesses.filter(b => b.status === 'approved').length}</span>
+                    </div>
+                    <div class="p-3.5 bg-sky-50 border border-sky-200 rounded-2xl">
+                      <span class="text-[10px] font-bold text-sky-800 uppercase block">Verificados 🏅</span>
+                      <span class="text-2xl font-black text-sky-950">${state.businesses.filter(b => b.is_verified).length}</span>
+                    </div>
+                    <div class="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl">
+                      <span class="text-[10px] font-bold text-amber-800 uppercase block">Transportadores</span>
+                      <span class="text-2xl font-black text-amber-950">${state.transporters.length}</span>
+                    </div>
+                    <div class="p-3.5 bg-purple-50 border border-purple-200 rounded-2xl">
+                      <span class="text-[10px] font-bold text-purple-800 uppercase block">Clics WhatsApp</span>
+                      <span class="text-2xl font-black text-purple-950">${Object.values(state.contactStats || {}).reduce((acc, c) => acc + (c.whatsapp || c.total || 0), 0)}</span>
+                    </div>
+                  </div>
+
+                  <div class="border border-slate-200 rounded-2xl p-4 bg-slate-50">
+                    <h5 class="text-xs font-bold text-slate-800 mb-2">🔥 Negocios más contactados por WhatsApp:</h5>
+                    ${Object.keys(state.contactStats || {}).length === 0 ? `
+                      <p class="text-xs text-slate-400 italic">Aún no se registran clics de contacto.</p>
+                    ` : `
+                      <div class="space-y-2">
+                        ${Object.entries(state.contactStats).map(([id, st]) => {
+                          const biz = state.businesses.find(b => b.id === id) || state.transporters.find(t => t.id === id);
+                          const name = biz ? biz.name || biz.full_name : id;
+                          return `
+                            <div class="flex items-center justify-between text-xs bg-white p-2.5 rounded-xl border border-slate-200">
+                              <span class="font-bold text-slate-800 truncate">${name}</span>
+                              <span class="font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">${st.whatsapp || st.total || 0} clics</span>
+                            </div>
+                          `;
+                        }).join('')}
+                      </div>
+                    `}
+                  </div>
+                </div>
+                ` : ''}
+
+                ${state.adminTab === 'reviews' ? `
                 <!-- SECCIÓN EXCLUSIVA DE CONTROL: RESEÑAS, HISTORIAL Y BANEOS -->
-                <div class="pt-3 border-t">
+                <div>
                   <div class="flex items-center justify-between mb-2">
                     <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1">
                       <span>🛡️</span> <span>Auditoría de Reseñas de Usuarios (${state.reviews.length}):</span>
@@ -1778,7 +1942,10 @@
                   `}
                 </div>
 
-                <div class="pt-3 border-t">
+                ` : ''}
+
+                ${state.adminTab === 'suggestions' ? `
+                <div>
                   <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                     📬 Mensajes en el Buzón Ciudadano (${state.suggestions.length}):
                   </h4>
@@ -1800,6 +1967,7 @@
                     `}
                   </div>
                 </div>
+                ` : ''}
               </div>
             </div>
           </div>
@@ -2104,6 +2272,20 @@
     // =========================================================================
     // EVENTOS Y ACCIONES GLOBALES
     // =========================================================================
+    // Detección de enlace directo por QR o Compartir (?biz=id)
+    function checkDirectBizLink() {
+      const params = new URLSearchParams(window.location.search);
+      const bizId = params.get('biz');
+      if (bizId) {
+        const found = state.businesses.find(b => b.id === bizId);
+        if (found) {
+          state.selectedBusiness = found;
+          state.activeView = 'detail';
+        }
+      }
+    }
+    checkDirectBizLink();
+
     window.selectBusiness = function(id) {
       const b = state.businesses.find(item => item.id === id);
       if (b) {
@@ -3443,6 +3625,67 @@
       }
     };
 
+    
+    // Pestañas del Panel Admin
+    window.setAdminTab = function(tabName) {
+      state.adminTab = tabName;
+      renderApp();
+    };
+
+    // Alternar Insignia de Verificación Oficial
+    window.toggleVerifiedBusiness = async function(id) {
+      const b = state.businesses.find(item => item.id === id);
+      if (!b) return;
+      b.is_verified = !b.is_verified;
+      saveState();
+      renderApp();
+
+      if (supabaseClient) {
+        try {
+          await supabaseClient.from('businesses').update({ is_verified: b.is_verified }).eq('id', id);
+        } catch (e) {
+          console.warn('Supabase toggle verified notice:', e);
+        }
+      }
+
+      window.showToast(b.is_verified ? `✓ "${b.name}" ahora tiene la insignia de Negocio Verificado.` : `Insignia removida de "${b.name}".`, 'info');
+    };
+
+    // Abrir Modal de Código QR
+    window.showBusinessQr = function(id) {
+      const b = state.businesses.find(item => item.id === id);
+      if (!b) return;
+      state.activeQrBusiness = b;
+      state.modals.qrCode = true;
+      renderApp();
+    };
+
+    // Descargar Imagen QR
+    window.downloadQrImage = function(bizName) {
+      const qrImg = document.querySelector('#qrcode-container img') || document.querySelector('#qrcode-container canvas');
+      if (!qrImg) return;
+      const link = document.createElement('a');
+      link.download = `QR_${bizName.replace(/\s+/g, '_')}_CisnerosEmprende.png`;
+      link.href = qrImg.src || (qrImg.toDataURL ? qrImg.toDataURL('image/png') : '');
+      link.click();
+      window.showToast('¡Descargando código QR!', 'success');
+    };
+
+    // Imprimir Ficha QR
+    window.printQrCard = function() {
+      window.print();
+    };
+
+    // Compartir Ficha de Negocio en WhatsApp
+    window.shareBusinessOnWhatsApp = function(id) {
+      const b = state.businesses.find(item => item.id === id);
+      if (!b) return;
+      const url = window.location.origin + window.location.pathname + '?biz=' + b.id;
+      const text = `¡Hola! Mira los productos, menú y domicilios de *${b.name}* en el directorio de Cisneros Emprende: ${url}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+      window.showToast('Abriendo WhatsApp para compartir...', 'success');
+    };
+
     function bindEvents() {
       const brand = document.getElementById('nav-brand');
       if (brand) brand.onclick = () => { state.activeView = 'home'; renderApp(); };
@@ -3493,7 +3736,7 @@
     // =========================================================================
     // GESTIÓN DE CACHÉ Y REGISTRO DE SERVICE WORKER PWA
     // =========================================================================
-    const CURRENT_SW_VERSION = 'cisneros-emprende-v21';
+    const CURRENT_SW_VERSION = 'cisneros-emprende-v22';
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
