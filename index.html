@@ -265,7 +265,7 @@
             <div class="flex items-center gap-2">
               <!-- Botón rápido Transporte Local -->
               <button onclick="window.setCategory('transporte')" class="text-xs font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 px-2.5 py-1.5 rounded-xl flex items-center gap-1 shadow-2xs transition-colors">
-                <span>🛵</span> <span class="hidden md:inline">Mototaxis, Chivas & Carga</span>
+                <span>🛵</span> <span class="hidden md:inline">Chiveros, Mototaxis & Carga</span>
               </button>
 
               <button id="btn-suggestion" class="text-xs font-semibold text-slate-600 hover:text-emerald-800 px-2 py-1.5 rounded-lg hover:bg-slate-100 flex items-center gap-1">
@@ -406,20 +406,20 @@
                     </div>
                     <div>
                       <h3 class="font-extrabold text-slate-900 text-base sm:text-lg">Directorio de Chiveros, Motocarros, Mototaxis y Motocargueros</h3>
-                      <p class="text-xs text-slate-600">Contacta directamente a los chiveros veredales y transportadores locales de Cisneros</p>
+                      <p class="text-xs text-slate-600">Chiveros a Yolombó, San José del Nus y veredas, además de motocarros y mototaxis locales</p>
                     </div>
                   </div>
                   <button onclick="window.openTransporterRegister()" class="self-start sm:self-center bg-amber-600 hover:bg-amber-700 text-white font-black text-xs px-4 py-2.5 rounded-xl shadow-xs transition-colors flex items-center gap-1.5">
-                    <span>➕</span> <span>Registrar Mi Chiva / Motocarro / Transporte</span>
+                    <span>➕</span> <span>Registrar Mi Chivero / Motocarro / Mototaxi</span>
                   </button>
                 </div>
 
                 ${state.transporters.length === 0 ? `
                   <div class="bg-white/80 rounded-2xl p-5 text-center border border-dashed border-amber-300">
-                    <p class="text-xs font-semibold text-slate-700">¿Eres chivero de vereda, motocarrista, mototaxista o tienes motocarguero en Cisneros?</p>
+                    <p class="text-xs font-semibold text-slate-700">¿Prestas servicio de chivero (rutas a Yolombó, San José o veredas), motocarro, mototaxi o motocarguero?</p>
                     <p class="text-[11px] text-slate-500 mt-1">Regístrate 100% gratis para que los campesinos, vecinos y comerciantes te llamen o escriban directo a tu WhatsApp.</p>
                     <button onclick="window.openTransporterRegister()" class="mt-3 bg-amber-500 hover:bg-amber-600 text-amber-950 font-black text-xs px-4 py-2 rounded-xl transition-all shadow-xs">
-                      Registrarme como Chivero o Transportador Ahora
+                      Registrarme como Chivero o Transportador
                     </button>
                   </div>
                 ` : `
@@ -437,12 +437,13 @@
                             <span class="inline-block text-[10px] font-black uppercase tracking-wider text-amber-800 bg-amber-100 px-2 py-0.2 rounded-md">
                               ${(() => {
                                 switch(t.vehicle_type) {
-                                  case 'chiva': return '🚌 Chivero / Chiva Veredal';
-                                  case 'campero': return '🚙 Campero / Jeep Veredal';
+                                  case 'chivero': return '🚙 Chivero (Yolombó / San José / Veredas)';
+                                  case 'chiva': return '🚙 Chivero (Yolombó / San José / Veredas)';
+                                  case 'campero': return '🚙 Chivero (Yolombó / San José / Veredas)';
                                   case 'motocarro': return '🛺 Motocarro';
-                                  case 'motocarguero': return '🚚 Motocarguero';
+                                  case 'motocarguero': return '🚚 Motocarguero (Acarreos)';
                                   case 'mototaxi': return '🛵 Mototaxi';
-                                  default: return '🛵 Transporte Local';
+                                  default: return '🚙 Chivero / Transporte Local';
                                 }
                               })()}
                               ${t.vehicle_plate ? `• ${t.vehicle_plate}` : ''}
@@ -578,7 +579,7 @@
               <span>•</span>
               <button onclick="window.openModal('register')" class="hover:text-white">Registrar Mi Negocio</button>
               <span>•</span>
-              <button onclick="window.openTransporterRegister()" class="text-amber-400 hover:text-amber-300">Registrar Chiva/Mototaxi/Carga</button>
+              <button onclick="window.openTransporterRegister()" class="text-amber-400 hover:text-amber-300">Registrar Chivero/Mototaxi/Carga</button>
               <span>•</span>
               <button onclick="window.openModal('terms')" class="hover:text-white">Términos, Cookies & Datos</button>
               ${state.currentUser?.role === 'admin' ? `
@@ -1395,9 +1396,9 @@
                   <span class="text-2xl">🛵</span>
                   <div>
                     <h3 class="font-extrabold text-sm sm:text-base leading-tight">
-                      ${isEditing ? 'Gestionar Mi Servicio de Transporte' : 'Registro de Chivero, Motocarro, Campero o Mototaxi'}
+                      ${isEditing ? 'Gestionar Mi Servicio de Transporte' : 'Registro de Chivero, Motocarro, Mototaxi o Motocarguero'}
                     </h3>
-                    <p class="text-[10px] text-amber-100">Directorio de chivas veredales, transporte local y acarreos de Cisneros</p>
+                    <p class="text-[10px] text-amber-100">Chiveros a Yolombó, San José y veredas, motocarros y mototaxis de Cisneros</p>
                   </div>
                 </div>
                 <button onclick="window.closeModal('transporterRegister')" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center font-bold text-sm">✕</button>
@@ -1413,8 +1414,7 @@
                   <div>
                     <label class="block font-bold text-slate-800 mb-1">Tipo de Vehículo:</label>
                     <select id="trans-type" class="w-full p-2.5 rounded-xl border border-slate-300 bg-white">
-                      <option value="chiva" ${t?.vehicle_type === 'chiva' ? 'selected' : ''}>🚌 Chiva / Escalera (Rutas Veredales / Mercado)</option>
-                      <option value="campero" ${t?.vehicle_type === 'campero' ? 'selected' : ''}>🚙 Campero / Jeep Veredal (Fletes y Pasajeros)</option>
+                      <option value="chivero" ${(!t?.vehicle_type || t?.vehicle_type === 'chivero' || t?.vehicle_type === 'chiva' || t?.vehicle_type === 'campero') ? 'selected' : ''}>🚙 Chivero (Carro a Yolombó, San José o Veredas)</option>
                       <option value="motocarro" ${t?.vehicle_type === 'motocarro' ? 'selected' : ''}>🛺 Motocarro (Urbano / Veredal)</option>
                       <option value="motocarguero" ${t?.vehicle_type === 'motocarguero' ? 'selected' : ''}>🚚 Motocarguero (Carga pesada / Acarreos)</option>
                       <option value="mototaxi" ${t?.vehicle_type === 'mototaxi' ? 'selected' : ''}>🛵 Mototaxi (Pasajeros rápidos)</option>
@@ -1476,7 +1476,7 @@
 
                 <div>
                   <label class="block font-bold text-slate-800 mb-1">Acopio o Punto Habitual en Cisneros:</label>
-                  <input id="trans-ref" type="text" value="${t?.reference_point || ''}" placeholder="ej: Parque Principal, frente a la Estación del Tren" class="w-full p-2.5 rounded-xl border border-slate-300" />
+                  <input id="trans-ref" type="text" value="${t?.reference_point || ''}" placeholder="ej: Acopio parque principal, salida a Yolombó, frente a la estación" class="w-full p-2.5 rounded-xl border border-slate-300" />
                 </div>
 
                 <!-- Términos -->
@@ -1491,7 +1491,7 @@
 
                 <div class="space-y-2 pt-1">
                   <button type="submit" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-extrabold py-3.5 rounded-2xl text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2">
-                    <span>🚀</span> <span>${isEditing ? 'Guardar Cambios de Mi Transporte' : 'Publicar Mi Chiva / Motocarro / Transporte'}</span>
+                    <span>🚀</span> <span>${isEditing ? 'Guardar Cambios de Mi Transporte' : 'Publicar Mi Chivero / Motocarro / Mototaxi'}</span>
                   </button>
 
                   ${isEditing ? `
@@ -1918,7 +1918,7 @@
       window.openModal('transporterRegister');
       setTimeout(() => {
         if (document.getElementById('trans-name')) document.getElementById('trans-name').value = t.full_name || '';
-        if (document.getElementById('trans-type')) document.getElementById('trans-type').value = t.vehicle_type || 'chiva';
+        if (document.getElementById('trans-type')) document.getElementById('trans-type').value = (t.vehicle_type === 'chiva' || t.vehicle_type === 'campero') ? 'chivero' : (t.vehicle_type || 'chivero');
         if (document.getElementById('trans-plate')) document.getElementById('trans-plate').value = t.vehicle_plate || '';
         if (document.getElementById('trans-wa')) document.getElementById('trans-wa').value = t.whatsapp_number || '';
         if (document.getElementById('trans-phone')) document.getElementById('trans-phone').value = t.phone_number || '';
@@ -2007,7 +2007,7 @@
         window.showToast('¡Servicio de transporte actualizado con éxito!', 'success');
       } else {
         state.transporters.unshift(transData);
-        window.showToast('¡Excelente! Tu servicio de mototaxi/motocarro ya está visible en el directorio.', 'success');
+        window.showToast('¡Excelente! Tu servicio de chivero / transporte ya está visible en el directorio.', 'success');
       }
 
       state.editingTransporterId = null;
@@ -2674,7 +2674,7 @@
     if (typeof caches !== 'undefined') {
       caches.keys().then(names => {
         for (let name of names) {
-          if (name !== 'cisneros-emprende-v6') {
+          if (name !== 'cisneros-emprende-v7') {
             caches.delete(name);
           }
         }
