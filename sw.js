@@ -2,7 +2,7 @@
 // Service Worker: Cisneros Emprende PWA (Network-First para HTML)
 // =========================================================================
 
-const CACHE_NAME = 'cisneros-emprende-v8';
+const CACHE_NAME = 'cisneros-emprende-v9';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
