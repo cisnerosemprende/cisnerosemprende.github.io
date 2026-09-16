@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Cisneros Emprende | Directorio Comercial & Vitrina Digital PWA</title>
+  
+  <!-- SEO & PWA Meta Tags -->
+  <meta name="description" content="Directorio digital y plataforma de gestión para los emprendimientos y negocios locales de Cisneros, Antioquia, Colombia.">
+  <meta name="theme-color" content="#166534">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/svg+xml" href="/icons/icon-192.svg">
+  <link rel="apple-touch-icon" href="/icons/icon-192.svg">
+
+  <!-- Tailwind CSS & Google Fonts -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cisneros: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              600: '#16a34a',
+              700: '#15803d',
+              800: '#166534',
+              900: '#14532d',
+              950: '#052e16',
+            },
+            oro: {
+              400: '#fbbf24',
+              500: '#f59e0b',
+              600: '#d97706',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Supabase JS Client Oficial -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    body { font-family: 'Poppins', 'Inter', sans-serif; background-color: #f8fafc; }
+    .scrollbar-none::-webkit-scrollbar { display: none; }
+    .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col text-slate-900 selection:bg-emerald-200">
+
+  <!-- APP ROOT MOUNT POINT -->
+  <div id="app" class="flex-1 flex flex-col">
+    <!-- El contenido interactivo se inicializa vía el script modular inferior -->
+  </div>
+
+  <!-- SCRIPT MODULAR DE CISNEROS EMPRENDE PWA -->
+  <script type="module">
+    // =========================================================================
+    // DATOS DE DEMOSTRACIÓN OFICIALES DE CISNEROS, ANTIOQUIA
+    // =========================================================================
+    const INITIAL_CATEGORIES = [
+      { id: 1, slug: 'gastronomia', name: 'Gastronomía & Comidas', emoji: '🍲' },
+      { id: 2, slug: 'cafes-trapiches', name: 'Cafés & Trapiches', emoji: '☕' },
+      { id: 3, slug: 'comercio', name: 'Comercio & Tiendas', emoji: '🛍️' },
+      { id: 4, slug: 'artesanias', name: 'Artesanías & Modas', emoji: '🧵' },
+      { id: 5, slug: 'servicios', name: 'Servicios & Oficios', emoji: '🔧' },
+      { id: 6, slug: 'hospedaje-turismo', name: 'Hospedaje & Turismo', emoji: '🏨' },
+      { id: 7, slug: 'salud-belleza', name: 'Salud & Belleza', emoji: '💈' },
+      { id: 8, slug: 'agro-campo', name: 'Agro & Campo', emoji: '🌾' },
+      { id: 9, slug: 'tecnologia', name: 'Tecnología & Celulares', emoji: '📱' },
+      { id: 10, slug: 'transporte', name: 'Transporte & Envíos', emoji: '🛵' }
+    ];
+
+    // Sin negocios precargados (Esperando registros reales de la comunidad)
+    const INITIAL_BUSINESSES = [];
+
+    const INITIAL_REVIEWS = [];
+
+    // =========================================================================
+    // ESTADO GLOBAL DE LA APLICACIÓN
+    // =========================================================================
+    let state = {
+      businesses: JSON.parse(localStorage.getItem('cis_businesses')) || INITIAL_BUSINESSES,
+      categories: INITIAL_CATEGORIES,
+      reviews: JSON.parse(localStorage.getItem('cis_reviews')) || INITIAL_REVIEWS,
+      suggestions: JSON.parse(localStorage.getItem('cis_suggestions')) || [
+        { id: 's1', sender_name: 'Valeria Henao', sender_email: 'valeria@gmail.com', message: 'Sería genial agregar los horarios de las ferias campesinas en Cisneros.', created_at: '2026-09-11' }
+      ],
+      reports: JSON.parse(localStorage.getItem('cis_reports')) || [],
+      favorites: JSON.parse(localStorage.getItem('cis_favs')) || ['cis-001'],
+      cart: JSON.parse(localStorage.getItem('cis_cart')) || [],
+      currentBusinessInCart: JSON.parse(localStorage.getItem('cis_cart_biz')) || null,
+      selectedCategory: 'all',
+      searchTerm: '',
+      activeView: 'home', // 'home', 'detail'
+      selectedBusiness: null,
+      currentUser: JSON.parse(localStorage.getItem('cis_user')) || null,
+      menuDraft: [],
+      modals: {
+        login: false,
+        review: false,
+        suggestion: false,
+        report: false,
+        register: false,
+        admin: false
+      }
+    };
+
+    function saveState() {
+      localStorage.setItem('cis_businesses', JSON.stringify(state.businesses));
+      localStorage.setItem('cis_reviews', JSON.stringify(state.reviews));
+      localStorage.setItem('cis_suggestions', JSON.stringify(state.suggestions));
+      localStorage.setItem('cis_reports', JSON.stringify(state.reports));
+      localStorage.setItem('cis_favs', JSON.stringify(state.favorites));
+      localStorage.setItem('cis_cart', JSON.stringify(state.cart));
+      localStorage.setItem('cis_cart_biz', JSON.stringify(state.currentBusinessInCart));
+      localStorage.setItem('cis_user', JSON.stringify(state.currentUser));
+    }
+
+    // =========================================================================
+    // HELPER: HORARIOS COLOMBIA (Abierto / Cerrado)
+    // =========================================================================
+    function getBusinessStatus(schedule) {
+      if (!schedule) return { isOpen: false, label: 'Consultar Horario', color: 'bg-slate-100 text-slate-700' };
+      const now = new Date();
+      const days = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+      const today = days[now.getDay()];
+      const dayConf = schedule[today];
+      if (!dayConf || dayConf.closed) return { isOpen: false, label: 'Cerrado hoy', color: 'bg-rose-50 text-rose-700 border-rose-200' };
+      
+      const currentMin = (now.getHours() * 60) + now.getMinutes();
+      const [oh, om] = dayConf.open.split(':').map(Number);
+      const [ch, cm] = dayConf.close.split(':').map(Number);
+      const openMin = (oh * 60) + om;
+      const closeMin = (ch * 60) + cm;
+
+      if (currentMin >= openMin && currentMin < closeMin) {
+        return { isOpen: true, label: `🟢 Abierto hasta las ${dayConf.close}`, color: 'bg-emerald-50 text-emerald-800 border-emerald-300' };
+      }
+      return { isOpen: false, label: `🔴 Cerrado (Abre hoy a las ${dayConf.open})`, color: 'bg-slate-100 text-slate-700 border-slate-300' };
+    }
+
+    // =========================================================================
+    // HELPER: WHATSAPP MINI-CARRO FORMATTER
+    // =========================================================================
+    function getWhatsAppUrl(business, cart, details) {
+      let cleanPhone = business.whatsapp_number.replace(/\D/g, '');
+      if (!cleanPhone.startsWith('57')) cleanPhone = '57' + cleanPhone;
+
+      const subtotal = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+      const delivery = business.delivery_available ? Number(business.delivery_cost || 0) : 0;
+      const total = subtotal + delivery;
+
+      let msg = `👋 *¡Hola, ${business.name}!* \n`;
+      msg += `Vengo de la app *Cisneros Emprende* y quiero realizar este pedido:\n\n`;
+      msg += `🛍️ *PRODUCTOS:*\n`;
+      cart.forEach(i => {
+        msg += `• *${i.quantity}x* ${i.name} ($${(i.price * i.quantity).toLocaleString('es-CO')})\n`;
+      });
+      msg += `\n💰 *VALOR TOTAL:*\n`;
+      msg += `• Subtotal: $${subtotal.toLocaleString('es-CO')}\n`;
+      msg += `• Domicilio: ${delivery === 0 ? '¡Gratis!' : `$${delivery.toLocaleString('es-CO')}`}\n`;
+      msg += `👉 *TOTAL A PAGAR: $${total.toLocaleString('es-CO')}*\n\n`;
+      msg += `📍 *DATOS DE ENTREGA EN CISNEROS:*\n`;
+      msg += `• Dirección: ${details.address}\n`;
+      if (details.reference) msg += `• Punto de referencia: ${details.reference}\n`;
+      msg += `• Pago con: ${details.paymentMethod}\n`;
+      if (details.name) msg += `• Nombre: ${details.name}\n`;
+      msg += `\n_¿Me confirmas disponibilidad y tiempo estimado de entrega? Muchas gracias._`;
+
+      return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
+    }
+
+    // =========================================================================
+    // RENDERIZADOR PRINCIPAL
+    // =========================================================================
+    const appContainer = document.getElementById('app');
+
+    function renderApp() {
+      const filteredBusinesses = state.businesses.filter(b => {
+        if (b.status !== 'approved' && state.currentUser?.role !== 'admin') return false;
+        const matchesCategory = state.selectedCategory === 'all' || b.category_slug === state.selectedCategory;
+        const matchesSearch = !state.searchTerm || 
+          b.name.toLowerCase().includes(state.searchTerm.toLowerCase()) || 
+          (b.description && b.description.toLowerCase().includes(state.searchTerm.toLowerCase())) ||
+          (b.written_address && b.written_address.toLowerCase().includes(state.searchTerm.toLowerCase()));
+        return matchesCategory && matchesSearch;
+      });
+
+      const featuredBusiness = state.businesses.find(b => b.is_featured && b.status === 'approved');
+      const cartCount = state.cart.reduce((sum, i) => sum + i.quantity, 0);
+
+      appContainer.innerHTML = `
+        <!-- NAVBAR -->
+        <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-2xs">
+          <div class="max-w-6xl mx-auto px-4 py-2 flex items-center justify-between gap-3">
+            <!-- Brand con Logotipo Propio de Cisneros Emprende -->
+            <div id="nav-brand" class="flex items-center gap-2.5 cursor-pointer">
+              <div class="w-11 h-11 rounded-xl bg-white border border-slate-200 p-0.5 shadow-sm flex items-center justify-center overflow-hidden hover:scale-105 transition-transform">
+                <img src="icons/icon-192.svg" alt="Cisneros Emprende" class="w-full h-full object-contain" onerror="this.onerror=null; this.src='public/icons/icon-192.svg';" />
+              </div>
+              <div>
+                <h1 class="font-black text-base sm:text-lg text-emerald-950 tracking-tight leading-none">
+                  Cisneros <span class="text-amber-600">Emprende</span>
+                </h1>
+                
+              </div>
+            </div>
+
+            <!-- Buscador Central -->
+            <div class="flex-1 max-w-sm hidden sm:block">
+              <input
+                id="search-input"
+                type="text"
+                value="${state.searchTerm}"
+                placeholder="Buscar panaderías, trapiches, talleres..."
+                class="w-full pl-3 pr-3 py-1.5 text-xs rounded-xl bg-slate-100 border border-slate-200 focus:outline-none focus:border-emerald-600 focus:bg-white"
+              />
+            </div>
+
+            <!-- Acciones Principales -->
+            <div class="flex items-center gap-2">
+              <button id="btn-suggestion" class="text-xs font-semibold text-slate-600 hover:text-emerald-800 px-2 py-1.5 rounded-lg hover:bg-slate-100 flex items-center gap-1">
+                <span>📬</span> <span class="hidden md:inline">Buzón</span>
+              </button>
+
+              <button id="btn-register-biz" class="text-xs font-bold bg-emerald-700 text-white px-3 py-1.5 rounded-xl hover:bg-emerald-800 flex items-center gap-1 shadow-xs transition-colors">
+                <span>🏪</span> <span>Registrar Negocio</span>
+              </button>
+
+              ${state.currentUser?.role === 'admin' ? `
+                <button id="btn-admin-panel" class="text-xs font-black bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 px-2.5 py-1.5 rounded-xl shadow-xs flex items-center gap-1">
+                  <span>👑</span> <span>Panel Cami</span>
+                </button>
+              ` : ''}
+
+              <!-- Autenticación Google / Perfil -->
+              <div class="flex items-center gap-1.5 pl-2 border-l border-slate-200">
+                ${state.currentUser ? `
+                  <div class="flex items-center gap-1.5">
+                    <img src="${state.currentUser?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'}" class="w-7 h-7 rounded-full border border-emerald-600 object-cover" />
+                    <span class="text-xs font-bold text-slate-700 hidden lg:inline">${state.currentUser.full_name?.split(' ')[0]}</span>
+                    <button id="btn-toggle-auth" class="text-xs text-rose-600 hover:text-rose-800 font-bold ml-1 bg-rose-50 hover:bg-rose-100 px-2 py-1 rounded-lg border border-rose-200">
+                      Salir
+                    </button>
+                  </div>
+                ` : `
+                  <button id="btn-toggle-auth" class="text-xs font-bold bg-white text-slate-800 border border-slate-300 hover:bg-slate-50 px-3 py-1.5 rounded-xl shadow-2xs flex items-center gap-1.5 transition-colors">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                    <span>Ingresar</span>
+                  </button>
+                `}
+              </div>
+            </div>
+          </div>
+
+          <!-- Buscador móvil -->
+          <div class="px-4 pb-2 sm:hidden">
+            <input
+              id="search-input-mobile"
+              type="text"
+              value="${state.searchTerm}"
+              placeholder="Buscar en Cisneros..."
+              class="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-100 border border-slate-200 focus:outline-none focus:border-emerald-600"
+            />
+          </div>
+        </header>
+
+        <!-- CUERPO PRINCIPAL -->
+        <main class="flex-1 max-w-6xl mx-auto w-full px-4 py-4 sm:py-6">
+          ${state.activeView === 'home' ? `
+            
+            <!-- BANNER DESTACADO DE LA SEMANA (Si existe) -->
+            ${featuredBusiness ? `
+              <div class="mb-6 rounded-3xl bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-950 text-white p-5 sm:p-7 relative overflow-hidden shadow-lg border border-emerald-700/50">
+                <div class="relative z-10 max-w-lg space-y-2">
+                  <span class="inline-flex items-center gap-1.5 bg-amber-400 text-amber-950 text-xs font-black px-3 py-0.5 rounded-full shadow-sm">
+                    ⭐ NEGOCIO DESTACADO DE LA SEMANA
+                  </span>
+                  <h2 class="text-2xl sm:text-3xl font-black tracking-tight">${featuredBusiness.name}</h2>
+                  <p class="text-xs sm:text-sm text-emerald-100 line-clamp-2">${featuredBusiness.description}</p>
+                  <div class="pt-2 flex items-center gap-3">
+                    <button onclick="window.selectBusiness('${featuredBusiness.id}')" class="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-md transition-all">
+                      Ver Menú y Domicilios →
+                    </button>
+                    <span class="text-xs text-emerald-200 font-medium">📍 ${featuredBusiness.written_address}</span>
+                  </div>
+                </div>
+                <div class="absolute right-0 top-0 bottom-0 w-1/3 opacity-25 hidden sm:block pointer-events-none">
+                  <img src="${featuredBusiness.cover_images[0]}" class="w-full h-full object-cover" />
+                </div>
+              </div>
+            ` : ''}
+
+            <!-- CHIPS DE CATEGORÍA -->
+            <div class="mb-4">
+              <div class="w-full overflow-x-auto scrollbar-none py-1 flex gap-2">
+                <button
+                  onclick="window.setCategory('all')"
+                  class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap shadow-xs ${
+                    state.selectedCategory === 'all'
+                      ? 'bg-emerald-800 text-white shadow-emerald-800/20'
+                      : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+                  }"
+                >
+                  🌟 Todos (${state.businesses.filter(b => b.status === 'approved').length})
+                </button>
+                ${state.categories.map(c => `
+                  <button
+                    onclick="window.setCategory('${c.slug}')"
+                    class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap shadow-xs ${
+                      state.selectedCategory === c.slug
+                        ? 'bg-emerald-800 text-white shadow-emerald-800/20'
+                        : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+                    }"
+                  >
+                    <span>${c.emoji}</span> <span>${c.name}</span>
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- GRID DE NEGOCIOS O EMPTY STATE ACOGEDOR -->
+            ${filteredBusinesses.length === 0 ? `
+              <div class="bg-white rounded-3xl p-8 sm:p-14 text-center border border-slate-200 shadow-2xs mt-4 max-w-2xl mx-auto">
+                <div class="w-20 h-20 mx-auto rounded-3xl bg-emerald-50 border border-emerald-100 flex items-center justify-center p-3 mb-4 shadow-xs">
+                  <img src="icons/icon-192.svg" class="w-full h-full object-contain" alt="Cisneros" onerror="this.onerror=null; this.src='public/icons/icon-192.svg';" />
+                </div>
+                <span class="inline-flex items-center gap-1.5 bg-amber-100 text-amber-900 text-xs font-black px-3 py-1 rounded-full mb-3">
+                  🚀 ¡La vitrina digital de Cisneros está abierta!
+                </span>
+                <h3 class="font-black text-slate-900 text-xl sm:text-2xl tracking-tight">Sé el primer emprendedor en aparecer</h3>
+                <p class="text-xs sm:text-sm text-slate-600 mt-2 max-w-md mx-auto leading-relaxed">
+                  ¿Tienes una panadería, café, taller, tienda, artesanías o servicio en Cisneros? Regístrate 100% gratis y conecta con miles de vecinos y turistas por WhatsApp.
+                </p>
+                <div class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <button onclick="window.openModal('register')" class="w-full sm:w-auto bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs px-6 py-3 rounded-2xl shadow-md transition-all flex items-center justify-center gap-2">
+                    <span>🏪</span> <span>Registrar mi negocio ahora</span>
+                  </button>
+                  <button onclick="window.openModal('suggestion')" class="w-full sm:w-auto bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-5 py-3 rounded-2xl transition-all flex items-center justify-center gap-2">
+                    <span>📬</span> <span>Sugerir un comercio</span>
+                  </button>
+                </div>
+              </div>
+            ` : `
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                ${filteredBusinesses.map(b => {
+                  const status = getBusinessStatus(b.schedule);
+                  const isFav = state.favorites.includes(b.id);
+                  const isOrgullo = b.has_orgullo_cisneros || (b.avg_rating >= 4.6 && b.total_reviews >= 5);
+
+                  return `
+                    <article class="bg-white rounded-2xl border border-slate-200 shadow-2xs hover:shadow-md transition-all flex flex-col overflow-hidden hover:border-emerald-300 group">
+                      <!-- Carrusel de fotos -->
+                      <div class="relative h-48 bg-slate-900 overflow-hidden cursor-pointer" onclick="window.selectBusiness('${b.id}')">
+                        <img src="${b.cover_images[0] || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                        
+                        <button onclick="event.stopPropagation(); window.toggleFavorite('${b.id}')" class="absolute top-2.5 left-2.5 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-md shadow ${isFav ? 'bg-red-500 text-white' : 'bg-black/40 text-white'}">
+                          <span class="text-sm">${isFav ? '❤️' : '🤍'}</span>
+                        </button>
+
+                        ${isOrgullo ? `
+                          <div class="absolute bottom-2 left-2 bg-gradient-to-r from-amber-500 to-yellow-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow flex items-center gap-1">
+                            <span>🏅</span> Orgullo Cisneros
+                          </div>
+                        ` : ''}
+                      </div>
+
+                      <!-- Información -->
+                      <div class="p-4 flex-1 flex flex-col justify-between cursor-pointer" onclick="window.selectBusiness('${b.id}')">
+                        <div>
+                          <div class="flex items-center justify-between text-xs text-slate-500 mb-1">
+                            <span class="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">${b.category_name}</span>
+                            <span class="font-semibold text-amber-600">★ ${b.avg_rating} (${b.total_reviews})</span>
+                          </div>
+
+                          <h3 class="font-bold text-slate-900 text-base group-hover:text-emerald-700 transition-colors line-clamp-1">${b.name}</h3>
+                          <p class="text-xs text-slate-500 line-clamp-2 mt-1 leading-relaxed">${b.description}</p>
+
+                          <!-- Dirección estrictamente descriptiva -->
+                          <div class="bg-slate-50 p-2 rounded-xl border border-slate-100 text-xs text-slate-700 mt-2.5">
+                            <span class="text-emerald-700 font-bold">📍</span> ${b.written_address}
+                          </div>
+                        </div>
+
+                        <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs mt-3">
+                          <span class="text-[10px] font-bold px-2 py-0.5 rounded-md border ${status.color}">
+                            ${status.label}
+                          </span>
+                          <span class="text-[10px] font-medium text-slate-500">
+                            🛵 ${b.delivery_available ? (b.delivery_cost === 0 ? 'Domicilio Gratis' : `$${b.delivery_cost.toLocaleString('es-CO')}`) : 'En local'}
+                          </span>
+                        </div>
+                      </div>
+                    </article>
+                  `;
+                }).join('')}
+              </div>
+            `}
+
+          ` : `
+            <!-- VISTA DETALLADA DEL NEGOCIO -->
+            ${renderDetailView()}
+          `}
+        </main>
+
+        <!-- FOOTER INSTITUCIONAL CISNEROS -->
+        <footer class="bg-slate-900 text-slate-400 text-xs py-8 px-4 border-t border-slate-800 mt-12">
+          <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+            <div>
+              <p class="text-white font-bold text-sm">Cisneros Emprende • PWA 100% Gratuita</p>
+              <p class="text-[11px] text-slate-500 mt-0.5">Directorio comercial y vitrina digital del Municipio de Cisneros, Antioquia.</p>
+            </div>
+            <div class="flex items-center gap-4 text-[11px]">
+              <button onclick="window.openModal('suggestion')" class="hover:text-white">Buzón de Sugerencias</button>
+              <span>•</span>
+              <button onclick="window.openModal('register')" class="hover:text-white">Registrar Mi Negocio</button>
+            </div>
+          </div>
+        </footer>
+
+        <!-- MODALES DINÁMICOS -->
+        ${renderModals()}
+      `;
+
+      bindEvents();
+    }
+
+    // =========================================================================
+    // VISTA DETALLE DE NEGOCIO
+    // =========================================================================
+    function renderDetailView() {
+      const b = state.selectedBusiness;
+      if (!b) return '';
+      const status = getBusinessStatus(b.schedule);
+      const isFav = state.favorites.includes(b.id);
+      const isOrgullo = b.has_orgullo_cisneros || (b.avg_rating >= 4.6 && b.total_reviews >= 5);
+      const bizReviews = state.reviews.filter(r => r.business_id === b.id);
+
+      return `
+        <div class="max-w-4xl mx-auto space-y-4">
+          <button onclick="window.goBack()" class="text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-2xs">
+            ← Volver al Directorio
+          </button>
+
+          <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
+            <div class="relative h-64 sm:h-80 bg-slate-900">
+              <img src="${b.cover_images[0]}" class="w-full h-full object-cover" />
+              <button onclick="window.toggleFavorite('${b.id}')" class="absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-md shadow ${isFav ? 'bg-red-500 text-white' : 'bg-black/50 text-white'}">
+                <span class="text-lg">${isFav ? '❤️' : '🤍'}</span>
+              </button>
+            </div>
+
+            <div class="p-6 space-y-4">
+              <div>
+                <div class="flex items-center gap-2 flex-wrap mb-2">
+                  <span class="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-md">${b.category_name}</span>
+                  ${isOrgullo ? `
+                    <span class="inline-flex items-center gap-1 text-xs font-black text-amber-900 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full">
+                      🏅 Sello Orgullo Cisneros
+                    </span>
+                  ` : ''}
+                  <span class="text-xs font-bold px-2.5 py-0.5 rounded-md border ${status.color}">${status.label}</span>
+                </div>
+
+                <h2 class="text-2xl sm:text-3xl font-black text-slate-900">${b.name}</h2>
+                <p class="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">${b.description}</p>
+              </div>
+
+              <!-- Dirección Descriptiva Estricta -->
+              <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl text-xs sm:text-sm flex items-start gap-3">
+                <span class="text-2xl">📍</span>
+                <div>
+                  <span class="font-bold text-slate-900 block">Dirección en Cisneros:</span>
+                  <span class="text-slate-700 block mt-0.5">${b.written_address}</span>
+                  ${b.reference_point ? `<span class="text-slate-500 italic block mt-1 text-xs">Punto de referencia: ${b.reference_point}</span>` : ''}
+                </div>
+              </div>
+
+              <!-- Observaciones de Pedidos & Domicilios -->
+              ${(b.delivery_available || b.order_notes) ? `
+                <div class="bg-amber-50/70 border border-amber-200 p-3.5 rounded-2xl text-xs space-y-1">
+                  <div class="flex items-center gap-1.5 font-bold text-amber-950">
+                    <span>🛵</span> <span>Condiciones de Domicilios & Pedidos:</span>
+                  </div>
+                  <p class="text-amber-900">
+                    ${b.delivery_available 
+                      ? (b.delivery_cost === 0 
+                          ? '• Domicilio completamente <strong>Gratis</strong>.' 
+                          : `• Tarifa de domicilio: <strong>$${Number(b.delivery_cost).toLocaleString('es-CO')}</strong>.` + (b.delivery_min_order > 0 ? ` (¡Gratis a partir de $${Number(b.delivery_min_order).toLocaleString('es-CO')}!)` : '')) 
+                      : '• Solo atención en el local comercial (sin servicio a domicilio).'}
+                  </p>
+                  ${b.order_notes ? `<p class="text-slate-700 italic pt-0.5">• Nota del comerciante: "${b.order_notes}"</p>` : ''}
+                </div>
+              ` : ''}
+
+              <!-- Botones de Acción, Redes y Contacto -->
+              <div class="space-y-2 pt-1">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <a href="https://wa.me/57${b.whatsapp_number.replace(/\D/g, '')}?text=Hola%2C%20los%20contacto%20desde%20Cisneros%20Emprende" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm transition-colors">
+                    <span>💬</span> WhatsApp: ${b.whatsapp_number}
+                  </a>
+
+                  <button onclick="window.openModal('report')" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold py-3 px-4 rounded-2xl text-xs flex items-center justify-center gap-1 transition-colors">
+                    <span>⚠️</span> Reportar Información
+                  </button>
+                </div>
+
+                ${(b.website_url || b.instagram) ? `
+                  <div class="flex items-center gap-2 pt-1">
+                    ${b.website_url ? `
+                      <a href="${b.website_url}" target="_blank" class="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-xl text-[11px] flex items-center gap-1 shadow-2xs">
+                        <span>🌐</span> Sitio Web / Facebook
+                      </a>
+                    ` : ''}
+                    ${b.instagram ? `
+                      <a href="${b.instagram.startsWith('http') ? b.instagram : 'https://instagram.com/' + b.instagram.replace('@', '')}" target="_blank" class="bg-white hover:bg-slate-50 border border-slate-200 text-pink-700 font-bold px-3 py-1.5 rounded-xl text-[11px] flex items-center gap-1 shadow-2xs">
+                        <span>📸</span> ${b.instagram.startsWith('@') ? b.instagram : 'Instagram'}
+                      </a>
+                    ` : ''}
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+
+            <!-- Vitrina de Productos y Servicios -->
+            <div class="border-t border-slate-200 p-6 bg-slate-50/50 space-y-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="font-bold text-slate-900 text-base">🍽️ Menú, Productos y Servicios</h3>
+                  <p class="text-xs text-slate-500">Consulta precios y pide directamente por WhatsApp</p>
+                </div>
+              </div>
+
+              ${(!b.products || b.products.length === 0) ? `
+                <div class="p-6 text-center text-slate-400 bg-white rounded-2xl border border-slate-200">
+                  <span class="text-3xl block mb-1">🏷️</span>
+                  <p class="text-xs font-medium">Este negocio aún no tiene productos registrados en la lista.</p>
+                  <p class="text-[11px] text-slate-500 mt-1">Pregúntale directamente a su WhatsApp por disponibilidad.</p>
+                </div>
+              ` : `
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  ${b.products.map(p => `
+                    <div class="bg-white border border-slate-200 rounded-2xl p-3.5 shadow-2xs flex justify-between items-center gap-3">
+                      <div class="flex-1">
+                        <h4 class="font-bold text-slate-900 text-xs sm:text-sm">${p.name}</h4>
+                        <p class="text-[11px] text-slate-500 line-clamp-1">${p.description || ''}</p>
+                        <span class="text-emerald-700 font-black text-xs block mt-1">$${Number(p.price).toLocaleString('es-CO')}</span>
+                      </div>
+                      <a href="https://wa.me/57${b.whatsapp_number.replace(/\\D/g, '')}?text=Hola%2C%20quisiera%20pedir%20el%20producto%3A%20*${encodeURIComponent(p.name)}*%20que%20vi%20en%20Cisneros%20Emprende" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-2 rounded-xl text-xs flex items-center gap-1 shadow-xs transition-colors">
+                        <span>Pedir</span> <span>💬</span>
+                      </a>
+                    </div>
+                  `).join('')}
+                </div>
+              `}
+            </div>
+
+            <!-- Reseñas Verificadas de Google -->
+            <div class="border-t border-slate-200 p-6 space-y-4">
+              <div class="flex justify-between items-center">
+                <div>
+                  <h3 class="font-bold text-slate-900 text-base">⭐ Opiniones de la Comunidad (${bizReviews.length})</h3>
+                  <p class="text-xs text-slate-500">1 reseña verificada por cuenta de Google</p>
+                </div>
+                <button onclick="window.openModal('review')" class="bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-4 py-2 rounded-xl shadow-xs">
+                  ✍️ Dejar Reseña
+                </button>
+              </div>
+
+              <div class="space-y-3">
+                ${bizReviews.map(r => `
+                  <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs space-y-1">
+                    <div class="flex justify-between items-center font-bold text-slate-800">
+                      <span>${r.user_name}</span>
+                      <span class="text-amber-500">${'★'.repeat(r.rating)}</span>
+                    </div>
+                    <p class="text-slate-600">"${r.comment}"</p>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // MODALES: LOGIN, RESEÑAS, SUGERENCIAS, ADMIN, REGISTRO
+    // =========================================================================
+    function renderModals() {
+      let html = '';
+
+            // MODAL AUTENTICACIÓN GOOGLE ELEGANTE (SIN PROMPTS DEL NAVEGADOR)
+      if (state.modals.login) {
+        html += `
+          <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div class="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl border border-slate-100 animate-scale-up">
+              <!-- Encabezado -->
+              <div class="bg-gradient-to-r from-emerald-900 to-emerald-800 text-white p-5 flex justify-between items-center">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-9 h-9 rounded-xl bg-white/10 backdrop-blur-sm p-1 flex items-center justify-center border border-white/20">
+                    <img src="icons/icon-192.svg" class="w-full h-full object-contain rounded-lg" alt="Cisneros Emprende" onerror="this.src='public/icons/icon-192.svg'" />
+                  </div>
+                  <div>
+                    <h3 class="font-extrabold text-sm sm:text-base leading-tight">Acceso Emprendedor</h3>
+                    <p class="text-[10px] text-emerald-200">Cisneros Emprende</p>
+                  </div>
+                </div>
+                <button onclick="window.closeModal('login')" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-sm font-bold transition-colors">✕</button>
+              </div>
+
+              <!-- Contenido -->
+              <div class="p-6 space-y-4">
+                <div class="text-center space-y-1">
+                  <p class="text-slate-800 font-bold text-sm">Bienvenido a la red local</p>
+                  <p class="text-slate-500 text-xs">Ingresa tu correo de Google para registrar negocios o calificar.</p>
+                </div>
+
+                <form onsubmit="event.preventDefault(); window.submitGoogleLogin();" class="space-y-3">
+                  <div>
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1">Tu Cuenta de Google (@gmail.com)</label>
+                    <div class="relative">
+                      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="w-4 h-4 text-slate-400" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                      </div>
+                      <input id="google-email-input" type="email" required placeholder="tu-correo@gmail.com" value="andresc.15042010@gmail.com" class="w-full pl-9 pr-3 py-2.5 text-xs rounded-xl border border-slate-300 focus:outline-hidden focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 font-medium text-slate-800" />
+                    </div>
+                  </div>
+
+                  <button type="submit" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3 px-4 rounded-xl shadow-md flex items-center justify-center gap-2 text-xs transition-all active:scale-[0.98]">
+                    <span>Ingresar con Google</span>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                  </button>
+                </form>
+
+                <div class="text-[10px] text-center text-slate-400 bg-slate-50 p-2 rounded-xl border border-slate-100 flex items-center justify-center gap-1">
+                  <span>🔒</span> <span>Ingreso verificado y seguro</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // MODAL SUGERENCIAS
+      if (state.modals.suggestion) {
+        html += `
+          <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div class="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl">
+              <div class="bg-emerald-800 text-white p-4 flex justify-between items-center">
+                <h3 class="font-bold text-base">📬 Buzón de Sugerencias Ciudadano</h3>
+                <button onclick="window.closeModal('suggestion')" class="font-bold text-lg">✕</button>
+              </div>
+              <form onsubmit="event.preventDefault(); window.submitSuggestion();" class="p-5 space-y-3">
+                <p class="text-xs text-slate-600">Envía ideas para apoyar el comercio local o sugiere nuevos emprendimientos a Cami:</p>
+                <input id="sug-name" type="text" placeholder="Tu nombre" class="w-full text-xs p-2.5 rounded-xl border border-slate-300" />
+                <input id="sug-email" type="text" placeholder="WhatsApp o Correo" class="w-full text-xs p-2.5 rounded-xl border border-slate-300" />
+                <textarea id="sug-msg" rows="4" placeholder="Escribe aquí tu sugerencia..." class="w-full text-xs p-2.5 rounded-xl border border-slate-300 resize-none" required></textarea>
+                <button type="submit" class="w-full bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs shadow-sm">
+                  Enviar al Buzón
+                </button>
+              </form>
+            </div>
+          </div>
+        `;
+      }
+
+      // MODAL REGISTRO DE NEGOCIO (COMPLETO CON FOTOS, MENÚ, PRECIOS, DOMICILIOS Y REDES)
+      if (state.modals.register) {
+        html += `
+          <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+            <div class="bg-white rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl max-h-[92vh] flex flex-col">
+              <!-- Encabezado con identidad de Cisneros -->
+              <div class="bg-emerald-900 text-white px-5 py-4 flex justify-between items-center border-b border-emerald-800">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-lg bg-white p-0.5 flex items-center justify-center shadow-xs">
+                    <img src="icons/icon-192.svg" class="w-full h-full object-contain" alt="Cisneros" onerror="this.src='public/icons/icon-192.svg'" />
+                  </div>
+                  <div>
+                    <h3 class="font-extrabold text-sm sm:text-base leading-tight">Registrar Mi Emprendimiento</h3>
+                    <p class="text-[10px] text-emerald-200">Vitrina comercial 100% gratuita de Cisneros, Antioquia</p>
+                  </div>
+                </div>
+                <button onclick="window.closeModal('register')" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center font-bold text-sm transition-colors">✕</button>
+              </div>
+
+              <!-- Formulario modular con scroll -->
+              <form onsubmit="event.preventDefault(); window.submitBusiness();" class="p-5 overflow-y-auto space-y-4 text-xs">
+                
+                <!-- SECCIÓN 1: DATOS BÁSICOS -->
+                <div class="space-y-2">
+                  <label class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                    <span>📌</span> <span>Información Principal:</span>
+                  </label>
+                  <input id="reg-name" type="text" placeholder="Nombre del negocio (ej: Truchera El Trapiche, Panadería La Abuela)" class="w-full p-2.5 rounded-xl border border-slate-300 focus:border-emerald-600 focus:outline-none" required />
+                  
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div>
+                      <label class="block text-[11px] font-semibold text-slate-600 mb-1">Categoría del Comercio:</label>
+                      <select id="reg-cat" class="w-full p-2.5 rounded-xl border border-slate-300 bg-white focus:border-emerald-600 focus:outline-none">
+                        ${state.categories.map(c => `<option value="${c.slug}">${c.emoji} ${c.name}</option>`).join('')}
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-[11px] font-semibold text-slate-600 mb-1">WhatsApp para Pedidos/Clientes:</label>
+                      <input id="reg-wa" type="tel" placeholder="ej: 3101234567" class="w-full p-2.5 rounded-xl border border-slate-300 focus:border-emerald-600 focus:outline-none" required />
+                    </div>
+                  </div>
+
+                  <textarea id="reg-desc" rows="2" placeholder="Breve descripción de lo que ofreces, especialidades, historia o servicios..." class="w-full p-2.5 rounded-xl border border-slate-300 focus:border-emerald-600 focus:outline-none resize-none"></textarea>
+                </div>
+
+                <!-- SECCIÓN 2: LOGO Y FOTOS DEL LOCAL -->
+                <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2.5">
+                  <label class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                    <span>🖼️</span> <span>Logo y Fotos del Negocio / Local:</span>
+                  </label>
+                  <p class="text-[10px] text-slate-500">Pega enlaces de fotos de tu negocio, o usa el selector para cargar fotos desde tu celular/PC.</p>
+                  
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div>
+                      <label class="block text-[10px] font-semibold text-slate-600 mb-0.5">Foto de Portada / Fachada:</label>
+                      <input id="reg-cover" type="text" placeholder="https://... o sube abajo" class="w-full p-2 rounded-lg border border-slate-300 bg-white text-[11px]" />
+                      <input type="file" id="reg-cover-file" accept="image/*" class="mt-1 block w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100" />
+                    </div>
+                    <div>
+                      <label class="block text-[10px] font-semibold text-slate-600 mb-0.5">Logo del Negocio (Opcional):</label>
+                      <input id="reg-logo" type="text" placeholder="https://... o sube abajo" class="w-full p-2 rounded-lg border border-slate-300 bg-white text-[11px]" />
+                      <input type="file" id="reg-logo-file" accept="image/*" class="mt-1 block w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100" />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- SECCIÓN 3: DIRECCIÓN POR ESCRITO (CERO MAPAS) -->
+                <div class="bg-emerald-50/70 p-3.5 rounded-2xl border border-emerald-200/80 space-y-2">
+                  <label class="font-bold text-emerald-950 text-xs flex items-center gap-1.5">
+                    <span>📍</span> <span>Ubicación en Cisneros (100% Descriptiva):</span>
+                  </label>
+                  <input id="reg-addr" type="text" placeholder="Dirección exacta o Barrio (ej: Calle 19 # 20-14, Barrio El Uno)" class="w-full p-2.5 rounded-xl border border-slate-300 bg-white" required />
+                  <input id="reg-ref" type="text" placeholder="Punto de referencia clave (ej: diagonal a la Estación, junto al Túnel)" class="w-full p-2 rounded-lg border border-slate-300 bg-white" />
+                  <input id="reg-loc-photo" type="text" placeholder="Foto o video de la fachada/ubicación (Enlace de Facebook, TikTok o foto)" class="w-full p-2 rounded-lg border border-slate-300 bg-white text-[11px]" />
+                </div>
+
+                <!-- SECCIÓN 4: DOMICILIOS & HORARIOS -->
+                <div class="bg-amber-50/60 p-3.5 rounded-2xl border border-amber-200/80 space-y-2.5">
+                  <label class="font-bold text-amber-950 text-xs flex items-center gap-1.5">
+                    <span>🛵</span> <span>Servicio de Domicilios & Horario:</span>
+                  </label>
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div>
+                      <label class="block text-[10px] font-semibold text-slate-600 mb-0.5">¿Haces domicilios?:</label>
+                      <select id="reg-has-delivery" class="w-full p-2 rounded-lg border border-slate-300 bg-white">
+                        <option value="si">✅ Sí, cuenta con domicilios</option>
+                        <option value="no">❌ Solo atención en local</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-[10px] font-semibold text-slate-600 mb-0.5">Costo de Domicilio ($ COP):</label>
+                      <input id="reg-delivery-cost" type="number" placeholder="0 = Gratis o ej: 3000" value="0" class="w-full p-2 rounded-lg border border-slate-300 bg-white" />
+                    </div>
+                    <div>
+                      <label class="block text-[10px] font-semibold text-slate-600 mb-0.5">Gratis a partir de ($ COP):</label>
+                      <input id="reg-delivery-min" type="number" placeholder="ej: 25000 (Opcional)" class="w-full p-2 rounded-lg border border-slate-300 bg-white" />
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-2 pt-1">
+                    <div>
+                      <label class="block text-[10px] font-semibold text-slate-600 mb-0.5">Hora de Apertura:</label>
+                      <input id="reg-open" type="time" value="08:00" class="w-full p-2 rounded-lg border border-slate-300 bg-white" />
+                    </div>
+                    <div>
+                      <label class="block text-[10px] font-semibold text-slate-600 mb-0.5">Hora de Cierre:</label>
+                      <input id="reg-close" type="time" value="20:00" class="w-full p-2 rounded-lg border border-slate-300 bg-white" />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- SECCIÓN 5: PRODUCTOS / MENÚ CON PRECIOS -->
+                <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2.5">
+                  <div class="flex items-center justify-between">
+                    <label class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                      <span>🍽️</span> <span>Menú, Productos o Servicios:</span>
+                    </label>
+                    <button type="button" onclick="window.addDraftProduct()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-2.5 py-1 rounded-lg text-[11px] shadow-2xs flex items-center gap-1">
+                      <span>+</span> Agregar Plato/Producto
+                    </button>
+                  </div>
+                  <p class="text-[10px] text-slate-500">Agrega tus productos con nombre y precio para que los clientes puedan pedirlos fácilmente.</p>
+
+                  <!-- Lista de productos añadidos -->
+                  <div id="draft-products-list" class="space-y-1.5">
+                    ${(state.menuDraft && state.menuDraft.length > 0) ? state.menuDraft.map((p, idx) => `
+                      <div class="bg-white p-2.5 rounded-xl border border-slate-200 flex items-center justify-between gap-2 shadow-2xs">
+                        <div class="flex-1">
+                          <span class="font-bold text-slate-800 block">${p.name}</span>
+                          <span class="text-[10px] text-emerald-700 font-bold">$${Number(p.price).toLocaleString('es-CO')}</span>
+                          ${p.description ? `<span class="text-[10px] text-slate-500 block">${p.description}</span>` : ''}
+                        </div>
+                        <button type="button" onclick="window.removeDraftProduct(${idx})" class="text-rose-600 hover:text-rose-800 font-bold text-xs p-1">🗑️</button>
+                      </div>
+                    `).join('') : `
+                      <div class="bg-white p-3 rounded-xl border border-dashed border-slate-300 text-center text-slate-400 text-[11px]">
+                        No has agregado productos aún. Toca "+ Agregar Plato/Producto" arriba.
+                      </div>
+                    `}
+                  </div>
+                </div>
+
+                <!-- SECCIÓN 6: REDES SOCIALES & OBSERVACIONES -->
+                <div class="space-y-2">
+                  <label class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                    <span>🌐</span> <span>Sitio Web & Redes Sociales (Opcional):</span>
+                  </label>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <input id="reg-web" type="url" placeholder="Página Web o Facebook (ej: https://facebook.com/...)" class="w-full p-2.5 rounded-xl border border-slate-300" />
+                    <input id="reg-insta" type="text" placeholder="Usuario o link de Instagram (ej: @minegocio)" class="w-full p-2.5 rounded-xl border border-slate-300" />
+                  </div>
+                  <textarea id="reg-notes" rows="2" placeholder="Observaciones para pedidos (ej: 'Pedir con 1 hora de anticipación', 'Aceptamos Nequi, Bancolombia y Efectivo')..." class="w-full p-2.5 rounded-xl border border-slate-300 resize-none"></textarea>
+                </div>
+
+                <!-- AVISO INSTITUCIONAL -->
+                <div class="text-[11px] text-slate-600 bg-emerald-50 p-3 rounded-2xl border border-emerald-200 flex items-start gap-2">
+                  <span class="text-base">🛡️</span>
+                  <div>
+                    <span class="font-bold text-emerald-950 block">Revisión de Seguridad:</span>
+                    Todo negocio nuevo se registra en estado <strong>Pendiente</strong> para revisión de Cami antes de publicarse. Una vez aprobado, tus actualizaciones serán automáticas.
+                  </div>
+                </div>
+
+                <!-- BOTÓN DE ENVÍO -->
+                <button type="submit" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold py-3.5 rounded-2xl text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2">
+                  <span>🚀</span> <span>Registrar y Publicar Mi Emprendimiento</span>
+                </button>
+              </form>
+            </div>
+          </div>
+        `;
+      }
+
+      // MODAL RESEÑA
+      if (state.modals.review) {
+        html += `
+          <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div class="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl">
+              <div class="bg-emerald-800 text-white p-4 flex justify-between items-center">
+                <h3 class="font-bold text-base">✍️ Dejar Reseña Verificada</h3>
+                <button onclick="window.closeModal('review')" class="font-bold text-lg">✕</button>
+              </div>
+              <form onsubmit="event.preventDefault(); window.submitReview();" class="p-5 space-y-3">
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Calificación:</label>
+                  <select id="rev-rating" class="w-full text-xs p-2 rounded-xl border border-slate-300 bg-white">
+                    <option value="5">⭐⭐⭐⭐⭐ 5 Estrellas (Excelente)</option>
+                    <option value="4">⭐⭐⭐⭐ 4 Estrellas (Muy Bueno)</option>
+                    <option value="3">⭐⭐⭐ 3 Estrellas (Aceptable)</option>
+                    <option value="2">⭐⭐ 2 Estrellas (Regular)</option>
+                    <option value="1">⭐ 1 Estrella (Malo)</option>
+                  </select>
+                </div>
+                <textarea id="rev-comment" rows="3" placeholder="Escribe tu opinión honesta sobre la atención o producto..." class="w-full text-xs p-2.5 rounded-xl border border-slate-300 resize-none" required></textarea>
+                <div class="text-[11px] text-slate-500 bg-amber-50 p-2.5 rounded-xl border border-amber-200 text-amber-800">
+                  🔒 Limitado estrictamente a <strong>1 reseña por cuenta de Google</strong> por negocio para evitar spam.
+                </div>
+                <button type="submit" class="w-full bg-amber-500 text-white font-bold py-2.5 rounded-xl text-xs shadow-sm">
+                  Publicar Reseña
+                </button>
+              </form>
+            </div>
+          </div>
+        `;
+      }
+
+      // MODAL PANEL ADMIN (CAMI)
+      if (state.modals.admin) {
+        const pending = state.businesses.filter(b => b.status === 'pending');
+        html += `
+          <div class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+              <div class="bg-emerald-900 text-white p-4 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                  <span class="text-xl">👑</span>
+                  <h3 class="font-bold text-base">Panel de Administradora (Cami)</h3>
+                </div>
+                <button onclick="window.closeModal('admin')" class="font-bold text-lg">✕</button>
+              </div>
+              <div class="p-5 overflow-y-auto flex-1 space-y-4">
+                <div>
+                  <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                    ⏳ Negocios Pendientes de Aprobación (${pending.length}):
+                  </h4>
+                  ${pending.length === 0 ? `
+                    <p class="text-xs text-slate-400 italic">No hay comercios pendientes por aprobar.</p>
+                  ` : `
+                    <div class="space-y-2">
+                      ${pending.map(b => `
+                        <div class="border border-slate-200 p-3 rounded-xl flex justify-between items-center text-xs">
+                          <div>
+                            <span class="font-bold text-slate-900">${b.name}</span>
+                            <span class="text-slate-500 block">📍 ${b.written_address}</span>
+                          </div>
+                          <div class="flex gap-2">
+                            <button onclick="window.approveBusiness('${b.id}')" class="bg-emerald-700 text-white px-3 py-1 rounded-lg font-bold">Aprobar ✓</button>
+                            <button onclick="window.rejectBusiness('${b.id}')" class="bg-rose-100 text-rose-700 px-2 py-1 rounded-lg font-bold">Rechazar</button>
+                          </div>
+                        </div>
+                      `).join('')}
+                    </div>
+                  `}
+                </div>
+
+                <div class="pt-3 border-t">
+                  <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                    ⭐ Destacado de la Semana (Banner Superior):
+                  </h4>
+                  <div class="space-y-1.5 max-h-48 overflow-y-auto">
+                    ${state.businesses.filter(b => b.status === 'approved').map(b => `
+                      <div class="flex justify-between items-center p-2 rounded-lg border border-slate-100 text-xs">
+                        <span class="font-medium">${b.name}</span>
+                        <button onclick="window.setFeatured('${b.id}')" class="text-xs font-bold px-2.5 py-1 rounded-lg ${b.is_featured ? 'bg-amber-400 text-amber-950' : 'bg-slate-100 text-slate-600'}">
+                          ${b.is_featured ? '⭐ Destacado Activo' : 'Hacer Destacado'}
+                        </button>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+
+                <div class="pt-3 border-t">
+                  <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                    📬 Mensajes en el Buzón Ciudadano (${state.suggestions.length}):
+                  </h4>
+                  <div class="space-y-2">
+                    ${state.suggestions.map(s => `
+                      <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs">
+                        <div class="flex justify-between font-bold text-slate-800">
+                          <span>${s.sender_name} (${s.sender_email || 'Sin contacto'})</span>
+                          <span class="text-slate-400 font-normal">${s.created_at}</span>
+                        </div>
+                        <p class="text-slate-600 mt-1">"${s.message}"</p>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // MODAL REPORTES
+      if (state.modals.report) {
+        const b = state.selectedBusiness;
+        html += `
+          <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div class="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl">
+              <div class="bg-rose-800 text-white p-4 flex justify-between items-center">
+                <h3 class="font-bold text-base">⚠️ Reportar Información</h3>
+                <button onclick="window.closeModal('report')" class="font-bold text-lg">✕</button>
+              </div>
+              <form onsubmit="event.preventDefault(); window.submitReport();" class="p-5 space-y-3">
+                <p class="text-xs text-slate-600">Negocio: <strong>${b?.name}</strong></p>
+                <select id="rep-reason" class="w-full text-xs p-2.5 rounded-xl border border-slate-300 bg-white">
+                  <option value="Dirección incorrecta">📍 Dirección errada</option>
+                  <option value="Negocio cerrado">🔒 Negocio cerrado definitivamente</option>
+                  <option value="Teléfono equivocado">📱 Teléfono o WhatsApp equivocado</option>
+                  <option value="Otro motivo">ℹ️ Otro motivo</option>
+                </select>
+                <textarea id="rep-detail" rows="3" placeholder="Describe brevemente el error..." class="w-full text-xs p-2.5 rounded-xl border border-slate-300 resize-none" required></textarea>
+                <button type="submit" class="w-full bg-rose-700 text-white font-bold py-2.5 rounded-xl text-xs shadow-sm">
+                  Enviar Reporte a Moderación
+                </button>
+              </form>
+            </div>
+          </div>
+        `;
+      }
+
+      return html;
+    }
+
+    // =========================================================================
+    // EVENTOS Y ACCIONES GLOBALES
+    // =========================================================================
+    window.selectBusiness = function(id) {
+      const b = state.businesses.find(item => item.id === id);
+      if (b) {
+        state.selectedBusiness = b;
+        state.activeView = 'detail';
+        renderApp();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    };
+
+    window.goBack = function() {
+      state.activeView = 'home';
+      renderApp();
+    };
+
+    window.setCategory = function(slug) {
+      state.selectedCategory = slug;
+      renderApp();
+    };
+
+    window.toggleFavorite = function(id) {
+      if (state.favorites.includes(id)) {
+        state.favorites = state.favorites.filter(item => item !== id);
+      } else {
+        state.favorites.push(id);
+      }
+      saveState();
+      renderApp();
+    };
+
+    window.addToCart = function(productId) {
+      const b = state.selectedBusiness;
+      if (!b) return;
+
+      if (state.currentBusinessInCart && state.currentBusinessInCart.id !== b.id) {
+        if (state.cart.length > 0) {
+          if (!confirm(`Tienes productos de "${state.currentBusinessInCart.name}". ¿Deseas vaciar el carrito para pedir en "${b.name}"?`)) {
+            return;
+          }
+          state.cart = [];
+        }
+      }
+
+      state.currentBusinessInCart = b;
+      const product = b.products.find(p => p.id === productId);
+      if (product) {
+        const existing = state.cart.find(i => i.id === product.id);
+        if (existing) {
+          existing.quantity += 1;
+        } else {
+          state.cart.push({ ...product, quantity: 1 });
+        }
+        saveState();
+        renderApp();
+      }
+    };
+
+    window.updateCartQty = function(productId, qty) {
+      if (qty <= 0) {
+        state.cart = state.cart.filter(i => i.id !== productId);
+      } else {
+        const item = state.cart.find(i => i.id === productId);
+        if (item) item.quantity = qty;
+      }
+      if (state.cart.length === 0) state.currentBusinessInCart = null;
+      saveState();
+      renderApp();
+    };
+
+    window.sendWhatsAppOrder = function() {
+      const b = state.currentBusinessInCart || state.selectedBusiness;
+      const addr = document.getElementById('cart-addr')?.value.trim();
+      const ref = document.getElementById('cart-ref')?.value.trim();
+      const pay = document.getElementById('cart-pay')?.value;
+      const name = document.getElementById('cart-name')?.value.trim();
+
+      if (!addr) {
+        alert('Por favor escribe tu dirección en Cisneros para que te puedan entregar el pedido.');
+        return;
+      }
+
+      const url = getWhatsAppUrl(b, state.cart, { address: addr, reference: ref, paymentMethod: pay, name: name });
+      window.open(url, '_blank');
+      state.cart = [];
+      state.currentBusinessInCart = null;
+      state.modals.cart = false;
+      saveState();
+      renderApp();
+    };
+
+    window.openModal = function(name) {
+      if (name === 'register' && !state.currentUser) {
+        alert('🔐 Para registrar tu emprendimiento en Cisneros Emprende, primero debes ingresar con tu cuenta de Google.');
+        state.modals.login = true;
+        renderApp();
+        return;
+      }
+      state.modals[name] = true;
+      renderApp();
+    };
+
+    window.closeModal = function(name) {
+      state.modals[name] = false;
+      renderApp();
+    };
+
+    window.submitSuggestion = function() {
+      const name = document.getElementById('sug-name')?.value.trim();
+      const email = document.getElementById('sug-email')?.value.trim();
+      const msg = document.getElementById('sug-msg')?.value.trim();
+
+      state.suggestions.unshift({
+        id: 'sug-' + Date.now(),
+        sender_name: name || 'Ciudadano Cisneros',
+        sender_email: email,
+        message: msg,
+        created_at: new Date().toISOString().split('T')[0]
+      });
+      saveState();
+      alert('¡Muchas gracias! Tu sugerencia ha sido recibida.');
+      state.modals.suggestion = false;
+      renderApp();
+    };
+
+    window.addDraftProduct = function() {
+      const name = prompt('Nombre del plato, producto o servicio:');
+      if (!name || !name.trim()) return;
+      const priceStr = prompt('Precio en pesos colombianos (COP):', '10000');
+      const price = Number(priceStr?.replace(/\D/g, '') || 0);
+      const desc = prompt('Breve descripción o ingredientes (opcional):') || '';
+
+      if (!state.menuDraft) state.menuDraft = [];
+      state.menuDraft.push({
+        id: 'p-' + Date.now(),
+        name: name.trim(),
+        price: price,
+        description: desc.trim()
+      });
+      renderApp();
+    };
+
+    window.removeDraftProduct = function(index) {
+      if (state.menuDraft && state.menuDraft[index]) {
+        state.menuDraft.splice(index, 1);
+        renderApp();
+      }
+    };
+
+    window.submitBusiness = function() {
+      const name = document.getElementById('reg-name')?.value.trim();
+      const cat = document.getElementById('reg-cat')?.value;
+      const desc = document.getElementById('reg-desc')?.value.trim();
+      const addr = document.getElementById('reg-addr')?.value.trim();
+      const ref = document.getElementById('reg-ref')?.value.trim();
+      const wa = document.getElementById('reg-wa')?.value.trim();
+      const coverUrl = document.getElementById('reg-cover')?.value.trim();
+      const logoUrl = document.getElementById('reg-logo')?.value.trim();
+      const locPhoto = document.getElementById('reg-loc-photo')?.value.trim();
+      const hasDel = document.getElementById('reg-has-delivery')?.value === 'si';
+      const delCost = Number(document.getElementById('reg-delivery-cost')?.value || 0);
+      const delMin = Number(document.getElementById('reg-delivery-min')?.value || 0);
+      const openTime = document.getElementById('reg-open')?.value || '08:00';
+      const closeTime = document.getElementById('reg-close')?.value || '20:00';
+      const web = document.getElementById('reg-web')?.value.trim();
+      const insta = document.getElementById('reg-insta')?.value.trim();
+      const notes = document.getElementById('reg-notes')?.value.trim();
+
+      const defaultCover = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800';
+      const covers = coverUrl ? [coverUrl] : [defaultCover];
+      if (locPhoto) covers.push(locPhoto);
+
+      const newBiz = {
+        id: 'biz-' + Date.now(),
+        owner_id: state.currentUser?.email || 'local',
+        name,
+        category_slug: cat,
+        category_name: state.categories.find(c => c.slug === cat)?.name || 'Comercio',
+        description: desc,
+        written_address: addr,
+        reference_point: ref,
+        whatsapp_number: wa,
+        logo_url: logoUrl || null,
+        website_url: web || null,
+        instagram: insta || null,
+        order_notes: notes || null,
+        delivery_available: hasDel,
+        delivery_cost: delCost,
+        delivery_min_order: delMin,
+        status: (state.currentUser?.role === 'admin') ? 'approved' : 'pending',
+        is_featured: false,
+        avg_rating: 0,
+        total_reviews: 0,
+        total_favorites: 0,
+        cover_images: covers,
+        schedule: {
+          lunes: { open: openTime, close: closeTime, closed: false },
+          martes: { open: openTime, close: closeTime, closed: false },
+          miercoles: { open: openTime, close: closeTime, closed: false },
+          jueves: { open: openTime, close: closeTime, closed: false },
+          viernes: { open: openTime, close: closeTime, closed: false },
+          sabado: { open: openTime, close: closeTime, closed: false },
+          domingo: { open: openTime, close: closeTime, closed: false }
+        },
+        products: state.menuDraft ? [...state.menuDraft] : []
+      };
+
+      state.businesses.push(newBiz);
+      state.menuDraft = []; // reset draft
+      saveState();
+
+      if (newBiz.status === 'approved') {
+        alert('¡Excelente Cami! Al ser administradora, tu negocio ha quedado Aprobado y publicado de inmediato en la vitrina.');
+      } else {
+        alert('¡Emprendimiento registrado con éxito! Ha quedado en estado "Pendiente" para revisión y aprobación de Cami.');
+      }
+
+      state.modals.register = false;
+      renderApp();
+    };
+
+    window.submitReview = function() {
+      const b = state.selectedBusiness;
+      const rating = Number(document.getElementById('rev-rating')?.value || 5);
+      const comment = document.getElementById('rev-comment')?.value.trim();
+
+      // Validación de 1 reseña por usuario por negocio
+      const existing = state.reviews.find(r => r.business_id === b.id && r.user_name === state.currentUser?.full_name);
+      if (existing) {
+        alert('Ya has dejado una reseña para este negocio. Para evitar spam, solo se permite 1 reseña por cuenta de Google.');
+        return;
+      }
+
+      state.reviews.unshift({
+        id: 'rev-' + Date.now(),
+        business_id: b.id,
+        user_name: state.currentUser?.full_name || 'Usuario Cisneros',
+        rating,
+        comment,
+        created_at: new Date().toISOString().split('T')[0]
+      });
+
+      // Recalcular promedio del negocio
+      const bizReviews = state.reviews.filter(r => r.business_id === b.id);
+      const avg = (bizReviews.reduce((sum, r) => sum + r.rating, 0) / bizReviews.length).toFixed(1);
+      b.avg_rating = Number(avg);
+      b.total_reviews = bizReviews.length;
+
+      saveState();
+      alert('¡Tu reseña ha sido publicada con éxito!');
+      state.modals.review = false;
+      renderApp();
+    };
+
+    window.submitReport = function() {
+      const b = state.selectedBusiness;
+      const reason = document.getElementById('rep-reason')?.value;
+      const detail = document.getElementById('rep-detail')?.value.trim();
+
+      state.reports.unshift({
+        id: 'rep-' + Date.now(),
+        business_id: b.id,
+        business_name: b.name,
+        reason,
+        details: detail,
+        created_at: new Date().toISOString().split('T')[0]
+      });
+      saveState();
+      alert('Reporte enviado a moderación. Gracias por ayudar a la comunidad de Cisneros.');
+      state.modals.report = false;
+      renderApp();
+    };
+
+    window.approveBusiness = function(id) {
+      const b = state.businesses.find(item => item.id === id);
+      if (b) {
+        b.status = 'approved';
+        saveState();
+        renderApp();
+      }
+    };
+
+    window.rejectBusiness = function(id) {
+      state.businesses = state.businesses.filter(item => item.id !== id);
+      saveState();
+      renderApp();
+    };
+
+    window.setFeatured = function(id) {
+      state.businesses.forEach(b => {
+        b.is_featured = (b.id === id);
+      });
+      saveState();
+      renderApp();
+    };
+
+        // Autenticación con Google elegante (sin ventana prompt() nativa)
+    window.submitGoogleLogin = function() {
+      const input = document.getElementById('google-email-input');
+      const email = (input ? input.value : '').trim().toLowerCase();
+      if (!email || !email.includes('@')) {
+        alert('Por favor ingresa un correo de Google válido.');
+        return;
+      }
+
+      const isAdmin = email.includes('andresc.15042010@gmail.com');
+
+      state.currentUser = {
+        email: email,
+        full_name: isAdmin ? 'Cami (Admin)' : email.split('@')[0],
+        role: isAdmin ? 'admin' : 'user',
+        avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
+      };
+
+      saveState();
+      state.modals.login = false;
+      renderApp();
+
+      if (isAdmin) {
+        alert('Sesion iniciada con Google. Bienvenido/a al Panel de Administradora.');
+      } else {
+        alert('Sesion iniciada con Google. Ya puedes registrar tu emprendimiento o calificar.');
+      }
+    };
+
+    window.loginWithGoogle = function() {
+      window.openModal('login');
+    };
+
+    function bindEvents() {
+      const brand = document.getElementById('nav-brand');
+      if (brand) brand.onclick = () => { state.activeView = 'home'; renderApp(); };
+
+      const btnSug = document.getElementById('btn-suggestion');
+      if (btnSug) btnSug.onclick = () => window.openModal('suggestion');
+
+      const btnReg = document.getElementById('btn-register-biz');
+      if (btnReg) btnReg.onclick = () => window.openModal('register');
+
+      const btnAdm = document.getElementById('btn-admin-panel');
+      if (btnAdm) btnAdm.onclick = () => window.openModal('admin');
+
+      const searchDesktop = document.getElementById('search-input');
+      if (searchDesktop) {
+        searchDesktop.oninput = (e) => {
+          state.searchTerm = e.target.value;
+          renderApp();
+        };
+      }
+
+      const searchMobile = document.getElementById('search-input-mobile');
+      if (searchMobile) {
+        searchMobile.oninput = (e) => {
+          state.searchTerm = e.target.value;
+          renderApp();
+        };
+      }
+
+      const btnAuth = document.getElementById('btn-toggle-auth');
+      if (btnAuth) {
+        btnAuth.onclick = () => {
+          if (state.currentUser) {
+            state.currentUser = null;
+            saveState();
+            renderApp();
+          } else {
+            window.openModal('login');
+          }
+        };
+      }
+    }
+
+    // =========================================================================
+    // REGISTRO DE SERVICE WORKER PARA INSTALABILIDAD PWA
+    // =========================================================================
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('[PWA] Service Worker registrado con éxito:', reg.scope))
+          .catch(err => console.log('[PWA] Service Worker no registrado (normal en preview local):', err));
+      });
+    }
+
+    // Arranque inicial
+    renderApp();
+  </script>
+</body>
+</html>
