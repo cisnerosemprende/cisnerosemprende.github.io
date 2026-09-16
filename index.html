@@ -602,19 +602,19 @@
     function renderModals() {
       let html = '';
 
-                  // MODAL AUTENTICACIÓN: LOGIN, REGISTRO Y VERIFICACIÓN POR CÓDIGO EMAIL
+                  // MODAL AUTENTICACIÓN ELEGANTE Y MODERNO (SIN POPUPS NATIVOS)
       if (state.modals.login) {
         const isOtp = state.authTab === 'otp';
         const isRegister = state.authTab === 'register';
         const isLogin = state.authTab === 'login';
 
         html += `
-          <div class="fixed inset-0 z-50 bg-black/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-fade-in">
+          <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
             <div class="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl border border-slate-100">
               <!-- Encabezado con identidad de Cisneros Emprende -->
-              <div class="bg-gradient-to-r from-emerald-900 via-emerald-800 to-emerald-900 text-white p-4 sm:p-5 flex justify-between items-center">
+              <div class="bg-gradient-to-r from-emerald-900 via-emerald-800 to-emerald-900 text-white p-4.5 flex justify-between items-center">
                 <div class="flex items-center gap-2.5">
-                  <div class="w-9 h-9 rounded-xl bg-white/10 backdrop-blur-sm p-1 flex items-center justify-center border border-white/20 shadow-xs">
+                  <div class="w-9 h-9 rounded-xl bg-white/10 p-1 flex items-center justify-center border border-white/20">
                     <img src="icons/icon-192.svg" class="w-full h-full object-contain rounded-lg" alt="Cisneros Emprende" onerror="this.src='public/icons/icon-192.svg'" />
                   </div>
                   <div>
@@ -625,15 +625,22 @@
                 <button onclick="window.closeModal('login')" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-sm font-bold transition-colors">✕</button>
               </div>
 
-              <!-- Pestañas (solo si no estamos en paso de código) -->
+              <!-- Pestañas -->
               ${!isOtp ? `
                 <div class="flex border-b border-slate-200 bg-slate-50 text-xs font-bold">
                   <button onclick="window.setAuthTab('login')" class="flex-1 py-3 text-center transition-colors border-b-2 ${isLogin ? 'border-emerald-700 text-emerald-800 bg-white' : 'border-transparent text-slate-500 hover:text-slate-800'}">
                     Iniciar Sesión
                   </button>
                   <button onclick="window.setAuthTab('register')" class="flex-1 py-3 text-center transition-colors border-b-2 ${isRegister ? 'border-emerald-700 text-emerald-800 bg-white' : 'border-transparent text-slate-500 hover:text-slate-800'}">
-                    Crear Cuenta
+                    Registrarse
                   </button>
+                </div>
+              ` : ''}
+
+              <!-- Mensaje de estado en el modal si existe -->
+              ${state.authNotice ? `
+                <div class="mx-5 mt-4 p-2.5 rounded-xl text-[11px] font-medium ${state.authNoticeType === 'error' ? 'bg-rose-50 text-rose-800 border border-rose-200' : 'bg-emerald-50 text-emerald-800 border border-emerald-200'}">
+                  ${state.authNotice}
                 </div>
               ` : ''}
 
@@ -641,34 +648,33 @@
               <div class="p-5 sm:p-6 space-y-4">
                 ${isOtp ? `
                   <!-- PASO DE VERIFICACIÓN DE CÓDIGO OTP -->
-                  <div class="text-center space-y-1.5">
-                    <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 mx-auto flex items-center justify-center text-xl font-bold shadow-xs">
+                  <div class="text-center space-y-1">
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 mx-auto flex items-center justify-center text-xl font-bold shadow-2xs">
                       ✉️
                     </div>
                     <h4 class="font-bold text-sm text-slate-800">Verifica tu Correo</h4>
                     <p class="text-[11px] text-slate-500 leading-tight">
-                      Enviamos un código de verificación a:<br>
+                      Código de 6 dígitos enviado a:<br>
                       <strong class="text-slate-700">${state.authPendingEmail}</strong>
                     </p>
                   </div>
 
                   <form onsubmit="event.preventDefault(); window.verifyEmailOtp();" class="space-y-3">
                     <div>
-                      <label class="block text-[11px] font-bold text-slate-600 mb-1 text-center">Ingresa el código recibido</label>
-                      <input id="auth-otp-code" type="text" required maxlength="8" placeholder="Ej: 123456" autofocus class="w-full text-center text-lg tracking-widest font-black py-2.5 px-3 rounded-xl border border-slate-300 focus:outline-hidden focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 text-slate-800" />
+                      <input id="auth-otp-code" type="text" required maxlength="8" placeholder="Código de 6 dígitos" autofocus class="w-full text-center text-base tracking-widest font-black py-2.5 px-3 rounded-xl border border-slate-300 focus:outline-hidden focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 text-slate-800" />
                     </div>
 
                     <button type="submit" ${state.authLoading ? 'disabled' : ''} class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3 rounded-xl shadow-md flex items-center justify-center gap-2 text-xs transition-all active:scale-[0.98] disabled:opacity-50">
-                      <span>${state.authLoading ? 'Verificando...' : 'Confirmar y Entrar'}</span>
+                      <span>${state.authLoading ? 'Verificando código...' : 'Confirmar y Acceder'}</span>
                     </button>
                   </form>
 
                   <div class="flex justify-between items-center text-[10px] text-slate-500 pt-1">
-                    <button onclick="window.resendOtp()" class="text-emerald-700 font-bold hover:underline">Reenviar código</button>
-                    <button onclick="window.setAuthTab('login')" class="text-slate-400 hover:underline">Cambiar correo</button>
+                    <button type="button" onclick="window.resendOtp()" class="text-emerald-700 font-bold hover:underline">Reenviar código</button>
+                    <button type="button" onclick="window.setAuthTab('login')" class="text-slate-400 hover:underline">Cambiar correo</button>
                   </div>
                 ` : isRegister ? `
-                  <!-- FORMULARIO DE REGISTRO CON VERIFICACIÓN -->
+                  <!-- FORMULARIO DE REGISTRO -->
                   <div class="text-center space-y-1">
                     <p class="text-slate-800 font-bold text-sm">Crea tu cuenta ciudadana</p>
                     <p class="text-slate-500 text-[11px]">Recibirás un código de confirmación en tu correo.</p>
@@ -677,22 +683,21 @@
                   <form onsubmit="event.preventDefault(); window.submitRegister();" class="space-y-3">
                     <div>
                       <label class="block text-[11px] font-bold text-slate-600 mb-1">Nombre Completo</label>
-                      <input id="reg-name" type="text" required placeholder="Tu nombre y apellido" class="w-full py-2.5 px-3 text-xs rounded-xl border border-slate-300 focus:outline-hidden focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 text-slate-800" />
+                      <input id="reg-name" type="text" required placeholder="Tu nombre y apellido" class="w-full py-2.5 px-3 text-xs rounded-xl border border-slate-300 focus:outline-hidden focus:border-emerald-600 text-slate-800" />
                     </div>
 
                     <div>
                       <label class="block text-[11px] font-bold text-slate-600 mb-1">Correo Electrónico</label>
-                      <input id="reg-email" type="email" required placeholder="ejemplo@gmail.com" class="w-full py-2.5 px-3 text-xs rounded-xl border border-slate-300 focus:outline-hidden focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 text-slate-800" />
+                      <input id="reg-email" type="email" required placeholder="ejemplo@gmail.com" class="w-full py-2.5 px-3 text-xs rounded-xl border border-slate-300 focus:outline-hidden focus:border-emerald-600 text-slate-800" />
                     </div>
 
                     <div>
                       <label class="block text-[11px] font-bold text-slate-600 mb-1">Crea una Contraseña</label>
-                      <input id="reg-password" type="password" required minlength="6" placeholder="Mínimo 6 caracteres" class="w-full py-2.5 px-3 text-xs rounded-xl border border-slate-300 focus:outline-hidden focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 text-slate-800" />
+                      <input id="reg-password" type="password" required minlength="6" placeholder="Mínimo 6 caracteres" class="w-full py-2.5 px-3 text-xs rounded-xl border border-slate-300 focus:outline-hidden focus:border-emerald-600 text-slate-800" />
                     </div>
 
                     <button type="submit" ${state.authLoading ? 'disabled' : ''} class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3 rounded-xl shadow-md flex items-center justify-center gap-2 text-xs transition-all active:scale-[0.98] disabled:opacity-50">
                       <span>${state.authLoading ? 'Enviando código...' : 'Registrarme y Enviar Código'}</span>
-                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                     </button>
                   </form>
                 ` : `
@@ -705,40 +710,23 @@
                   <form onsubmit="event.preventDefault(); window.submitEmailPasswordLogin();" class="space-y-3">
                     <div>
                       <label class="block text-[11px] font-bold text-slate-600 mb-1">Correo Electrónico</label>
-                      <input id="login-email" type="email" required placeholder="ejemplo@gmail.com" class="w-full py-2.5 px-3 text-xs rounded-xl border border-slate-300 focus:outline-hidden focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 text-slate-800" />
+                      <input id="login-email" type="email" required placeholder="ejemplo@gmail.com" class="w-full py-2.5 px-3 text-xs rounded-xl border border-slate-300 focus:outline-hidden focus:border-emerald-600 text-slate-800" />
                     </div>
 
                     <div>
-                      <div class="flex justify-between items-center mb-1">
-                        <label class="block text-[11px] font-bold text-slate-600">Contraseña</label>
-                        <button type="button" onclick="window.sendLoginOtpCode()" class="text-[10px] text-emerald-700 font-bold hover:underline">¿Entrar con código?</button>
-                      </div>
-                      <input id="login-password" type="password" required placeholder="Tu contraseña" class="w-full py-2.5 px-3 text-xs rounded-xl border border-slate-300 focus:outline-hidden focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 text-slate-800" />
+                      <label class="block text-[11px] font-bold text-slate-600 mb-1">Contraseña</label>
+                      <input id="login-password" type="password" required placeholder="Tu contraseña" class="w-full py-2.5 px-3 text-xs rounded-xl border border-slate-300 focus:outline-hidden focus:border-emerald-600 text-slate-800" />
                     </div>
 
                     <button type="submit" ${state.authLoading ? 'disabled' : ''} class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3 rounded-xl shadow-md flex items-center justify-center gap-2 text-xs transition-all active:scale-[0.98] disabled:opacity-50">
-                      <span>${state.authLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}</span>
+                      <span>${state.authLoading ? 'Verificando...' : 'Iniciar Sesión'}</span>
                     </button>
                   </form>
                 `}
 
-                <!-- Separador y acceso con Google oficial -->
-                ${!isOtp ? `
-                  <div class="relative flex py-1 items-center">
-                    <div class="grow border-t border-slate-200"></div>
-                    <span class="shrink mx-3 text-[10px] text-slate-400 font-bold uppercase tracking-wider">o también</span>
-                    <div class="grow border-t border-slate-200"></div>
-                  </div>
-
-                  <button type="button" onclick="window.loginWithGoogleOAuth()" class="w-full bg-white hover:bg-slate-50 text-slate-700 font-bold py-2.5 px-3 rounded-xl border border-slate-300 shadow-2xs flex items-center justify-center gap-2 text-xs transition-all hover:border-slate-400">
-                    <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-                    <span>Vincular con Cuenta de Google</span>
-                  </button>
-
-                  <div class="text-[10px] text-center text-slate-400 bg-slate-50 p-2 rounded-xl border border-slate-100">
-                    🔒 Conexión cifrada con verificación directa a tu bandeja
-                  </div>
-                ` : ''}
+                <div class="text-[10px] text-center text-slate-400 bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex items-center justify-center gap-1.5">
+                  <span>🔒</span> <span>Autenticación segura con verificación a tu correo</span>
+                </div>
               </div>
             </div>
           </div>
@@ -1184,6 +1172,49 @@
       renderApp();
     };
 
+        // =========================================================================
+    // SISTEMA DE NOTIFICACIONES TOAST (ELEGANTE, SIN VENTANAS NATIVAS)
+    // =========================================================================
+    window.showToast = function(message, type = 'info') {
+      let toastContainer = document.getElementById('toast-container');
+      if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        toastContainer.className = 'fixed bottom-5 right-5 z-60 flex flex-col gap-2 max-w-xs sm:max-w-sm w-full pointer-events-none px-4';
+        document.body.appendChild(toastContainer);
+      }
+
+      const toast = document.createElement('div');
+      const bgColors = {
+        success: 'bg-emerald-800 text-white border-emerald-700',
+        error: 'bg-rose-800 text-white border-rose-700',
+        warning: 'bg-amber-800 text-white border-amber-700',
+        info: 'bg-slate-900 text-white border-slate-800'
+      };
+      const icons = {
+        success: '✓',
+        error: '✕',
+        warning: '⚠',
+        info: 'ℹ'
+      };
+
+      toast.className = `${bgColors[type] || bgColors.info} border px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 text-xs font-medium pointer-events-auto transform translate-y-3 opacity-0 transition-all duration-300`;
+      toast.innerHTML = `
+        <span class="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center font-bold text-xs shrink-0">${icons[type] || '•'}</span>
+        <span class="flex-1 leading-snug">${message}</span>
+      `;
+
+      toastContainer.appendChild(toast);
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-3', 'opacity-0');
+      });
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-3');
+        setTimeout(() => toast.remove(), 300);
+      }, 4500);
+    };
+
     window.closeModal = function(name) {
       state.modals[name] = false;
       renderApp();
@@ -1379,14 +1410,14 @@
     };
 
             // =========================================================================
-    // LÓGICA DE AUTENTICACIÓN Y VERIFICACIÓN POR CÓDIGO DE CORREO
+    // LÓGICA DE AUTENTICACIÓN CON NOTIFICACIONES INTEGRADAS (CERO ALERTS FEOS)
     // =========================================================================
     window.setAuthTab = function(tab) {
       state.authTab = tab;
+      state.authNotice = null;
       renderApp();
     };
 
-    // Registrarse enviando código de verificación real al correo
     window.submitRegister = async function() {
       const nameInput = document.getElementById('reg-name');
       const emailInput = document.getElementById('reg-email');
@@ -1397,11 +1428,14 @@
       const password = passInput ? passInput.value : '';
 
       if (!name || !email || !password) {
-        alert('Por favor completa todos los campos.');
+        state.authNotice = 'Por favor completa todos los campos.';
+        state.authNoticeType = 'error';
+        renderApp();
         return;
       }
 
       state.authLoading = true;
+      state.authNotice = null;
       renderApp();
 
       try {
@@ -1418,17 +1452,19 @@
         state.authPendingEmail = email;
         state.authPendingType = 'signup';
         state.authTab = 'otp';
-        alert('¡Código de verificación enviado! Revisa la bandeja de entrada o spam de: ' + email);
+        state.authNotice = '¡Código enviado! Revisa tu bandeja de entrada o spam.';
+        state.authNoticeType = 'success';
+        window.showToast('Código de verificación enviado a tu correo', 'success');
       } catch (err) {
         console.error('Error en registro:', err);
-        alert('No se pudo registrar: ' + (err.message || 'Verifica los datos e intenta nuevamente.'));
+        state.authNotice = err.message || 'No se pudo registrar. Intenta de nuevo.';
+        state.authNoticeType = 'error';
       } finally {
         state.authLoading = false;
         renderApp();
       }
     };
 
-    // Iniciar sesión con Correo y Contraseña
     window.submitEmailPasswordLogin = async function() {
       const emailInput = document.getElementById('login-email');
       const passInput = document.getElementById('login-password');
@@ -1437,11 +1473,14 @@
       const password = passInput ? passInput.value : '';
 
       if (!email || !password) {
-        alert('Por favor ingresa tu correo y contraseña.');
+        state.authNotice = 'Ingresa tu correo y contraseña.';
+        state.authNoticeType = 'error';
+        renderApp();
         return;
       }
 
       state.authLoading = true;
+      state.authNotice = null;
       renderApp();
 
       try {
@@ -1462,67 +1501,37 @@
 
         saveState();
         state.modals.login = false;
-        alert('¡Bienvenido/a de nuevo a Cisneros Emprende!');
+        window.showToast('¡Bienvenido/a de nuevo!', 'success');
       } catch (err) {
         console.error('Error al iniciar sesión:', err);
-        alert('Datos incorrectos o correo sin verificar: ' + (err.message || 'Verifica tu contraseña.'));
+        state.authNotice = 'Correo o contraseña incorrectos, o correo sin verificar.';
+        state.authNoticeType = 'error';
       } finally {
         state.authLoading = false;
         renderApp();
       }
     };
 
-    // Enviar código OTP para entrar con correo
-    window.sendLoginOtpCode = async function() {
-      const emailInput = document.getElementById('login-email');
-      const email = (emailInput ? emailInput.value : '').trim().toLowerCase();
-      if (!email) {
-        alert('Ingresa primero tu correo para enviarte el código de acceso.');
-        return;
-      }
-
-      state.authLoading = true;
-      renderApp();
-
-      try {
-        const { error } = await supabaseClient.auth.signInWithOtp({
-          email: email,
-          options: { shouldCreateUser: false }
-        });
-        if (error) throw error;
-
-        state.authPendingEmail = email;
-        state.authPendingType = 'email';
-        state.authTab = 'otp';
-        alert('Código de acceso enviado a: ' + email);
-      } catch (err) {
-        console.error('Error OTP:', err);
-        // Si no está habilitado otp directo, usar flujo con contraseña
-        alert('Usa tu contraseña registrada para ingresar o regístrate si es tu primera vez.');
-      } finally {
-        state.authLoading = false;
-        renderApp();
-      }
-    };
-
-    // Verificar el código de correo (OTP de 6 dígitos)
     window.verifyEmailOtp = async function() {
       const otpInput = document.getElementById('auth-otp-code');
       const token = (otpInput ? otpInput.value : '').trim();
 
       if (!token) {
-        alert('Por favor ingresa el código que te llegó al correo.');
+        state.authNotice = 'Ingresa el código que te llegó al correo.';
+        state.authNoticeType = 'error';
+        renderApp();
         return;
       }
 
       state.authLoading = true;
+      state.authNotice = null;
       renderApp();
 
       try {
         const { data, error } = await supabaseClient.auth.verifyOtp({
           email: state.authPendingEmail,
           token: token,
-          type: state.authPendingType === 'email' ? 'email' : 'signup'
+          type: 'signup'
         });
 
         if (error) throw error;
@@ -1540,48 +1549,33 @@
         saveState();
         state.modals.login = false;
         state.authTab = 'login';
-        alert('¡Correo verificado con éxito! Has iniciado sesión correctamente.');
+        window.showToast('¡Correo verificado con éxito!', 'success');
       } catch (err) {
         console.error('Error al verificar código:', err);
-        alert('Código inválido o expirado. Verifica el número en tu correo.');
+        state.authNotice = 'Código inválido o expirado. Revisa tu correo.';
+        state.authNoticeType = 'error';
       } finally {
         state.authLoading = false;
         renderApp();
       }
     };
 
-    // Reenviar código
     window.resendOtp = async function() {
       if (!state.authPendingEmail) return;
       try {
         await supabaseClient.auth.resend({
-          type: state.authPendingType === 'email' ? 'email_change' : 'signup',
+          type: 'signup',
           email: state.authPendingEmail
         });
-        alert('Nuevo código enviado a ' + state.authPendingEmail);
+        window.showToast('Nuevo código enviado', 'info');
       } catch (e) {
-        alert('Espera un minuto antes de pedir otro código.');
-      }
-    };
-
-    // Ingresar mediante Google OAuth oficial
-    window.loginWithGoogleOAuth = async function() {
-      try {
-        const { data, error } = await supabaseClient.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            redirectTo: window.location.origin + window.location.pathname
-          }
-        });
-        if (error) throw error;
-      } catch (err) {
-        console.error('Google OAuth error:', err);
-        alert('Para vincular con Google directamente, usa también tu correo @gmail con contraseña o código.');
+        window.showToast('Espera unos segundos antes de pedir otro código', 'warning');
       }
     };
 
     window.loginWithGoogle = function() {
       state.authTab = 'login';
+      state.authNotice = null;
       window.openModal('login');
     };
 
