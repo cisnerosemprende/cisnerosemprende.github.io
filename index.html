@@ -737,54 +737,6 @@
                 </div>
 
                 <!-- SECCIÓN 2: LOGO Y FOTOS DEL LOCAL -->
-                <script>
-                  window.handleImageUpload = function(event, targetInputId, previewId) {
-                    const file = event.target.files && event.target.files[0];
-                    if (!file) return;
-                    if (!file.type.startsWith('image/')) {
-                      window.showToast('Por favor selecciona un archivo de imagen válido (JPG, PNG, WebP).', 'warning');
-                      return;
-                    }
-                    if (file.size > 8 * 1024 * 1024) {
-                      window.showToast('La imagen no debe superar los 8MB.', 'warning');
-                      return;
-                    }
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                      const img = new Image();
-                      img.onload = function() {
-                        const canvas = document.createElement('canvas');
-                        const maxDim = 1200;
-                        let width = img.width;
-                        let height = img.height;
-                        if (width > maxDim || height > maxDim) {
-                          if (width > height) {
-                            height = Math.round((height * maxDim) / width);
-                            width = maxDim;
-                          } else {
-                            width = Math.round((width * maxDim) / height);
-                            height = maxDim;
-                          }
-                        }
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.82);
-                        const targetInput = document.getElementById(targetInputId);
-                        if (targetInput) targetInput.value = compressedBase64;
-                        const previewEl = document.getElementById(previewId);
-                        if (previewEl) {
-                          previewEl.src = compressedBase64;
-                          previewEl.classList.remove('hidden');
-                        }
-                        window.showToast('¡Foto cargada y optimizada con éxito!', 'success');
-                      };
-                      img.src = e.target.result;
-                    };
-                    reader.readAsDataURL(file);
-                  };
-                </script>
                 <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2.5">
                   <label class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
                     <span>🖼️</span> <span>Logo y Fotos del Negocio / Local:</span>
@@ -1234,6 +1186,53 @@
     window.closeModal = function(name) {
       state.modals[name] = false;
       renderApp();
+    };
+
+    window.handleImageUpload = function(event, targetInputId, previewId) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        window.showToast('Por favor selecciona un archivo de imagen válido (JPG, PNG, WebP).', 'warning');
+        return;
+      }
+      if (file.size > 8 * 1024 * 1024) {
+        window.showToast('La imagen no debe superar los 8MB.', 'warning');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const maxDim = 1200;
+          let width = img.width;
+          let height = img.height;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.82);
+          const targetInput = document.getElementById(targetInputId);
+          if (targetInput) targetInput.value = compressedBase64;
+          const previewEl = document.getElementById(previewId);
+          if (previewEl) {
+            previewEl.src = compressedBase64;
+            previewEl.classList.remove('hidden');
+          }
+          window.showToast('¡Foto cargada y optimizada con éxito!', 'success');
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
     };
 
     window.submitSuggestion = async function() {
