@@ -763,7 +763,7 @@
                     <article class="bg-white rounded-2xl border border-slate-200 shadow-2xs hover:shadow-lg transition-all flex flex-col overflow-hidden hover:border-emerald-300 group animate-fade-in-up">
                       <!-- Portada e imagen con logo circular superpuesto -->
                       <div class="relative h-48 bg-slate-900 overflow-hidden cursor-pointer" onclick="window.selectBusiness('${b.id}')">
-                        <img src="${(b.cover_images && b.cover_images[0]) || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" alt="${b.name}" />
+                        <img src="${(b.cover_images && b.cover_images[0]) || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" alt="${esc(b.name)}" />
                         
                         <button onclick="event.stopPropagation(); window.toggleFavorite('${b.id}')" class="absolute top-2.5 left-2.5 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-md shadow ${isFav ? 'bg-red-500 text-white' : 'bg-black/40 text-white'}">
                           <span class="text-sm">${isFav ? '❤️' : '🤍'}</span>
@@ -785,7 +785,7 @@
                         <!-- Logo circular superpuesto en la esquina inferior derecha -->
                         ${b.logo_url ? `
                           <div class="absolute bottom-2 right-2 w-12 h-12 rounded-full border-2 border-white shadow-md overflow-hidden bg-white flex items-center justify-center shrink-0">
-                            <img src="${b.logo_url}" class="w-full h-full object-cover" alt="Logo ${b.name}" />
+                            <img src="${b.logo_url ? sanitizeUrl(b.logo_url) : ''}" class="w-full h-full object-cover" alt="Logo" onerror="this.style.display='none'" />
                           </div>
                         ` : ''}
                       </div>
@@ -933,7 +933,7 @@
                         <div class="bg-white rounded-2xl p-4 border border-amber-200/80 shadow-2xs flex flex-col justify-between gap-3 hover:border-amber-400 hover:shadow-lg transition-all animate-fade-in-up hover:-translate-y-1">
                           <div class="flex items-start gap-3">
                             <div class="w-14 h-14 rounded-2xl border-2 border-amber-400 overflow-hidden bg-slate-100 shrink-0 shadow-xs flex items-center justify-center">
-                              <img src="${t.photo_url || 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=120'}" class="w-full h-full object-cover" alt="${t.full_name}" />
+                              <img src="${t.photo_url ? sanitizeUrl(t.photo_url) : 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=120'}" class="w-full h-full object-cover" alt="${t.full_name}" />
                             </div>
                             <div class="min-w-0 flex-1">
                               <div class="flex items-center justify-between gap-1">
@@ -1035,14 +1035,14 @@
 
           <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
             <div class="relative h-64 sm:h-80 bg-slate-900">
-              <img src="${(b.cover_images && b.cover_images[0]) || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5'}" class="w-full h-full object-cover" alt="${b.name}" />
+              <img src="${(b.cover_images && b.cover_images[0]) || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5'}" class="w-full h-full object-cover" alt="${esc(b.name)}" />
               <button onclick="window.toggleFavorite('${b.id}')" class="absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-md shadow ${isFav ? 'bg-red-500 text-white' : 'bg-black/50 text-white'}">
                 <span class="text-lg">${isFav ? '❤️' : '🤍'}</span>
               </button>
 
               ${b.logo_url ? `
                 <div class="absolute -bottom-6 left-6 w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-white shadow-xl overflow-hidden bg-white flex items-center justify-center z-10">
-                  <img src="${b.logo_url}" class="w-full h-full object-cover" alt="Logo ${b.name}" />
+                  <img src="${b.logo_url ? sanitizeUrl(b.logo_url) : ''}" class="w-full h-full object-cover" alt="Logo" onerror="this.style.display='none'" />
                 </div>
               ` : ''}
             </div>
@@ -1118,7 +1118,7 @@
               <!-- Botones de Acción, Redes y Contacto -->
               <div class="space-y-2 pt-1">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <a href="https://wa.me/57${sanitizePhone(b.whatsapp_number)}?text=Hola%2C%20los%20contacto%20desde%20Cisneros%20Emprende" target="_blank" rel="noopener noreferrer" onclick="window.trackContactClick('whatsapp', '${b.id}', '${b.name}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm transition-colors">
+                  <a href="https://wa.me/57${sanitizePhone(b.whatsapp_number)}?text=Hola%2C%20los%20contacto%20desde%20Cisneros%20Emprende" target="_blank" rel="noopener noreferrer" onclick="window.trackContactClick('whatsapp', '${b.id}', '${esc(b.name)}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm transition-colors">
                     <span>💬</span> Pedir por WhatsApp: ${b.whatsapp_number}
                   </a>
 
@@ -1376,7 +1376,7 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-2 pt-1">
-                  <button onclick="window.downloadQrImage('${b.name}')" class="bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold py-2.5 px-3 rounded-xl text-xs shadow-sm flex items-center justify-center gap-1.5 transition-all">
+                  <button onclick="window.downloadQrImage('${esc(b.name)}')" class="bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold py-2.5 px-3 rounded-xl text-xs shadow-sm flex items-center justify-center gap-1.5 transition-all">
                     <span>⬇️</span> <span>Descargar QR</span>
                   </button>
                   <button onclick="window.printQrCard()" class="bg-slate-800 hover:bg-slate-900 text-white font-extrabold py-2.5 px-3 rounded-xl text-xs shadow-sm flex items-center justify-center gap-1.5 transition-all">
@@ -1852,7 +1852,7 @@
                         <div class="border border-slate-200 p-3 rounded-2xl flex flex-col sm:flex-row justify-between sm:items-center gap-3 text-xs bg-slate-50/70 hover:bg-slate-50 transition-colors">
                           <div class="flex items-center gap-3">
                             <div class="w-12 h-12 rounded-xl bg-slate-200 overflow-hidden shrink-0 border border-slate-300">
-                              <img src="${(b.cover_images && b.cover_images[0]) || b.logo_url || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=100'}" class="w-full h-full object-cover" alt="${b.name}" />
+                              <img src="${sanitizeUrl((b.cover_images && b.cover_images[0]) || b.logo_url || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=100')}" class="w-full h-full object-cover" alt="${esc(b.name)}" />
                             </div>
                             <div>
                               <div class="flex items-center gap-1.5 mb-0.5">
@@ -1891,7 +1891,7 @@
                         <div class="flex items-center justify-between p-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs gap-2">
                           <div class="flex items-center gap-2.5 min-w-0">
                             <div class="w-9 h-9 rounded-lg overflow-hidden bg-slate-200 shrink-0 border border-slate-300">
-                              <img src="${(b.cover_images && b.cover_images[0]) || b.logo_url || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=100'}" class="w-full h-full object-cover" alt="${b.name}" />
+                              <img src="${sanitizeUrl((b.cover_images && b.cover_images[0]) || b.logo_url || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=100')}" class="w-full h-full object-cover" alt="${esc(b.name)}" />
                             </div>
                             <div class="truncate">
                               <span class="font-bold text-slate-900 block truncate">${esc(b.name)}</span>
@@ -2469,7 +2469,7 @@
 
       if (state.currentBusinessInCart && state.currentBusinessInCart.id !== b.id) {
         if (state.cart.length > 0) {
-          if (!confirm(`Tienes productos de "${state.currentBusinessInCart.name}". ¿Deseas vaciar el carrito para pedir en "${b.name}"?`)) {
+          if (!confirm(`Tienes productos de "${state.currentBusinessInCart.name}". ¿Deseas vaciar el carrito para pedir en "${esc(b.name)}"?`)) {
             return;
           }
           state.cart = [];
@@ -2803,6 +2803,15 @@
     };
 
     window.editTransporter = function(id) {
+      const t = state.transporters.find(x => x.id === id);
+      if (!t) return;
+      // Solo el admin o el dueño (por email) puede editar
+      const isAdmin = state.currentUser?.role === 'admin';
+      const isOwner = t.email && state.currentUser?.email === t.email;
+      if (!isAdmin && !isOwner) {
+        window.showToast('⛔ Solo puedes editar tu propio registro.', 'error');
+        return;
+      }
       const t = state.transporters.find(item => item.id === id);
       if (!t) return;
       state.editingTransporterId = id;
@@ -2982,6 +2991,14 @@
     };
 
     window.editBusiness = function(id) {
+      const biz = state.businesses.find(x => x.id === id);
+      if (!biz) return;
+      const isAdmin = state.currentUser?.role === 'admin';
+      const isOwner = biz.owner_email && state.currentUser?.email === biz.owner_email;
+      if (!isAdmin && !isOwner) {
+        window.showToast('⛔ Solo el administrador puede editar este comercio.', 'error');
+        return;
+      }
       const b = state.businesses.find(item => item.id === id);
       if (!b) return;
       state.editingBusinessId = id;
@@ -3038,6 +3055,11 @@
     };
 
     window.deleteBusiness = async function(id) {
+      if (!state.currentUser || state.currentUser.role !== 'admin') {
+        window.showToast('⛔ Acceso denegado.', 'error');
+        return;
+      }
+      if (!confirm('¿Eliminar este comercio definitivamente? Esta acción no se puede deshacer.')) return;
       if (!state.currentUser || state.currentUser.role !== 'admin') {
         window.showToast('⛔ Acceso denegado. Esta acción es solo para administradores.', 'error');
         return;
@@ -3364,7 +3386,7 @@
             console.warn('Error approving in Supabase:', e);
           }
         }
-        window.showToast(`¡El comercio "${b.name}" ha sido aprobado y ya es visible en Cisneros!`, 'success');
+        window.showToast(`¡El comercio "${esc(b.name)}" ha sido aprobado y ya es visible en Cisneros!`, 'success');
         renderApp();
       }
     };
@@ -3417,7 +3439,7 @@
         }
       }
 
-      window.showToast(b.is_featured ? `⭐ "${b.name}" ahora es Destacado de la Semana.` : `"${b.name}" ya no está destacado.`, 'success');
+      window.showToast(b.is_featured ? `⭐ "${esc(b.name)}" ahora es Destacado de la Semana.` : `"${esc(b.name)}" ya no está destacado.`, 'success');
       renderApp();
     };
 
@@ -3816,7 +3838,7 @@
         }
       }
 
-      window.showToast(b.is_verified ? `✓ "${b.name}" ahora tiene la insignia de Negocio Verificado.` : `Insignia removida de "${b.name}".`, 'info');
+      window.showToast(b.is_verified ? `✓ "${esc(b.name)}" ahora tiene la insignia de Negocio Verificado.` : `Insignia removida de "${esc(b.name)}".`, 'info');
     };
 
     // Abrir Modal de Código QR
@@ -3904,7 +3926,7 @@
     // =========================================================================
     // GESTIÓN DE CACHÉ Y REGISTRO DE SERVICE WORKER PWA
     // =========================================================================
-    const CURRENT_SW_VERSION = 'cisneros-emprende-v25';
+    const CURRENT_SW_VERSION = 'cisneros-emprende-v26';
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
