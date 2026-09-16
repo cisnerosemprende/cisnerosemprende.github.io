@@ -47,9 +47,54 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    body { font-family: 'Poppins', 'Inter', sans-serif; background-color: #f8fafc; }
+    body { font-family: 'Poppins', 'Inter', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
     .scrollbar-none::-webkit-scrollbar { display: none; }
     .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* Keyframes de Animaciones Modernas */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+      50% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+    }
+    @keyframes floatSlow {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-4px); }
+    }
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .animate-fade-in-up {
+      animation: fadeInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .animate-scale-in {
+      animation: scaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .animate-float {
+      animation: floatSlow 3s ease-in-out infinite;
+    }
+    .pulse-live {
+      animation: pulseGlow 2s infinite;
+    }
+
+    /* Microinteracciones táctiles suaves en botones y tarjetas */
+    button:active {
+      transform: scale(0.96);
+    }
+    button, a {
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    article {
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    }
+    article:hover {
+      transform: translateY(-3px);
+    }
   </style>
 
   <!-- Cache Buster Inmediato para Móviles -->
@@ -576,7 +621,7 @@
                   const isOrgullo = b.has_orgullo_cisneros || (b.avg_rating >= 4.6 && b.total_reviews >= 5);
 
                   return `
-                    <article class="bg-white rounded-2xl border border-slate-200 shadow-2xs hover:shadow-md transition-all flex flex-col overflow-hidden hover:border-emerald-300 group">
+                    <article class="bg-white rounded-2xl border border-slate-200 shadow-2xs hover:shadow-lg transition-all flex flex-col overflow-hidden hover:border-emerald-300 group animate-fade-in-up">
                       <!-- Portada e imagen con logo circular superpuesto -->
                       <div class="relative h-48 bg-slate-900 overflow-hidden cursor-pointer" onclick="window.selectBusiness('${b.id}')">
                         <img src="${(b.cover_images && b.cover_images[0]) || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" alt="${b.name}" />
@@ -739,7 +784,7 @@
                       const waLink = `https://wa.me/57${cleanPhone}?text=Hola%20${encodeURIComponent(t.full_name)}%2C%20te%20contacto%20desde%20Cisneros%20Emprende%20para%20un%20servicio%20de%20transporte.`;
 
                       return `
-                        <div class="bg-white rounded-2xl p-4 border border-amber-200/80 shadow-2xs flex flex-col justify-between gap-3 hover:border-amber-400 hover:shadow-md transition-all">
+                        <div class="bg-white rounded-2xl p-4 border border-amber-200/80 shadow-2xs flex flex-col justify-between gap-3 hover:border-amber-400 hover:shadow-lg transition-all animate-fade-in-up hover:-translate-y-1">
                           <div class="flex items-start gap-3">
                             <div class="w-14 h-14 rounded-2xl border-2 border-amber-400 overflow-hidden bg-slate-100 shrink-0 shadow-xs flex items-center justify-center">
                               <img src="${t.photo_url || 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=120'}" class="w-full h-full object-cover" alt="${t.full_name}" />
@@ -807,7 +852,7 @@
               <span>•</span>
               <button onclick="window.openModal('register')" class="hover:text-white">Registrar Mi Negocio</button>
               <span>•</span>
-              <button onclick="window.openTransporterRegister()" class="text-amber-400 hover:text-amber-300">Registrar Chivero/Mototaxi/Carga</button>
+              <button onclick="window.openTransporterRegister()" class="hover:text-white transition-colors">Registrar Transporte</button>
               <span>•</span>
               <button onclick="window.openModal('terms')" class="hover:text-white">Términos, Cookies & Datos</button>
               ${state.currentUser?.role === 'admin' ? `
@@ -2948,7 +2993,7 @@
     // =========================================================================
     // GESTIÓN DE CACHÉ Y REGISTRO DE SERVICE WORKER PWA
     // =========================================================================
-    const CURRENT_SW_VERSION = 'cisneros-emprende-v15';
+    const CURRENT_SW_VERSION = 'cisneros-emprende-v16';
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
