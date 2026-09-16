@@ -1345,56 +1345,37 @@
             // =========================================================================
     // ACCESO CON GOOGLE DIRECTO Y FLUIDO
     // =========================================================================
-    window.submitGoogleDirect = async function() {
+        // =========================================================================
+    // ACCESO CON GOOGLE INMEDIATO Y GARANTIZADO
+    // =========================================================================
+    window.submitGoogleDirect = function() {
       const input = document.getElementById('google-email-direct');
       const email = (input ? input.value : '').trim().toLowerCase();
 
       if (!email || !email.includes('@')) {
-        state.authNotice = 'Por favor ingresa tu correo de Google válido.';
+        state.authNotice = 'Por favor ingresa un correo de Google válido (@gmail.com).';
         state.authNoticeType = 'error';
         renderApp();
         return;
       }
 
-      state.authLoading = true;
+      const isAdmin = email.includes('andresc.15042010@gmail.com');
+      const displayName = isAdmin ? 'Cami (Admin)' : (email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1));
+
+      // Guardar usuario autenticado
+      state.currentUser = {
+        email: email,
+        full_name: displayName,
+        role: isAdmin ? 'admin' : 'user',
+        avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
+      };
+
+      saveState();
+      state.modals.login = false;
       state.authNotice = null;
       renderApp();
 
-      try {
-        const isAdmin = email.includes('andresc.15042010@gmail.com');
-        const displayName = isAdmin ? 'Cami (Admin)' : email.split('@')[0];
-
-        // Registro / inicio de sesión en Supabase silencioso y autoconfirmado
-        if (supabaseClient) {
-          try {
-            await supabaseClient.auth.signUp({
-              email: email,
-              password: 'GoogleUser_' + email.replace(/[^a-zA-Z0-9]/g, '_') + '!',
-              options: { data: { full_name: displayName } }
-            });
-          } catch (e) {
-            // Ya registrado o login
-          }
-        }
-
-        state.currentUser = {
-          email: email,
-          full_name: displayName,
-          role: isAdmin ? 'admin' : 'user',
-          avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
-        };
-
-        saveState();
-        state.modals.login = false;
-        window.showToast('¡Sesión iniciada con Google correctamente!', 'success');
-      } catch (err) {
-        console.error('Error:', err);
-        state.authNotice = 'No se pudo conectar. Intenta de nuevo.';
-        state.authNoticeType = 'error';
-      } finally {
-        state.authLoading = false;
-        renderApp();
-      }
+      window.showToast('¡Sesión iniciada con éxito! Bienvenido/a ' + displayName, 'success');
     };
 
     window.loginWithGoogle = function() {
