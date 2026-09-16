@@ -51,12 +51,33 @@
     .scrollbar-none::-webkit-scrollbar { display: none; }
     .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
+
+  <!-- Cache Buster Inmediato para Móviles -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for (let reg of registrations) {
+          reg.update();
+        }
+      });
+    }
+  </script>
 </head>
 <body class="min-h-screen flex flex-col text-slate-900 selection:bg-emerald-200">
 
   <!-- APP ROOT MOUNT POINT -->
   <div id="app" class="flex-1 flex flex-col">
-    <!-- El contenido interactivo se inicializa vía el script modular inferior -->
+    <!-- Skeleton loader y mensaje inicial para evitar pantalla en blanco -->
+    <div class="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6 text-center">
+      <div class="w-16 h-16 rounded-2xl bg-white border border-slate-200 p-2 shadow-sm flex items-center justify-center overflow-hidden mb-4 animate-pulse">
+        <img src="icons/icon-192.svg" alt="Cisneros Emprende" class="w-full h-full object-contain" onerror="this.onerror=null; this.src='public/icons/icon-192.svg';" />
+      </div>
+      <h2 class="text-xl font-black text-emerald-950 tracking-tight">Cisneros <span class="text-amber-600">Emprende</span></h2>
+      <p class="text-xs text-slate-500 mt-1 max-w-xs">Cargando directorio y comercios locales...</p>
+      <div class="mt-4 w-32 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+        <div class="w-full h-full bg-emerald-600 animate-pulse"></div>
+      </div>
+    </div>
   </div>
 
   <!-- SCRIPT MODULAR DE CISNEROS EMPRENDE PWA -->
@@ -100,24 +121,34 @@
     // =========================================================================
     // ESTADO GLOBAL DE LA APLICACIÓN
     // =========================================================================
+    function safeJsonParse(key, fallback) {
+      try {
+        const val = localStorage.getItem(key);
+        return val ? JSON.parse(val) : fallback;
+      } catch (e) {
+        console.warn(`[Cisneros] Resetting corrupt cache for ${key}`);
+        return fallback;
+      }
+    }
+
     let state = {
-      businesses: JSON.parse(localStorage.getItem('cis_businesses')) || INITIAL_BUSINESSES,
+      businesses: safeJsonParse('cis_businesses', INITIAL_BUSINESSES),
       categories: INITIAL_CATEGORIES,
-      reviews: JSON.parse(localStorage.getItem('cis_reviews')) || INITIAL_REVIEWS,
-      suggestions: JSON.parse(localStorage.getItem('cis_suggestions')) || [],
-      reports: JSON.parse(localStorage.getItem('cis_reports')) || [],
-      favorites: JSON.parse(localStorage.getItem('cis_favs')) || ['cis-001'],
-      cart: JSON.parse(localStorage.getItem('cis_cart')) || [],
-      currentBusinessInCart: JSON.parse(localStorage.getItem('cis_cart_biz')) || null,
+      reviews: safeJsonParse('cis_reviews', INITIAL_REVIEWS),
+      suggestions: safeJsonParse('cis_suggestions', []),
+      reports: safeJsonParse('cis_reports', []),
+      favorites: safeJsonParse('cis_favs', ['cis-001']),
+      cart: safeJsonParse('cis_cart', []),
+      currentBusinessInCart: safeJsonParse('cis_cart_biz', null),
       selectedCategory: 'all',
       searchTerm: '',
       activeView: 'home', // 'home', 'detail'
       selectedBusiness: null,
-      currentUser: JSON.parse(localStorage.getItem('cis_user')) || null,
+      currentUser: safeJsonParse('cis_user', null),
       menuDraft: [],
       editingBusinessId: null,
       editingTransporterId: null,
-      transporters: JSON.parse(localStorage.getItem('cis_transporters')) || [],
+      transporters: safeJsonParse('cis_transporters', []),
       // Estado de Autenticación
       authTab: 'login',
       authPendingEmail: '',
@@ -657,19 +688,7 @@
                       </button>
                     </div>
                   ` : ''}
-                </div>
-                  <span class="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-md">${b.category_name}</span>
-                  ${isOrgullo ? `
-                    <span class="inline-flex items-center gap-1 text-xs font-black text-amber-900 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full">
-                      🏅 Sello Orgullo Cisneros
-                    </span>
-                  ` : ''}
-                  <span class="text-xs font-bold px-2.5 py-0.5 rounded-md border ${status.color}">${status.label}</span>
-                  ${b.work_days ? `
-                    <span class="text-xs font-semibold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-md border border-slate-200">
-                      🗓️ ${b.work_days}
-                    </span>
-                  ` : ''}
+                  <!-- Fin de controles -->
                 </div>
 
                 <h2 class="text-2xl sm:text-3xl font-black text-slate-900">${b.name}</h2>
@@ -2609,34 +2628,64 @@
     }
 
     // =========================================================================
-    // REGISTRO DE SERVICE WORKER PARA INSTALABILIDAD PWA
+    // GESTIÓN DE CACHÉ Y REGISTRO DE SERVICE WORKER PWA
     // =========================================================================
+    const CURRENT_SW_VERSION = 'cisneros-emprende-v10';
+
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
           .then(reg => {
-            console.log('[PWA] Service Worker registrado con éxito:', reg.scope);
+            console.log('[PWA] Service Worker activo:', reg.scope);
             reg.update();
           })
-          .catch(err => console.log('[PWA] Service Worker no registrado (normal en preview local):', err));
+          .catch(err => console.log('[PWA] SW notice:', err));
       });
     }
 
-    // Limpieza activa de caches obsoletas del navegador
+    // Purgar caches de versiones anteriores automáticamente
     if (typeof caches !== 'undefined') {
       caches.keys().then(names => {
         for (let name of names) {
-          if (name !== 'cisneros-emprende-v9') {
+          if (name !== CURRENT_SW_VERSION) {
+            console.log('[PWA] Purgando cache antigua:', name);
             caches.delete(name);
           }
         }
       });
     }
 
-    // Arranque inicial
-    renderApp();
-    processGoogleAuthReturn();
-    if (window.syncWithSupabase) window.syncWithSupabase();
+    // Arranque blindado contra excepciones en tiempo de ejecución
+    try {
+      renderApp();
+    } catch (err) {
+      console.error('[Cisneros] Error en primer render:', err);
+      const appEl = document.getElementById('app');
+      if (appEl) {
+        appEl.innerHTML = `
+          <div class="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6 text-center">
+            <div class="w-16 h-16 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-3xl mb-3">⚠️</div>
+            <h2 class="text-lg font-black text-slate-900">Actualizando Cisneros Emprende</h2>
+            <p class="text-xs text-slate-600 mt-1 max-w-sm">Detectamos una versión previa en tu navegador. Presiona el botón para cargar la última versión limpia.</p>
+            <button onclick="localStorage.clear(); if(typeof caches!=='undefined'){caches.keys().then(k=>Promise.all(k.map(c=>caches.delete(c)))).then(()=>location.reload(true));}else{location.reload(true);}" class="mt-4 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-md">
+              🔄 Limpiar Caché y Entrar
+            </button>
+          </div>
+        `;
+      }
+    }
+
+    try {
+      processGoogleAuthReturn();
+    } catch (e) {
+      console.warn('Google auth return error:', e);
+    }
+
+    try {
+      if (window.syncWithSupabase) window.syncWithSupabase();
+    } catch (e) {
+      console.warn('Supabase sync notice:', e);
+    }
   </script>
 </body>
 </html>
