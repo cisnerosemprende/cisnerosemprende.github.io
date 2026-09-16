@@ -204,6 +204,17 @@
       }
     }
 
+    // Limpieza estricta: asegurar que cuentas no deseadas no queden pre-cargadas en local
+    let loadedUser = safeJsonParse('cis_user', null);
+    if (loadedUser && loadedUser.email && !loadedUser.email.includes('andresc.15042010@gmail.com')) {
+      loadedUser = null;
+      localStorage.removeItem('cis_user');
+    }
+
+    let loadedAccounts = safeJsonParse('cis_saved_accounts', []);
+    loadedAccounts = loadedAccounts.filter(acc => acc.email && acc.email.includes('andresc.15042010@gmail.com'));
+    localStorage.setItem('cis_saved_accounts', JSON.stringify(loadedAccounts));
+
     let state = {
       businesses: safeJsonParse('cis_businesses', INITIAL_BUSINESSES),
       categories: INITIAL_CATEGORIES,
@@ -224,7 +235,8 @@
       searchTerm: '',
       activeView: 'home', // 'home', 'detail'
       selectedBusiness: null,
-      currentUser: safeJsonParse('cis_user', null),
+      currentUser: loadedUser,
+      savedAccounts: loadedAccounts,
       menuDraft: [],
       editingBusinessId: null,
       editingTransporterId: null,
@@ -236,6 +248,7 @@
       authLoading: false,
       modals: {
         login: false,
+        accountSwitcher: false,
         review: false,
         suggestion: false,
         report: false,
@@ -270,6 +283,7 @@
       localStorage.setItem('cis_user', JSON.stringify(state.currentUser));
       localStorage.setItem('cis_transporters', JSON.stringify(state.transporters));
       localStorage.setItem('cis_banned_users', JSON.stringify(state.bannedUsers));
+      localStorage.setItem('cis_saved_accounts', JSON.stringify(state.savedAccounts || []));
     }
 
     // =========================================================================
@@ -491,10 +505,13 @@
               <!-- Autenticación Google / Perfil (Ajuste para que NUNCA se desborde el botón Salir) -->
               <div class="flex items-center gap-1 pl-1 sm:pl-2 border-l border-slate-200 shrink-0">
                 ${state.currentUser ? `
-                  <div class="flex items-center gap-1">
-                    <img src="${state.currentUser?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'}" class="w-6 h-6 sm:w-7 sm:h-7 rounded-full border border-emerald-600 object-cover shrink-0" />
-                    <span class="text-xs font-bold text-slate-700 hidden lg:inline">${state.currentUser.full_name?.split(' ')[0]}</span>
-                    <button id="btn-toggle-auth" class="text-[11px] sm:text-xs text-rose-600 hover:text-rose-800 font-bold bg-rose-50 hover:bg-rose-100 px-1.5 sm:px-2 py-1 rounded-lg border border-rose-200 transition-colors whitespace-nowrap" title="Cerrar sesión">
+                  <div class="flex items-center gap-1.5">
+                    <button onclick="window.openModal('accountSwitcher')" class="flex items-center gap-1 p-0.5 rounded-full hover:ring-2 hover:ring-emerald-500 transition-all cursor-pointer group" title="Cambiar o gestionar cuentas">
+                      <img src="${state.currentUser?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'}" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-emerald-600 object-cover shrink-0 shadow-2xs group-hover:scale-105 transition-transform" />
+                      <span class="text-[10px] text-slate-500 group-hover:text-emerald-700 font-bold hidden sm:inline">▼</span>
+                    </button>
+                    <span class="text-xs font-bold text-slate-800 hidden lg:inline max-w-[100px] truncate">${state.currentUser.full_name?.split(' ')[0]}</span>
+                    <button id="btn-toggle-auth" class="text-[11px] sm:text-xs text-rose-600 hover:text-rose-800 font-bold bg-rose-50 hover:bg-rose-100 px-1.5 sm:px-2 py-1 rounded-lg border border-rose-200 transition-colors whitespace-nowrap" title="Cerrar sesión actual">
                       Salir
                     </button>
                   </div>
@@ -1131,6 +1148,92 @@
       let html = '';
 
                   // MODAL OFICIAL GOOGLE OAUTH
+      
+      // MODAL GESTOR MULTI-CUENTA / CAMBIAR CUENTA
+      if (state.modals.accountSwitcher) {
+        const otherAccounts = (state.savedAccounts || []).filter(a => a.id !== state.currentUser?.id);
+        html += `
+          <div class="fixed inset-0 z-50 bg-black/65 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
+            <div class="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl border border-slate-100 flex flex-col max-h-[90vh]">
+              <!-- Cabecera -->
+              <div class="bg-gradient-to-r from-emerald-950 via-emerald-900 to-slate-900 text-white p-4.5 flex justify-between items-center">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-9 h-9 rounded-xl bg-white/10 p-1 flex items-center justify-center border border-white/20">
+                    <span class="text-lg">👥</span>
+                  </div>
+                  <div>
+                    <h3 class="font-extrabold text-sm leading-tight">Cuentas Vinculadas</h3>
+                    <p class="text-[10px] text-emerald-200">Cambiar de cuenta fácilmente</p>
+                  </div>
+                </div>
+                <button onclick="window.closeModal('accountSwitcher')" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-sm font-bold transition-colors">✕</button>
+              </div>
+
+              <div class="p-5 space-y-4 overflow-y-auto">
+                <!-- Cuenta Activa -->
+                <div>
+                  <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1.5">Cuenta Activa:</span>
+                  <div class="flex items-center justify-between p-3 rounded-2xl bg-emerald-50 border-2 border-emerald-500 shadow-2xs">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                      <img src="${state.currentUser?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'}" class="w-10 h-10 rounded-full border border-emerald-600 object-cover shrink-0" />
+                      <div class="min-w-0">
+                        <div class="flex items-center gap-1.5">
+                          <span class="text-xs font-black text-slate-900 truncate">${state.currentUser?.full_name || 'Usuario'}</span>
+                          ${state.currentUser?.role === 'admin' ? '<span class="text-[9px] font-black bg-amber-400 text-amber-950 px-1.5 py-0.2 rounded-md">ADMIN</span>' : ''}
+                        </div>
+                        <span class="text-[11px] text-slate-500 truncate block">${state.currentUser?.email || ''}</span>
+                      </div>
+                    </div>
+                    <span class="text-emerald-700 text-xs font-black px-2 py-1 bg-emerald-100 rounded-lg shrink-0">En uso</span>
+                  </div>
+                </div>
+
+                <!-- Otras Cuentas Guardadas -->
+                ${otherAccounts.length > 0 ? `
+                  <div>
+                    <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1.5">Otras Cuentas Guardadas:</span>
+                    <div class="space-y-2">
+                      ${otherAccounts.map(acc => `
+                        <div class="flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors">
+                          <div class="flex items-center gap-2.5 min-w-0 cursor-pointer flex-1" onclick="window.switchToAccount('${acc.id}')">
+                            <img src="${acc.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'}" class="w-9 h-9 rounded-full border border-slate-300 object-cover shrink-0" />
+                            <div class="min-w-0">
+                              <span class="text-xs font-bold text-slate-800 truncate block">${acc.full_name}</span>
+                              <span class="text-[10px] text-slate-400 truncate block">${acc.email}</span>
+                            </div>
+                          </div>
+                          <div class="flex items-center gap-1 shrink-0">
+                            <button onclick="window.switchToAccount('${acc.id}')" class="text-xs font-bold text-emerald-800 bg-emerald-100 hover:bg-emerald-200 px-2 py-1 rounded-lg">
+                              Cambiar
+                            </button>
+                            <button onclick="window.removeSavedAccount('${acc.id}')" class="text-rose-500 hover:text-rose-700 p-1 text-xs font-bold" title="Quitar cuenta">
+                              ✕
+                            </button>
+                          </div>
+                        </div>
+                      `).join('')}
+                    </div>
+                  </div>
+                ` : ''}
+
+                <!-- Botones de Acción -->
+                <div class="pt-2 space-y-2 border-t border-slate-100">
+                  <button onclick="window.addAnotherAccount()" class="w-full bg-white hover:bg-slate-50 text-slate-800 font-bold py-2.5 px-3 rounded-2xl border-2 border-dashed border-slate-300 hover:border-emerald-500 flex items-center justify-center gap-2 text-xs transition-all shadow-2xs">
+                    <span class="text-base">➕</span>
+                    <span>Iniciar sesión con otra cuenta</span>
+                  </button>
+
+                  <button onclick="window.logoutCurrentAccount()" class="w-full bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold py-2 px-3 rounded-xl border border-rose-200 flex items-center justify-center gap-1.5 text-xs transition-colors">
+                    <span>🚪</span>
+                    <span>Cerrar sesión de esta cuenta</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
       if (state.modals.login) {
         html += `
           <div class="fixed inset-0 z-50 bg-black/65 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
@@ -3037,6 +3140,7 @@
                     // =========================================================================
     // GOOGLE OAUTH 2.0 OFICIAL & DETECCIÓN AUTOMÁTICA DE RETORNO
     // =========================================================================
+    // Forzar siempre a Google a mostrar el selector de cuentas para permitir cambiar de correo
     window.triggerOfficialGoogleOAuth = async function() {
       const redirectUrl = window.location.origin + window.location.pathname;
       try {
@@ -3044,7 +3148,10 @@
           const { data, error } = await supabaseClient.auth.signInWithOAuth({
             provider: 'google',
             options: {
-              redirectTo: redirectUrl
+              redirectTo: redirectUrl,
+              queryParams: {
+                prompt: 'select_account'
+              }
             }
           });
           if (error) throw error;
@@ -3053,9 +3160,56 @@
         }
       } catch (err) {
         console.warn('OAuth standard fallback:', err);
-        const authUrl = `${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirectUrl)}`;
+        const authUrl = `${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirectUrl)}&prompt=select_account`;
         window.location.href = authUrl;
       }
+    };
+
+    // Funciones del Gestor Multi-Cuenta
+    window.openAccountSwitcher = function() {
+      state.modals.accountSwitcher = true;
+      renderApp();
+    };
+
+    window.addAnotherAccount = async function() {
+      state.modals.accountSwitcher = false;
+      if (supabaseClient) {
+        try {
+          await supabaseClient.auth.signOut();
+        } catch (e) {}
+      }
+      window.triggerOfficialGoogleOAuth();
+    };
+
+    window.switchToAccount = function(accountId) {
+      const target = (state.savedAccounts || []).find(a => a.id === accountId);
+      if (target) {
+        state.currentUser = target;
+        saveState();
+        state.modals.accountSwitcher = false;
+        renderApp();
+        window.showToast(`Cambiado a cuenta: ${target.full_name}`, 'success');
+      }
+    };
+
+    window.removeSavedAccount = function(accountId) {
+      state.savedAccounts = (state.savedAccounts || []).filter(a => a.id !== accountId);
+      saveState();
+      renderApp();
+      window.showToast('Cuenta removida de la lista.', 'info');
+    };
+
+    window.logoutCurrentAccount = async function() {
+      if (supabaseClient) {
+        try {
+          await supabaseClient.auth.signOut();
+        } catch (e) {}
+      }
+      state.currentUser = null;
+      state.modals.accountSwitcher = false;
+      saveState();
+      renderApp();
+      window.showToast('Sesión cerrada correctamente.', 'info');
     };
 
     // Procesar retorno de Google OAuth (Soporta #access_token en URL y supabase.auth.getSession)
@@ -3105,13 +3259,24 @@
             return;
           }
 
-          state.currentUser = {
+          const newAccountObj = {
             id: userFound.id,
             email: email,
             full_name: fullName,
             role: isAdmin ? 'admin' : 'user',
             avatar_url: avatar
           };
+
+          state.currentUser = newAccountObj;
+
+          // Registrar en savedAccounts si no existe
+          if (!state.savedAccounts) state.savedAccounts = [];
+          const existsIdx = state.savedAccounts.findIndex(a => a.id === userFound.id || a.email === email);
+          if (existsIdx >= 0) {
+            state.savedAccounts[existsIdx] = newAccountObj;
+          } else {
+            state.savedAccounts.push(newAccountObj);
+          }
 
           // Limpiar el hash feo de la URL sin recargar la página
           if (window.history && window.history.replaceState) {
@@ -3120,6 +3285,7 @@
 
           saveState();
           state.modals.login = false;
+          state.modals.accountSwitcher = false;
           renderApp();
           window.showToast(`¡Bienvenido/a, ${fullName}! Sesión iniciada con Google.`, 'success');
         }
@@ -3164,11 +3330,15 @@
 
       const btnAuth = document.getElementById('btn-toggle-auth');
       if (btnAuth) {
-        btnAuth.onclick = () => {
+        btnAuth.onclick = async () => {
           if (state.currentUser) {
+            if (supabaseClient) {
+              try { await supabaseClient.auth.signOut(); } catch (e) {}
+            }
             state.currentUser = null;
             saveState();
             renderApp();
+            window.showToast('Sesión cerrada.', 'info');
           } else {
             window.openModal('login');
           }
@@ -3179,7 +3349,7 @@
     // =========================================================================
     // GESTIÓN DE CACHÉ Y REGISTRO DE SERVICE WORKER PWA
     // =========================================================================
-    const CURRENT_SW_VERSION = 'cisneros-emprende-v17';
+    const CURRENT_SW_VERSION = 'cisneros-emprende-v19';
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
