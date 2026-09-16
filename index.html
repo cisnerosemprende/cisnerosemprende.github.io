@@ -1148,7 +1148,7 @@
       const name = document.getElementById('cart-name')?.value.trim();
 
       if (!addr) {
-        alert('Por favor escribe tu dirección en Cisneros para que te puedan entregar el pedido.');
+        window.showToast('Por favor escribe tu dirección en Cisneros para que te puedan entregar el pedido.', "info");
         return;
       }
 
@@ -1163,7 +1163,7 @@
 
     window.openModal = function(name) {
       if (name === 'register' && !state.currentUser) {
-        alert('🔐 Para registrar tu emprendimiento en Cisneros Emprende, primero debes ingresar con tu cuenta de Google.');
+        window.showToast('🔐 Para registrar tu emprendimiento en Cisneros Emprende, primero debes ingresar con tu cuenta de Google.', "info");
         state.modals.login = true;
         renderApp();
         return;
@@ -1233,7 +1233,7 @@
         created_at: new Date().toISOString().split('T')[0]
       });
       saveState();
-      alert('¡Muchas gracias! Tu sugerencia ha sido recibida.');
+      window.showToast('¡Muchas gracias! Tu sugerencia ha sido recibida.', "info");
       state.modals.suggestion = false;
       renderApp();
     };
@@ -1325,9 +1325,9 @@
       saveState();
 
       if (newBiz.status === 'approved') {
-        alert('¡Excelente Cami! Al ser administradora, tu negocio ha quedado Aprobado y publicado de inmediato en la vitrina.');
+        window.showToast('¡Excelente Cami! Al ser administradora, tu negocio ha quedado Aprobado y publicado de inmediato en la vitrina.', "info");
       } else {
-        alert('¡Emprendimiento registrado con éxito! Ha quedado en estado "Pendiente" para revisión y aprobación de Cami.');
+        window.showToast('¡Emprendimiento registrado con éxito! Ha quedado en estado "Pendiente" para revisión y aprobación de Cami.', "info");
       }
 
       state.modals.register = false;
@@ -1342,7 +1342,7 @@
       // Validación de 1 reseña por usuario por negocio
       const existing = state.reviews.find(r => r.business_id === b.id && r.user_name === state.currentUser?.full_name);
       if (existing) {
-        alert('Ya has dejado una reseña para este negocio. Para evitar spam, solo se permite 1 reseña por cuenta de Google.');
+        window.showToast('Ya has dejado una reseña para este negocio. Para evitar spam, solo se permite 1 reseña por cuenta de Google.', "info");
         return;
       }
 
@@ -1362,7 +1362,7 @@
       b.total_reviews = bizReviews.length;
 
       saveState();
-      alert('¡Tu reseña ha sido publicada con éxito!');
+      window.showToast('¡Tu reseña ha sido publicada con éxito!', "info");
       state.modals.review = false;
       renderApp();
     };
@@ -1381,7 +1381,7 @@
         created_at: new Date().toISOString().split('T')[0]
       });
       saveState();
-      alert('Reporte enviado a moderación. Gracias por ayudar a la comunidad de Cisneros.');
+      window.showToast('Reporte enviado a moderación. Gracias por ayudar a la comunidad de Cisneros.', "info");
       state.modals.report = false;
       renderApp();
     };
