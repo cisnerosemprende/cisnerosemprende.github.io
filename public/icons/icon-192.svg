@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <defs>
+    <linearGradient id="cisnerosBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#166534" />
+      <stop offset="50%" stop-color="#15803d" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+    <linearGradient id="goldMedal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+  </defs>
+  <!-- Background Circle -->
+  <rect width="192" height="192" rx="42" fill="url(#cisnerosBg)" />
+  <!-- Mountain Silhouette (Antioquia / Cisneros) -->
+  <path d="M24 148 L68 92 L104 136 L132 108 L168 148 Z" fill="#0f5132" opacity="0.45" />
+  <!-- Store Front / Building Icon -->
+  <path d="M48 84 L96 46 L144 84 L144 142 A6 6 0 0 1 138 148 L54 148 A6 6 0 0 1 48 142 Z" fill="#ffffff" />
+  <!-- Awning (Toldo de Tienda Verde/Blanco) -->
+  <path d="M44 84 L148 84 L140 102 L52 102 Z" fill="url(#goldMedal)" />
+  <!-- Store Door -->
+  <rect x="80" y="112" width="32" height="36" rx="4" fill="#166534" />
+  <!-- Golden Star / Medal "Orgullo Cisneros" -->
+  <circle cx="140" cy="54" r="18" fill="url(#goldMedal)" stroke="#ffffff" stroke-width="3" />
+  <path d="M140 44 L143 51 L151 52 L145 57 L147 65 L140 61 L133 65 L135 57 L129 52 L137 51 Z" fill="#ffffff" />
+</svg>
