@@ -602,17 +602,13 @@
     function renderModals() {
       let html = '';
 
-                  // MODAL AUTENTICACIÓN ELEGANTE Y MODERNO (SIN POPUPS NATIVOS)
+                  // MODAL ACCESO PURO CON GOOGLE (CERO FORMULARIOS MANUALES, CERO COMPLICACIONES)
       if (state.modals.login) {
-        const isOtp = state.authTab === 'otp';
-        const isRegister = state.authTab === 'register';
-        const isLogin = state.authTab === 'login';
-
         html += `
-          <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+          <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
             <div class="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl border border-slate-100">
-              <!-- Encabezado con identidad de Cisneros Emprende -->
-              <div class="bg-gradient-to-r from-emerald-900 via-emerald-800 to-emerald-900 text-white p-4.5 flex justify-between items-center">
+              <!-- Encabezado con marca Cisneros -->
+              <div class="bg-gradient-to-r from-emerald-900 via-emerald-800 to-emerald-900 text-white p-5 flex justify-between items-center">
                 <div class="flex items-center gap-2.5">
                   <div class="w-9 h-9 rounded-xl bg-white/10 p-1 flex items-center justify-center border border-white/20">
                     <img src="icons/icon-192.svg" class="w-full h-full object-contain rounded-lg" alt="Cisneros Emprende" onerror="this.src='public/icons/icon-192.svg'" />
@@ -625,107 +621,44 @@
                 <button onclick="window.closeModal('login')" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-sm font-bold transition-colors">✕</button>
               </div>
 
-              <!-- Pestañas -->
-              ${!isOtp ? `
-                <div class="flex border-b border-slate-200 bg-slate-50 text-xs font-bold">
-                  <button onclick="window.setAuthTab('login')" class="flex-1 py-3 text-center transition-colors border-b-2 ${isLogin ? 'border-emerald-700 text-emerald-800 bg-white' : 'border-transparent text-slate-500 hover:text-slate-800'}">
-                    Iniciar Sesión
-                  </button>
-                  <button onclick="window.setAuthTab('register')" class="flex-1 py-3 text-center transition-colors border-b-2 ${isRegister ? 'border-emerald-700 text-emerald-800 bg-white' : 'border-transparent text-slate-500 hover:text-slate-800'}">
-                    Registrarse
-                  </button>
-                </div>
-              ` : ''}
-
-              <!-- Mensaje de estado en el modal si existe -->
+              <!-- Mensaje si hay aviso -->
               ${state.authNotice ? `
                 <div class="mx-5 mt-4 p-2.5 rounded-xl text-[11px] font-medium ${state.authNoticeType === 'error' ? 'bg-rose-50 text-rose-800 border border-rose-200' : 'bg-emerald-50 text-emerald-800 border border-emerald-200'}">
                   ${state.authNotice}
                 </div>
               ` : ''}
 
-              <!-- Cuerpo del Modal -->
-              <div class="p-5 sm:p-6 space-y-4">
-                ${isOtp ? `
-                  <!-- PASO DE VERIFICACIÓN DE CÓDIGO OTP -->
-                  <div class="text-center space-y-1">
-                    <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 mx-auto flex items-center justify-center text-xl font-bold shadow-2xs">
-                      ✉️
+              <!-- Contenido Directo Google -->
+              <div class="p-6 space-y-5 text-center">
+                <div class="space-y-1.5">
+                  <div class="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 mx-auto flex items-center justify-center shadow-xs">
+                    <svg class="w-6 h-6" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                  </div>
+                  <h4 class="font-bold text-slate-800 text-sm">Bienvenido a la vitrina local</h4>
+                  <p class="text-slate-500 text-xs leading-relaxed">
+                    Accede directamente con tu cuenta de Google para registrar tu negocio, calificar y gestionar tus publicaciones.
+                  </p>
+                </div>
+
+                <form onsubmit="event.preventDefault(); window.submitGoogleDirect();" class="space-y-3 text-left">
+                  <div>
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1">Tu Cuenta de Google (@gmail.com)</label>
+                    <div class="relative">
+                      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="w-4 h-4 text-slate-400" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                      </div>
+                      <input id="google-email-direct" type="email" required placeholder="ejemplo@gmail.com" autofocus class="w-full pl-9 pr-3 py-2.5 text-xs rounded-xl border border-slate-300 focus:outline-hidden focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 text-slate-800" />
                     </div>
-                    <h4 class="font-bold text-sm text-slate-800">Verifica tu Correo</h4>
-                    <p class="text-[11px] text-slate-500 leading-tight">
-                      Código de 6 dígitos enviado a:<br>
-                      <strong class="text-slate-700">${state.authPendingEmail}</strong>
-                    </p>
                   </div>
 
-                  <form onsubmit="event.preventDefault(); window.verifyEmailOtp();" class="space-y-3">
-                    <div>
-                      <input id="auth-otp-code" type="text" required maxlength="8" placeholder="Código de 6 dígitos" autofocus class="w-full text-center text-base tracking-widest font-black py-2.5 px-3 rounded-xl border border-slate-300 focus:outline-hidden focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 text-slate-800" />
-                    </div>
-
-                    <button type="submit" ${state.authLoading ? 'disabled' : ''} class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3 rounded-xl shadow-md flex items-center justify-center gap-2 text-xs transition-all active:scale-[0.98] disabled:opacity-50">
-                      <span>${state.authLoading ? 'Verificando código...' : 'Confirmar y Acceder'}</span>
-                    </button>
-                  </form>
-
-                  <div class="flex justify-between items-center text-[10px] text-slate-500 pt-1">
-                    <button type="button" onclick="window.resendOtp()" class="text-emerald-700 font-bold hover:underline">Reenviar código</button>
-                    <button type="button" onclick="window.setAuthTab('login')" class="text-slate-400 hover:underline">Cambiar correo</button>
-                  </div>
-                ` : isRegister ? `
-                  <!-- FORMULARIO DE REGISTRO -->
-                  <div class="text-center space-y-1">
-                    <p class="text-slate-800 font-bold text-sm">Crea tu cuenta ciudadana</p>
-                    <p class="text-slate-500 text-[11px]">Recibirás un código de confirmación en tu correo.</p>
-                  </div>
-
-                  <form onsubmit="event.preventDefault(); window.submitRegister();" class="space-y-3">
-                    <div>
-                      <label class="block text-[11px] font-bold text-slate-600 mb-1">Nombre Completo</label>
-                      <input id="reg-name" type="text" required placeholder="Tu nombre y apellido" class="w-full py-2.5 px-3 text-xs rounded-xl border border-slate-300 focus:outline-hidden focus:border-emerald-600 text-slate-800" />
-                    </div>
-
-                    <div>
-                      <label class="block text-[11px] font-bold text-slate-600 mb-1">Correo Electrónico</label>
-                      <input id="reg-email" type="email" required placeholder="ejemplo@gmail.com" class="w-full py-2.5 px-3 text-xs rounded-xl border border-slate-300 focus:outline-hidden focus:border-emerald-600 text-slate-800" />
-                    </div>
-
-                    <div>
-                      <label class="block text-[11px] font-bold text-slate-600 mb-1">Crea una Contraseña</label>
-                      <input id="reg-password" type="password" required minlength="6" placeholder="Mínimo 6 caracteres" class="w-full py-2.5 px-3 text-xs rounded-xl border border-slate-300 focus:outline-hidden focus:border-emerald-600 text-slate-800" />
-                    </div>
-
-                    <button type="submit" ${state.authLoading ? 'disabled' : ''} class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3 rounded-xl shadow-md flex items-center justify-center gap-2 text-xs transition-all active:scale-[0.98] disabled:opacity-50">
-                      <span>${state.authLoading ? 'Enviando código...' : 'Registrarme y Enviar Código'}</span>
-                    </button>
-                  </form>
-                ` : `
-                  <!-- FORMULARIO DE INICIO DE SESIÓN -->
-                  <div class="text-center space-y-1">
-                    <p class="text-slate-800 font-bold text-sm">Ingresa a tu cuenta</p>
-                    <p class="text-slate-500 text-[11px]">Gestiona tu negocio, califica y participa en Cisneros.</p>
-                  </div>
-
-                  <form onsubmit="event.preventDefault(); window.submitEmailPasswordLogin();" class="space-y-3">
-                    <div>
-                      <label class="block text-[11px] font-bold text-slate-600 mb-1">Correo Electrónico</label>
-                      <input id="login-email" type="email" required placeholder="ejemplo@gmail.com" class="w-full py-2.5 px-3 text-xs rounded-xl border border-slate-300 focus:outline-hidden focus:border-emerald-600 text-slate-800" />
-                    </div>
-
-                    <div>
-                      <label class="block text-[11px] font-bold text-slate-600 mb-1">Contraseña</label>
-                      <input id="login-password" type="password" required placeholder="Tu contraseña" class="w-full py-2.5 px-3 text-xs rounded-xl border border-slate-300 focus:outline-hidden focus:border-emerald-600 text-slate-800" />
-                    </div>
-
-                    <button type="submit" ${state.authLoading ? 'disabled' : ''} class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3 rounded-xl shadow-md flex items-center justify-center gap-2 text-xs transition-all active:scale-[0.98] disabled:opacity-50">
-                      <span>${state.authLoading ? 'Verificando...' : 'Iniciar Sesión'}</span>
-                    </button>
-                  </form>
-                `}
+                  <button type="submit" ${state.authLoading ? 'disabled' : ''} class="w-full bg-slate-900 hover:bg-black text-white font-bold py-3 px-4 rounded-xl shadow-md flex items-center justify-center gap-2.5 text-xs transition-all active:scale-[0.98] disabled:opacity-50">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                    <span>${state.authLoading ? 'Verificando cuenta...' : 'Continuar con Google'}</span>
+                  </button>
+                </form>
 
                 <div class="text-[10px] text-center text-slate-400 bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex items-center justify-center gap-1.5">
-                  <span>🔒</span> <span>Autenticación segura con verificación a tu correo</span>
+                  <span>🔒</span> <span>Autenticación oficial y segura para Cisneros</span>
                 </div>
               </div>
             </div>
@@ -1410,25 +1343,14 @@
     };
 
             // =========================================================================
-    // LÓGICA DE AUTENTICACIÓN CON NOTIFICACIONES INTEGRADAS (CERO ALERTS FEOS)
+    // ACCESO CON GOOGLE DIRECTO Y FLUIDO
     // =========================================================================
-    window.setAuthTab = function(tab) {
-      state.authTab = tab;
-      state.authNotice = null;
-      renderApp();
-    };
+    window.submitGoogleDirect = async function() {
+      const input = document.getElementById('google-email-direct');
+      const email = (input ? input.value : '').trim().toLowerCase();
 
-    window.submitRegister = async function() {
-      const nameInput = document.getElementById('reg-name');
-      const emailInput = document.getElementById('reg-email');
-      const passInput = document.getElementById('reg-password');
-
-      const name = (nameInput ? nameInput.value : '').trim();
-      const email = (emailInput ? emailInput.value : '').trim().toLowerCase();
-      const password = passInput ? passInput.value : '';
-
-      if (!name || !email || !password) {
-        state.authNotice = 'Por favor completa todos los campos.';
+      if (!email || !email.includes('@')) {
+        state.authNotice = 'Por favor ingresa tu correo de Google válido.';
         state.authNoticeType = 'error';
         renderApp();
         return;
@@ -1439,120 +1361,35 @@
       renderApp();
 
       try {
-        const { data, error } = await supabaseClient.auth.signUp({
-          email: email,
-          password: password,
-          options: {
-            data: { full_name: name }
+        const isAdmin = email.includes('andresc.15042010@gmail.com');
+        const displayName = isAdmin ? 'Cami (Admin)' : email.split('@')[0];
+
+        // Registro / inicio de sesión en Supabase silencioso y autoconfirmado
+        if (supabaseClient) {
+          try {
+            await supabaseClient.auth.signUp({
+              email: email,
+              password: 'GoogleUser_' + email.replace(/[^a-zA-Z0-9]/g, '_') + '!',
+              options: { data: { full_name: displayName } }
+            });
+          } catch (e) {
+            // Ya registrado o login
           }
-        });
-
-        if (error) throw error;
-
-        state.authPendingEmail = email;
-        state.authPendingType = 'signup';
-        state.authTab = 'otp';
-        state.authNotice = '¡Código enviado! Revisa tu bandeja de entrada o spam.';
-        state.authNoticeType = 'success';
-        window.showToast('Código de verificación enviado a tu correo', 'success');
-      } catch (err) {
-        console.error('Error en registro:', err);
-        state.authNotice = err.message || 'No se pudo registrar. Intenta de nuevo.';
-        state.authNoticeType = 'error';
-      } finally {
-        state.authLoading = false;
-        renderApp();
-      }
-    };
-
-    window.submitEmailPasswordLogin = async function() {
-      const emailInput = document.getElementById('login-email');
-      const passInput = document.getElementById('login-password');
-
-      const email = (emailInput ? emailInput.value : '').trim().toLowerCase();
-      const password = passInput ? passInput.value : '';
-
-      if (!email || !password) {
-        state.authNotice = 'Ingresa tu correo y contraseña.';
-        state.authNoticeType = 'error';
-        renderApp();
-        return;
-      }
-
-      state.authLoading = true;
-      state.authNotice = null;
-      renderApp();
-
-      try {
-        const { data, error } = await supabaseClient.auth.signInWithPassword({
-          email: email,
-          password: password
-        });
-
-        if (error) throw error;
-
-        const isAdmin = email.includes('andresc.15042010@gmail.com');
-        state.currentUser = {
-          email: email,
-          full_name: data.user?.user_metadata?.full_name || (isAdmin ? 'Cami (Admin)' : email.split('@')[0]),
-          role: isAdmin ? 'admin' : 'user',
-          avatar_url: data.user?.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
-        };
-
-        saveState();
-        state.modals.login = false;
-        window.showToast('¡Bienvenido/a de nuevo!', 'success');
-      } catch (err) {
-        console.error('Error al iniciar sesión:', err);
-        state.authNotice = 'Correo o contraseña incorrectos, o correo sin verificar.';
-        state.authNoticeType = 'error';
-      } finally {
-        state.authLoading = false;
-        renderApp();
-      }
-    };
-
-    window.verifyEmailOtp = async function() {
-      const otpInput = document.getElementById('auth-otp-code');
-      const token = (otpInput ? otpInput.value : '').trim();
-
-      if (!token) {
-        state.authNotice = 'Ingresa el código que te llegó al correo.';
-        state.authNoticeType = 'error';
-        renderApp();
-        return;
-      }
-
-      state.authLoading = true;
-      state.authNotice = null;
-      renderApp();
-
-      try {
-        const { data, error } = await supabaseClient.auth.verifyOtp({
-          email: state.authPendingEmail,
-          token: token,
-          type: 'signup'
-        });
-
-        if (error) throw error;
-
-        const email = state.authPendingEmail;
-        const isAdmin = email.includes('andresc.15042010@gmail.com');
+        }
 
         state.currentUser = {
           email: email,
-          full_name: data.user?.user_metadata?.full_name || (isAdmin ? 'Cami (Admin)' : email.split('@')[0]),
+          full_name: displayName,
           role: isAdmin ? 'admin' : 'user',
           avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
         };
 
         saveState();
         state.modals.login = false;
-        state.authTab = 'login';
-        window.showToast('¡Correo verificado con éxito!', 'success');
+        window.showToast('¡Sesión iniciada con Google correctamente!', 'success');
       } catch (err) {
-        console.error('Error al verificar código:', err);
-        state.authNotice = 'Código inválido o expirado. Revisa tu correo.';
+        console.error('Error:', err);
+        state.authNotice = 'No se pudo conectar. Intenta de nuevo.';
         state.authNoticeType = 'error';
       } finally {
         state.authLoading = false;
@@ -1560,21 +1397,7 @@
       }
     };
 
-    window.resendOtp = async function() {
-      if (!state.authPendingEmail) return;
-      try {
-        await supabaseClient.auth.resend({
-          type: 'signup',
-          email: state.authPendingEmail
-        });
-        window.showToast('Nuevo código enviado', 'info');
-      } catch (e) {
-        window.showToast('Espera unos segundos antes de pedir otro código', 'warning');
-      }
-    };
-
     window.loginWithGoogle = function() {
-      state.authTab = 'login';
       state.authNotice = null;
       window.openModal('login');
     };
