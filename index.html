@@ -420,7 +420,7 @@
         return matchesCategory && matchesSearch;
       });
 
-      const featuredBusiness = state.businesses.find(b => b.is_featured && b.status === 'approved');
+      const featuredBusinesses = state.businesses.filter(b => b.is_featured && b.status === 'approved').slice(0, 3);
       const cartCount = state.cart.reduce((sum, i) => sum + i.quantity, 0);
 
       appContainer.innerHTML = `
@@ -583,24 +583,36 @@
             <!-- ========================================== -->
             ${state.mainTab === 'negocios' ? `
               
-              <!-- BANNER DESTACADO DE LA SEMANA (Si existe) -->
-              ${featuredBusiness ? `
-                <div class="mb-5 rounded-3xl bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-950 text-white p-5 sm:p-7 relative overflow-hidden shadow-lg border border-emerald-700/50">
-                  <div class="relative z-10 max-w-lg space-y-2">
-                    <span class="inline-flex items-center gap-1.5 bg-amber-400 text-amber-950 text-xs font-black px-3 py-0.5 rounded-full shadow-sm">
-                      ⭐ NEGOCIO DESTACADO DE LA SEMANA
+              <!-- CARRUSEL DESTACADOS DE LA SEMANA (hasta 3 negocios) -->
+              ${featuredBusinesses.length > 0 ? `
+                <div class="mb-5">
+                  <div class="flex items-center gap-2 mb-2.5">
+                    <span class="inline-flex items-center gap-1.5 bg-amber-400 text-amber-950 text-xs font-black px-3 py-0.5 rounded-full shadow-sm animate-pulse-glow">
+                      ⭐ DESTACADOS DE LA SEMANA
                     </span>
-                    <h2 class="text-2xl sm:text-3xl font-black tracking-tight">${featuredBusiness.name}</h2>
-                    <p class="text-xs sm:text-sm text-emerald-100 line-clamp-2">${featuredBusiness.description}</p>
-                    <div class="pt-2 flex items-center gap-3">
-                      <button onclick="window.selectBusiness('${featuredBusiness.id}')" class="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-md transition-all">
-                        Ver Menú y Domicilios →
-                      </button>
-                      <span class="text-xs text-emerald-200 font-medium">📍 ${featuredBusiness.written_address}</span>
-                    </div>
+                    <span class="text-xs text-slate-500 font-medium">${featuredBusinesses.length} negocio${featuredBusinesses.length > 1 ? 's' : ''} destacado${featuredBusinesses.length > 1 ? 's' : ''}</span>
                   </div>
-                  <div class="absolute right-0 top-0 bottom-0 w-1/3 opacity-25 hidden sm:block pointer-events-none">
-                    <img src="${featuredBusiness.cover_images[0]}" class="w-full h-full object-cover" />
+                  <div class="grid grid-cols-1 ${featuredBusinesses.length > 1 ? 'sm:grid-cols-' + Math.min(featuredBusinesses.length, 3) : ''} gap-4">
+                    ${featuredBusinesses.map((fb, idx) => `
+                      <div class="relative rounded-3xl bg-gradient-to-br ${idx === 0 ? 'from-emerald-900 via-emerald-800 to-teal-950' : idx === 1 ? 'from-sky-900 via-sky-800 to-indigo-950' : 'from-purple-900 via-purple-800 to-fuchsia-950'} text-white p-5 sm:p-6 overflow-hidden shadow-lg border ${idx === 0 ? 'border-emerald-700/50' : idx === 1 ? 'border-sky-700/50' : 'border-purple-700/50'} cursor-pointer hover:scale-[1.01] transition-transform animate-fade-in-up" onclick="window.selectBusiness('${fb.id}')">
+                        <div class="relative z-10 space-y-1.5">
+                          <span class="inline-flex items-center gap-1 bg-amber-400/90 text-amber-950 text-[10px] font-black px-2.5 py-0.5 rounded-full">
+                            ⭐ #${idx + 1} Destacado
+                          </span>
+                          <h2 class="text-xl sm:text-2xl font-black tracking-tight line-clamp-1">${fb.name}</h2>
+                          <p class="text-xs text-white/80 line-clamp-2">${fb.description || ''}</p>
+                          <div class="pt-1.5 flex items-center gap-3 flex-wrap">
+                            <span class="bg-white/20 hover:bg-white/30 text-white text-[11px] font-bold px-3 py-1.5 rounded-xl transition-all">
+                              Ver negocio →
+                            </span>
+                            <span class="text-[11px] text-white/70 font-medium">📍 ${fb.written_address || ''}</span>
+                          </div>
+                        </div>
+                        <div class="absolute right-0 top-0 bottom-0 w-2/5 opacity-20 pointer-events-none">
+                          <img src="${(fb.cover_images && fb.cover_images[0]) || fb.logo_url || ''}" class="w-full h-full object-cover" onerror="this.style.display='none'" />
+                        </div>
+                      </div>
+                    `).join('')}
                   </div>
                 </div>
               ` : ''}
@@ -1847,22 +1859,36 @@
                 ${state.adminTab === 'analytics' ? `
                 <!-- PESTAÑA ANALÍTICA EN VIVO -->
                 <div class="space-y-4">
-                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     <div class="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl">
-                      <span class="text-[10px] font-bold text-emerald-800 uppercase block">Total Negocios</span>
+                      <span class="text-[10px] font-bold text-emerald-800 uppercase block">Negocios Activos</span>
                       <span class="text-2xl font-black text-emerald-950">${state.businesses.filter(b => b.status === 'approved').length}</span>
+                      <span class="text-[10px] text-emerald-600">${state.businesses.filter(b => b.status === 'pending').length} pendientes</span>
                     </div>
                     <div class="p-3.5 bg-sky-50 border border-sky-200 rounded-2xl">
                       <span class="text-[10px] font-bold text-sky-800 uppercase block">Verificados 🏅</span>
                       <span class="text-2xl font-black text-sky-950">${state.businesses.filter(b => b.is_verified).length}</span>
+                      <span class="text-[10px] text-sky-600">${state.businesses.filter(b => b.is_featured).length} destacados ⭐</span>
                     </div>
                     <div class="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl">
                       <span class="text-[10px] font-bold text-amber-800 uppercase block">Transportadores</span>
                       <span class="text-2xl font-black text-amber-950">${state.transporters.length}</span>
+                      <span class="text-[10px] text-amber-600">en la plataforma</span>
                     </div>
                     <div class="p-3.5 bg-purple-50 border border-purple-200 rounded-2xl">
                       <span class="text-[10px] font-bold text-purple-800 uppercase block">Clics WhatsApp</span>
                       <span class="text-2xl font-black text-purple-950">${Object.values(state.contactStats || {}).reduce((acc, c) => acc + (c.whatsapp || c.total || 0), 0)}</span>
+                      <span class="text-[10px] text-purple-600">total acumulado</span>
+                    </div>
+                    <div class="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl">
+                      <span class="text-[10px] font-bold text-rose-800 uppercase block">Reseñas 📝</span>
+                      <span class="text-2xl font-black text-rose-950">${state.reviews.length}</span>
+                      <span class="text-[10px] text-rose-600">de usuarios</span>
+                    </div>
+                    <div class="p-3.5 bg-teal-50 border border-teal-200 rounded-2xl">
+                      <span class="text-[10px] font-bold text-teal-800 uppercase block">Sugerencias 📬</span>
+                      <span class="text-2xl font-black text-teal-950">${state.suggestions.length}</span>
+                      <span class="text-[10px] text-teal-600">ciudadanas</span>
                     </div>
                   </div>
 
@@ -3273,18 +3299,30 @@
     };
 
     window.setFeatured = async function(id) {
-      state.businesses.forEach(b => {
-        b.is_featured = (b.id === id);
-      });
+      const b = state.businesses.find(x => x.id === id);
+      if (!b) return;
+
+      // Contar destacados actuales (máximo 3)
+      const currentFeatured = state.businesses.filter(x => x.is_featured);
+      const isCurrentlyFeatured = b.is_featured;
+
+      if (!isCurrentlyFeatured && currentFeatured.length >= 3) {
+        window.showToast('Ya hay 3 negocios destacados. Quita uno primero.', 'warning');
+        return;
+      }
+
+      b.is_featured = !isCurrentlyFeatured;
       saveState();
+
       if (supabaseClient) {
         try {
-          await supabaseClient.from('businesses').update({ is_featured: false }).neq('id', id);
-          await supabaseClient.from('businesses').update({ is_featured: true }).eq('id', id);
+          await supabaseClient.from('businesses').update({ is_featured: b.is_featured }).eq('id', id);
         } catch (e) {
           console.warn('Error setting featured in Supabase:', e);
         }
       }
+
+      window.showToast(b.is_featured ? `⭐ "${b.name}" ahora es Destacado de la Semana.` : `"${b.name}" ya no está destacado.`, 'success');
       renderApp();
     };
 
@@ -3736,7 +3774,7 @@
     // =========================================================================
     // GESTIÓN DE CACHÉ Y REGISTRO DE SERVICE WORKER PWA
     // =========================================================================
-    const CURRENT_SW_VERSION = 'cisneros-emprende-v22';
+    const CURRENT_SW_VERSION = 'cisneros-emprende-v23';
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
