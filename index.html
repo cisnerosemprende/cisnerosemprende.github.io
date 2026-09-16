@@ -1515,53 +1515,86 @@
                   <textarea id="reg-desc" rows="2" placeholder="Breve descripción de lo que ofreces, especialidades, historia o servicios..." class="w-full p-2.5 rounded-xl border border-slate-300 focus:border-emerald-600 focus:outline-none resize-none"></textarea>
                 </div>
 
-                <!-- SECCIÓN 2: LOGO Y FOTOS DEL LOCAL -->
-                <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2.5">
-                  <label class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
-                    <span>🖼️</span> <span>Logo y Fotos del Negocio / Local:</span>
-                  </label>
-                  <p class="text-[10px] text-slate-500">Pega enlaces de fotos de tu negocio, o usa el selector para cargar fotos desde tu celular/PC.</p>
+                <!-- SECCIÓN 2: LOGO Y FOTOS DEL LOCAL (REDiseño LIMPIO Y ORDENADO) -->
+                <div class="bg-gradient-to-br from-slate-50 to-emerald-50/30 p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-3">
+                  <div class="flex items-center justify-between">
+                    <label class="font-bold text-slate-800 text-xs sm:text-sm flex items-center gap-2">
+                      <span class="text-base">🖼️</span> <span>Logo y Fotos de Presentación</span>
+                    </label>
+                    <span class="text-[10px] text-emerald-700 font-bold bg-emerald-100/70 px-2 py-0.5 rounded-md">Formatos JPG, PNG o WebP</span>
+                  </div>
+                  <p class="text-[11px] text-slate-500 leading-relaxed">Sube fotos claras desde tu celular o computadora. Puedes recortar y centrar cada imagen a la medida ideal.</p>
                   
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label class="block text-[10px] font-semibold text-slate-700 mb-1 flex items-center justify-between">
-                        <span>Foto Portada / Fachada:</span>
-                        <span class="text-[9px] text-emerald-700 font-bold">Subir desde galería o PC</span>
-                      </label>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                    <!-- Tarjeta 1: Foto de Portada / Fachada -->
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs flex flex-col justify-between space-y-2.5">
+                      <div>
+                        <div class="flex items-center justify-between mb-1">
+                          <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                            <span>📸</span> Foto de Portada o Fachada:
+                          </span>
+                          <span class="text-[9px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">Principal</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500">Es la imagen grande que todos verán en el catálogo.</p>
+                      </div>
+
                       <input id="reg-cover" type="hidden" />
-                      <input type="file" id="reg-cover-file" accept="image/*" onchange="window.handleImageUpload(event, 'reg-cover', 'preview-cover', 'cover')" class="block w-full text-[10px] text-slate-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[10px] file:font-bold file:bg-emerald-700 file:text-white hover:file:bg-emerald-800 cursor-pointer" />
                       
-                      <!-- Vista previa interactiva con botón de Ajustar/Recortar -->
-                      <div id="cover-preview-wrapper" class="relative mt-2 rounded-xl overflow-hidden border-2 border-dashed border-slate-300 bg-slate-100 h-28 flex items-center justify-center group">
+                      <!-- Vista previa rectangular interactiva -->
+                      <div id="cover-preview-wrapper" class="relative w-full h-32 rounded-xl overflow-hidden border-2 border-dashed border-emerald-300/80 bg-slate-50 flex items-center justify-center group shadow-inner">
                         <img id="preview-cover" class="hidden w-full h-full object-cover" alt="Vista previa portada" />
-                        <span id="preview-cover-placeholder" class="text-xs text-slate-400 font-medium">Toca 'Seleccionar archivo' arriba</span>
-                        <button type="button" id="btn-adjust-cover" onclick="window.openImageAdjuster('reg-cover', 'preview-cover', 'cover')" class="hidden absolute bottom-2 right-2 bg-black/75 hover:bg-black text-white text-[10px] font-black px-2.5 py-1 rounded-lg backdrop-blur-xs flex items-center gap-1 shadow-md transition-all">
-                          <span>✂️ Ajustar tamaño y posición</span>
+                        <div id="preview-cover-placeholder" class="text-center p-2 text-slate-400">
+                          <span class="text-2xl block mb-0.5">🏞️</span>
+                          <span class="text-[11px] font-medium block">Sin foto de portada seleccionada</span>
+                          <span class="text-[9px] text-slate-400 block">Toca el botón verde abajo para elegir</span>
+                        </div>
+                        <button type="button" id="btn-adjust-cover" onclick="window.openImageAdjuster('reg-cover', 'preview-cover', 'cover')" class="hidden absolute bottom-2 right-2 bg-black/80 hover:bg-black text-white text-[10px] font-bold px-2.5 py-1 rounded-lg backdrop-blur-xs flex items-center gap-1 shadow-md transition-all">
+                          <span>✂️ Ajustar / Recortar</span>
                         </button>
                       </div>
+
+                      <div>
+                        <input type="file" id="reg-cover-file" accept="image/*" onchange="window.handleImageUpload(event, 'reg-cover', 'preview-cover', 'cover')" class="block w-full text-[11px] text-slate-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[11px] file:font-bold file:bg-emerald-700 file:text-white hover:file:bg-emerald-800 cursor-pointer" />
+                      </div>
                     </div>
-                    <div>
-                      <label class="block text-[10px] font-semibold text-slate-700 mb-1 flex items-center justify-between">
-                        <span>Logo del Negocio (Opcional):</span>
-                        <span class="text-[9px] text-emerald-700 font-bold">Subir desde galería o PC</span>
-                      </label>
+
+                    <!-- Tarjeta 2: Logo del Negocio -->
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs flex flex-col justify-between space-y-2.5">
+                      <div>
+                        <div class="flex items-center justify-between mb-1">
+                          <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                            <span>🏷️</span> Logo del Negocio (Opcional):
+                          </span>
+                          <span class="text-[9px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">Recomendado</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500">Aparecerá en círculo en tu perfil y publicaciones.</p>
+                      </div>
+
                       <input id="reg-logo" type="hidden" />
-                      <input type="file" id="reg-logo-file" accept="image/*" onchange="window.handleImageUpload(event, 'reg-logo', 'preview-logo', 'logo')" class="block w-full text-[10px] text-slate-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[10px] file:font-bold file:bg-emerald-700 file:text-white hover:file:bg-emerald-800 cursor-pointer" />
-                      
-                      <div class="flex items-center gap-3 mt-2">
-                        <div class="relative w-16 h-16 rounded-full border-2 border-emerald-500 overflow-hidden bg-slate-100 flex items-center justify-center shrink-0 shadow-xs cursor-pointer group" onclick="window.openImageAdjuster('reg-logo', 'preview-logo', 'logo')">
-                          <img id="preview-logo" class="w-full h-full object-cover hidden" alt="Vista previa circular logo" />
-                          <span id="preview-logo-placeholder" class="text-xs text-slate-400 font-bold">Logo</span>
-                          <div class="absolute inset-0 bg-black/40 text-white text-[9px] font-bold opacity-0 group-hover:opacity-100 flex items-center justify-center text-center transition-opacity p-0.5">
-                            Ajustar ✂️
+
+                      <!-- Contenedor centralizado para el Logo -->
+                      <div class="flex items-center gap-3.5 bg-slate-50 p-2.5 rounded-xl border border-slate-200/80">
+                        <div class="relative w-20 h-20 rounded-full border-2 border-emerald-500 overflow-hidden bg-white flex items-center justify-center shrink-0 shadow-md cursor-pointer group" onclick="window.openImageAdjuster('reg-logo', 'preview-logo', 'logo')">
+                          <img id="preview-logo" class="w-full h-full object-cover hidden" alt="Vista previa logo" />
+                          <div id="preview-logo-placeholder" class="text-center text-slate-400">
+                            <span class="text-xl block">👤</span>
+                            <span class="text-[9px] font-bold block">Logo</span>
+                          </div>
+                          <div class="absolute inset-0 bg-black/50 text-white text-[10px] font-bold opacity-0 group-hover:opacity-100 flex items-center justify-center text-center transition-opacity p-1">
+                            ✂️ Ajustar
                           </div>
                         </div>
-                        <div class="flex-1">
-                          <span class="text-[10px] text-slate-500 leading-tight block">Círculo perfecto sin deformar.</span>
-                          <button type="button" id="btn-adjust-logo" onclick="window.openImageAdjuster('reg-logo', 'preview-logo', 'logo')" class="hidden mt-1 text-[10px] font-bold text-emerald-800 bg-emerald-100 hover:bg-emerald-200 px-2 py-0.5 rounded-md transition-colors">
-                            ✂️ Ajustar posición / zoom
+                        <div class="flex-1 min-w-0 space-y-1">
+                          <span class="text-[11px] font-bold text-slate-700 block truncate">Círculo de identidad</span>
+                          <span class="text-[10px] text-slate-500 block leading-tight">Se ajusta a un círculo perfecto sin deformarse.</span>
+                          <button type="button" id="btn-adjust-logo" onclick="window.openImageAdjuster('reg-logo', 'preview-logo', 'logo')" class="hidden text-[10px] font-bold text-emerald-800 bg-emerald-100 hover:bg-emerald-200 px-2.5 py-1 rounded-lg transition-colors items-center gap-1 shadow-2xs">
+                            ✂️ Centrar / Zoom
                           </button>
                         </div>
+                      </div>
+
+                      <div>
+                        <input type="file" id="reg-logo-file" accept="image/*" onchange="window.handleImageUpload(event, 'reg-logo', 'preview-logo', 'logo')" class="block w-full text-[11px] text-slate-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[11px] file:font-bold file:bg-emerald-700 file:text-white hover:file:bg-emerald-800 cursor-pointer" />
                       </div>
                     </div>
                   </div>
@@ -1583,12 +1616,12 @@
                   </div>
                 </div>
 
-                <!-- SECCIÓN 4: DOMICILIOS & HORARIOS -->
-                <div class="bg-amber-50/60 p-3.5 rounded-2xl border border-amber-200/80 space-y-2.5">
-                  <label class="font-bold text-amber-950 text-xs flex items-center gap-1.5">
-                    <span>🛵</span> <span>Servicio de Domicilios & Horario:</span>
+                <!-- SECCIÓN 4: DOMICILIOS & HORARIOS FLEXIBLES (PERSONALIZADOS POR DÍA) -->
+                <div class="bg-amber-50/60 p-4 rounded-2xl border border-amber-200/80 space-y-3">
+                  <label class="font-bold text-amber-950 text-xs sm:text-sm flex items-center gap-1.5">
+                    <span>🛵</span> <span>Servicio de Domicilios & Horarios de Atención:</span>
                   </label>
-                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                     <div>
                       <label class="block text-[10px] font-semibold text-slate-600 mb-0.5">¿Haces domicilios?:</label>
                       <select id="reg-has-delivery" class="w-full p-2 rounded-lg border border-slate-300 bg-white">
@@ -1605,26 +1638,74 @@
                       <input id="reg-delivery-min" type="number" placeholder="ej: 25000 (Opcional)" class="w-full p-2 rounded-lg border border-slate-300 bg-white" />
                     </div>
                   </div>
-                  <div class="pt-1 space-y-2">
-                    <div>
-                      <label class="block text-[10px] font-bold text-slate-700 mb-1">🗓️ Días de la semana que atiende:</label>
-                      <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5" id="biz-days-checkboxes">
-                        ${['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'].map(d => `
-                          <label class="flex items-center gap-1.5 p-1.5 rounded-lg bg-white border border-slate-200 cursor-pointer text-[11px] font-semibold text-slate-700 hover:bg-emerald-50">
-                            <input type="checkbox" name="biz_day" value="${d}" class="w-3.5 h-3.5 text-emerald-600 rounded" checked />
-                            <span>${d}</span>
-                          </label>
-                        `).join('')}
+
+                  <div class="pt-2 border-t border-amber-200/60 space-y-2.5">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                      <label class="block text-[11px] font-bold text-slate-800">🗓️ Horarios y Días de Atención:</label>
+                      <div class="inline-flex rounded-lg border border-amber-300 p-0.5 bg-amber-100/50 text-[11px] font-semibold">
+                        <label class="cursor-pointer px-2.5 py-1 rounded-md transition-all flex items-center gap-1 has-[:checked]:bg-amber-600 has-[:checked]:text-white">
+                          <input type="radio" name="schedule_mode" value="same" class="hidden" checked onchange="window.toggleScheduleMode('same')" />
+                          <span>⏰ Mismo horario todos los días</span>
+                        </label>
+                        <label class="cursor-pointer px-2.5 py-1 rounded-md transition-all flex items-center gap-1 has-[:checked]:bg-amber-600 has-[:checked]:text-white">
+                          <input type="radio" name="schedule_mode" value="custom" class="hidden" onchange="window.toggleScheduleMode('custom')" />
+                          <span>🗓️ Horario diferente por día</span>
+                        </label>
                       </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-2 pt-1">
+
+                    <!-- MODO 1: MISMO HORARIO (Rápido y estándar) -->
+                    <div id="schedule-mode-same" class="space-y-2">
                       <div>
-                        <label class="block text-[10px] font-semibold text-slate-600 mb-0.5">De qué hora abre:</label>
-                        <input id="reg-open" type="time" value="08:00" class="w-full p-2 rounded-lg border border-slate-300 bg-white" />
+                        <span class="block text-[10px] text-slate-500 mb-1">Marca los días de la semana que atiende tu negocio:</span>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5" id="biz-days-checkboxes">
+                          ${['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'].map(d => `
+                            <label class="flex items-center gap-1.5 p-1.5 rounded-lg bg-white border border-slate-200 cursor-pointer text-[11px] font-semibold text-slate-700 hover:bg-emerald-50">
+                              <input type="checkbox" name="biz_day" value="${d}" class="w-3.5 h-3.5 text-emerald-600 rounded" checked />
+                              <span>${d}</span>
+                            </label>
+                          `).join('')}
+                        </div>
                       </div>
-                      <div>
-                        <label class="block text-[10px] font-semibold text-slate-600 mb-0.5">A qué hora cierra:</label>
-                        <input id="reg-close" type="time" value="20:00" class="w-full p-2 rounded-lg border border-slate-300 bg-white" />
+                      <div class="grid grid-cols-2 gap-2 pt-1 bg-white p-3 rounded-xl border border-amber-200/70">
+                        <div>
+                          <label class="block text-[10px] font-semibold text-slate-700 mb-0.5">Hora de apertura:</label>
+                          <input id="reg-open" type="time" value="08:00" class="w-full p-2 rounded-lg border border-slate-300 bg-white" />
+                        </div>
+                        <div>
+                          <label class="block text-[10px] font-semibold text-slate-700 mb-0.5">Hora de cierre:</label>
+                          <input id="reg-close" type="time" value="20:00" class="w-full p-2 rounded-lg border border-slate-300 bg-white" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- MODO 2: HORARIO PERSONALIZADO POR DÍA -->
+                    <div id="schedule-mode-custom" class="hidden space-y-1.5 bg-white p-3 rounded-xl border border-amber-300/80">
+                      <p class="text-[10px] text-slate-500 mb-2">Marca cada día que abres y especifica su horario exacto (ej. si el miércoles abres de 4:00 PM a 6:00 PM):</p>
+                      <div class="space-y-1.5">
+                        ${[
+                          { key: 'lunes', label: 'Lunes' },
+                          { key: 'martes', label: 'Martes' },
+                          { key: 'miercoles', label: 'Miércoles' },
+                          { key: 'jueves', label: 'Jueves' },
+                          { key: 'viernes', label: 'Viernes' },
+                          { key: 'sabado', label: 'Sábado' },
+                          { key: 'domingo', label: 'Domingo' }
+                        ].map(item => `
+                          <div class="flex items-center justify-between gap-2 p-2 rounded-lg border border-slate-100 bg-slate-50/50 hover:bg-slate-50">
+                            <label class="flex items-center gap-2 min-w-[95px] cursor-pointer text-xs font-bold text-slate-800">
+                              <input type="checkbox" id="reg-day-${item.key}-active" checked onchange="window.toggleDaySchedule('${item.key}')" class="w-4 h-4 text-emerald-600 rounded" />
+                              <span>${item.label}</span>
+                            </label>
+                            <div id="reg-day-${item.key}-inputs" class="flex items-center gap-1.5 text-[11px]">
+                              <span class="text-slate-400 text-[10px]">De:</span>
+                              <input type="time" id="reg-day-${item.key}-open" value="08:00" class="p-1 rounded border border-slate-300 bg-white text-xs" />
+                              <span class="text-slate-400 text-[10px]">A:</span>
+                              <input type="time" id="reg-day-${item.key}-close" value="20:00" class="p-1 rounded border border-slate-300 bg-white text-xs" />
+                            </div>
+                            <span id="reg-day-${item.key}-closed-label" class="hidden text-rose-600 font-bold text-[10px] bg-rose-50 px-2 py-1 rounded">Cerrado</span>
+                          </div>
+                        `).join('')}
                       </div>
                     </div>
                   </div>
@@ -1645,28 +1726,65 @@
                   <div class="pt-2 border-t border-slate-200">
                     <div class="flex items-center justify-between mb-1">
                       <label class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
-                        <span>🍽️</span> <span>O Escribe Tus Platos/Servicios Individualmente:</span>
+                        <span>🍽️</span> <span>Platos, Productos o Servicios Individuales:</span>
                       </label>
-                      <button type="button" onclick="window.addDraftProduct()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-2.5 py-1 rounded-lg text-[11px] shadow-2xs flex items-center gap-1">
-                        <span>+</span> Agregar Plato
+                      <button type="button" onclick="window.openAddProductForm()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-3 py-1.5 rounded-xl text-[11px] shadow-2xs flex items-center gap-1.5 transition-colors">
+                        <span>+</span> Agregar Plato o Producto
                       </button>
                     </div>
-                    <p class="text-[10px] text-slate-500 mb-2">Agrega productos con precio para pedidos directos a tu WhatsApp:</p>
+                    <p class="text-[10px] text-slate-500 mb-2.5">Agrega tus productos con nombre, precio y descripción para que tus clientes puedan pedir directo a tu WhatsApp:</p>
+
+                    <!-- FORMULARIO LIMPIO EN LÍNEA (REEMPLAZA EL PROMPT NATIVO FEO) -->
+                    <div id="product-add-inline-card" class="hidden bg-emerald-50/80 p-3.5 rounded-2xl border-2 border-emerald-300 shadow-sm mb-3 space-y-2.5 animate-fade-in-up">
+                      <div class="flex items-center justify-between">
+                        <span class="text-xs font-black text-emerald-950 flex items-center gap-1">
+                          <span>✨</span> Nuevo Producto / Servicio
+                        </span>
+                        <button type="button" onclick="window.closeAddProductForm()" class="text-slate-400 hover:text-slate-700 text-xs font-bold px-1.5 py-0.5 rounded">✕ Cancelar</button>
+                      </div>
+
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div>
+                          <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Nombre del plato o servicio: *</label>
+                          <input id="new-prod-name" type="text" placeholder="Ej: Bandeja Paisa, Hamburguesa Doble, Corte de Cabello" class="w-full p-2 text-xs rounded-xl border border-slate-300 bg-white focus:border-emerald-600 focus:outline-none" />
+                        </div>
+                        <div>
+                          <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Precio en pesos colombianos ($ COP): *</label>
+                          <input id="new-prod-price" type="number" placeholder="Ej: 18000" class="w-full p-2 text-xs rounded-xl border border-slate-300 bg-white focus:border-emerald-600 focus:outline-none" />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Descripción o ingredientes (opcional):</label>
+                        <input id="new-prod-desc" type="text" placeholder="Ej: Carne de res 150g, queso derretido, tocineta y papas a la francesa" class="w-full p-2 text-xs rounded-xl border border-slate-300 bg-white focus:border-emerald-600 focus:outline-none" />
+                      </div>
+
+                      <div class="flex items-center justify-end gap-2 pt-1">
+                        <button type="button" onclick="window.closeAddProductForm()" class="bg-white hover:bg-slate-100 text-slate-600 font-bold px-3 py-1.5 rounded-xl text-xs border border-slate-200">
+                          Cancelar
+                        </button>
+                        <button type="button" onclick="window.saveNewProductInline()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold px-4 py-1.5 rounded-xl text-xs shadow-xs flex items-center gap-1">
+                          <span>✓</span> Guardar en el Menú
+                        </button>
+                      </div>
+                    </div>
 
                     <!-- Lista de productos añadidos -->
                     <div id="draft-products-list" class="space-y-1.5">
                       ${(state.menuDraft && state.menuDraft.length > 0) ? state.menuDraft.map((p, idx) => `
-                        <div class="bg-white p-2.5 rounded-xl border border-slate-200 flex items-center justify-between gap-2 shadow-2xs">
-                          <div class="flex-1">
-                            <span class="font-bold text-slate-800 block">${p.name}</span>
-                            <span class="text-[10px] text-emerald-700 font-bold">$${Number(p.price).toLocaleString('es-CO')}</span>
-                            ${p.description ? `<span class="text-[10px] text-slate-500 block">${p.description}</span>` : ''}
+                        <div class="bg-white p-2.5 rounded-xl border border-slate-200 flex items-center justify-between gap-2 shadow-2xs hover:border-emerald-200 transition-colors">
+                          <div class="flex-1 min-w-0">
+                            <span class="font-bold text-slate-800 block text-xs truncate">${p.name}</span>
+                            <span class="text-[11px] text-emerald-700 font-bold">$${Number(p.price).toLocaleString('es-CO')}</span>
+                            ${p.description ? `<span class="text-[10px] text-slate-500 block truncate">${p.description}</span>` : ''}
                           </div>
-                          <button type="button" onclick="window.removeDraftProduct(${idx})" class="text-rose-600 hover:text-rose-800 font-bold text-xs p-1">🗑️</button>
+                          <button type="button" onclick="window.removeDraftProduct(${idx})" class="text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 font-bold text-xs p-1.5 rounded-lg transition-colors" title="Eliminar de la lista">🗑️</button>
                         </div>
                       `).join('') : `
-                        <div class="bg-white p-2.5 rounded-xl border border-dashed border-slate-300 text-center text-slate-400 text-[11px]">
-                          (Opcional) Toca "+ Agregar Plato" para listar productos individuales con precio.
+                        <div class="bg-white p-4 rounded-xl border border-dashed border-slate-300 text-center text-slate-400 text-xs space-y-1">
+                          <span class="text-lg block">📋</span>
+                          <span class="font-medium text-slate-500 block">Aún no has agregado platos o servicios individuales.</span>
+                          <span class="text-[10px] text-slate-400 block">Toca "+ Agregar Plato o Producto" arriba para registrar con precio.</span>
                         </div>
                       `}
                     </div>
@@ -3184,27 +3302,133 @@
       renderApp();
     };
 
-    window.addDraftProduct = function() {
-      const name = prompt('Nombre del plato, producto o servicio:');
-      if (!name || !name.trim()) return;
-      const priceStr = prompt('Precio en pesos colombianos (COP):', '10000');
-      const price = Number(priceStr?.replace(/\D/g, '') || 0);
-      const desc = prompt('Breve descripción o ingredientes (opcional):') || '';
+    // =========================================================================
+    // GESTIÓN DE PRODUCTOS / PLATOS DEL MENÚ (SIN PROMPTS NATIVOS)
+    // =========================================================================
+    window.openAddProductForm = function() {
+      const card = document.getElementById('product-add-inline-card');
+      if (card) {
+        card.classList.remove('hidden');
+        setTimeout(() => {
+          const nameInput = document.getElementById('new-prod-name');
+          if (nameInput) nameInput.focus();
+        }, 50);
+      }
+    };
+
+    window.closeAddProductForm = function() {
+      const card = document.getElementById('product-add-inline-card');
+      if (card) card.classList.add('hidden');
+      const nameInput = document.getElementById('new-prod-name');
+      const priceInput = document.getElementById('new-prod-price');
+      const descInput = document.getElementById('new-prod-desc');
+      if (nameInput) nameInput.value = '';
+      if (priceInput) priceInput.value = '';
+      if (descInput) descInput.value = '';
+    };
+
+    window.saveNewProductInline = function() {
+      const nameInput = document.getElementById('new-prod-name');
+      const priceInput = document.getElementById('new-prod-price');
+      const descInput = document.getElementById('new-prod-desc');
+
+      const name = nameInput ? nameInput.value.trim() : '';
+      const priceVal = priceInput ? priceInput.value.trim() : '';
+      const desc = descInput ? descInput.value.trim() : '';
+
+      if (!name) {
+        window.showToast('Por favor escribe el nombre del plato o servicio.', 'warning');
+        if (nameInput) nameInput.focus();
+        return;
+      }
+
+      const price = Number(priceVal.replace(/\D/g, '') || 0);
+      if (price <= 0) {
+        window.showToast('Por favor escribe un precio válido en pesos colombianos.', 'warning');
+        if (priceInput) priceInput.focus();
+        return;
+      }
 
       if (!state.menuDraft) state.menuDraft = [];
       state.menuDraft.push({
         id: 'p-' + Date.now(),
-        name: name.trim(),
+        name: name,
         price: price,
-        description: desc.trim()
+        description: desc
       });
-      renderApp();
+
+      window.closeAddProductForm();
+      window.refreshDraftProductsList();
+      window.showToast(`¡"${name}" agregado al menú con éxito!`, 'success');
+    };
+
+    window.refreshDraftProductsList = function() {
+      const container = document.getElementById('draft-products-list');
+      if (!container) {
+        renderApp();
+        return;
+      }
+      if (!state.menuDraft || state.menuDraft.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white p-4 rounded-xl border border-dashed border-slate-300 text-center text-slate-400 text-xs space-y-1">
+            <span class="text-lg block">📋</span>
+            <span class="font-medium text-slate-500 block">Aún no has agregado platos o servicios individuales.</span>
+            <span class="text-[10px] text-slate-400 block">Toca "+ Agregar Plato o Producto" arriba para registrar con precio.</span>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = state.menuDraft.map((p, idx) => `
+        <div class="bg-white p-2.5 rounded-xl border border-slate-200 flex items-center justify-between gap-2 shadow-2xs hover:border-emerald-200 transition-colors">
+          <div class="flex-1 min-w-0">
+            <span class="font-bold text-slate-800 block text-xs truncate">${esc(p.name)}</span>
+            <span class="text-[11px] text-emerald-700 font-bold">$${Number(p.price).toLocaleString('es-CO')}</span>
+            ${p.description ? `<span class="text-[10px] text-slate-500 block truncate">${esc(p.description)}</span>` : ''}
+          </div>
+          <button type="button" onclick="window.removeDraftProduct(${idx})" class="text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 font-bold text-xs p-1.5 rounded-lg transition-colors" title="Eliminar de la lista">🗑️</button>
+        </div>
+      `).join('');
+    };
+
+    window.addDraftProduct = function() {
+      window.openAddProductForm();
     };
 
     window.removeDraftProduct = function(index) {
       if (state.menuDraft && state.menuDraft[index]) {
         state.menuDraft.splice(index, 1);
-        renderApp();
+        window.refreshDraftProductsList();
+      }
+    };
+
+    // =========================================================================
+    // CONTROLADORES DE MODO DE HORARIO FLEXIBLE
+    // =========================================================================
+    window.toggleScheduleMode = function(mode) {
+      const sameDiv = document.getElementById('schedule-mode-same');
+      const customDiv = document.getElementById('schedule-mode-custom');
+      if (mode === 'same') {
+        if (sameDiv) sameDiv.classList.remove('hidden');
+        if (customDiv) customDiv.classList.add('hidden');
+      } else {
+        if (sameDiv) sameDiv.classList.add('hidden');
+        if (customDiv) customDiv.classList.remove('hidden');
+      }
+    };
+
+    window.toggleDaySchedule = function(dayKey) {
+      const cb = document.getElementById(`reg-day-${dayKey}-active`);
+      const inputs = document.getElementById(`reg-day-${dayKey}-inputs`);
+      const label = document.getElementById(`reg-day-${dayKey}-closed-label`);
+      if (cb && inputs && label) {
+        if (cb.checked) {
+          inputs.classList.remove('hidden');
+          label.classList.add('hidden');
+        } else {
+          inputs.classList.add('hidden');
+          label.classList.remove('hidden');
+        }
       }
     };
 
@@ -3268,8 +3492,50 @@
         if (document.getElementById('reg-has-delivery')) document.getElementById('reg-has-delivery').value = b.delivery_available ? 'si' : 'no';
         if (document.getElementById('reg-delivery-cost')) document.getElementById('reg-delivery-cost').value = b.delivery_cost || 0;
         if (document.getElementById('reg-delivery-min')) document.getElementById('reg-delivery-min').value = b.delivery_minimum || b.delivery_min_order || 0;
-        if (document.getElementById('reg-open') && b.schedule?.lunes?.open) document.getElementById('reg-open').value = b.schedule.lunes.open;
-        if (document.getElementById('reg-close') && b.schedule?.lunes?.close) document.getElementById('reg-close').value = b.schedule.lunes.close;
+        // Rellenar horarios (modo mismo horario o personalizado por día)
+        const dayKeys = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
+        let hasVaryingHours = false;
+        let firstOpen = '08:00';
+        let firstClose = '20:00';
+
+        if (b.schedule) {
+          dayKeys.forEach((k, idx) => {
+            const conf = b.schedule[k];
+            const cb = document.getElementById(`reg-day-${k}-active`);
+            const openIn = document.getElementById(`reg-day-${k}-open`);
+            const closeIn = document.getElementById(`reg-day-${k}-close`);
+            if (conf) {
+              if (idx === 0 && conf.open) {
+                firstOpen = conf.open;
+                firstClose = conf.close || '20:00';
+              } else if (conf.open && (conf.open !== firstOpen || conf.close !== firstClose)) {
+                hasVaryingHours = true;
+              }
+              if (cb) cb.checked = !conf.closed;
+              if (openIn && conf.open) openIn.value = conf.open;
+              if (closeIn && conf.close) closeIn.value = conf.close;
+              window.toggleDaySchedule(k);
+            }
+          });
+        }
+
+        if (document.getElementById('reg-open')) document.getElementById('reg-open').value = firstOpen;
+        if (document.getElementById('reg-close')) document.getElementById('reg-close').value = firstClose;
+
+        // Si los horarios variaban por día, activar modo personalizado automáticamente
+        if (hasVaryingHours) {
+          const radioCustom = document.querySelector('input[name="schedule_mode"][value="custom"]');
+          if (radioCustom) {
+            radioCustom.checked = true;
+            window.toggleScheduleMode('custom');
+          }
+        } else {
+          const radioSame = document.querySelector('input[name="schedule_mode"][value="same"]');
+          if (radioSame) {
+            radioSame.checked = true;
+            window.toggleScheduleMode('same');
+          }
+        }
         if (document.getElementById('reg-web')) document.getElementById('reg-web').value = b.website_url || '';
         if (document.getElementById('reg-insta')) document.getElementById('reg-insta').value = b.instagram_url || '';
         if (document.getElementById('reg-notes')) document.getElementById('reg-notes').value = b.order_notes || '';
@@ -3329,13 +3595,53 @@
       const hasDel = document.getElementById('reg-has-delivery')?.value === 'si';
       const delCost = Number(document.getElementById('reg-delivery-cost')?.value || 0);
       const delMin = Number(document.getElementById('reg-delivery-min')?.value || 0);
-      const selectedBizDays = [];
-      document.querySelectorAll('input[name="biz_day"]:checked').forEach(cb => {
-        selectedBizDays.push(cb.value);
-      });
-      const workDays = selectedBizDays.length === 7 ? 'Lunes a Domingo' : (selectedBizDays.length > 0 ? selectedBizDays.join(', ') : 'Lunes a Domingo');
-      const openTime = document.getElementById('reg-open')?.value || '08:00';
-      const closeTime = document.getElementById('reg-close')?.value || '20:00';
+      // Extracción de horarios flexibles o comunes
+      const scheduleMode = document.querySelector('input[name="schedule_mode"]:checked')?.value || 'same';
+      const dayKeysMap = [
+        { key: 'lunes', label: 'Lunes' },
+        { key: 'martes', label: 'Martes' },
+        { key: 'miercoles', label: 'Miércoles' },
+        { key: 'jueves', label: 'Jueves' },
+        { key: 'viernes', label: 'Viernes' },
+        { key: 'sabado', label: 'Sábado' },
+        { key: 'domingo', label: 'Domingo' }
+      ];
+
+      let computedSchedule = {};
+      let activeDayLabels = [];
+
+      if (scheduleMode === 'custom') {
+        dayKeysMap.forEach(d => {
+          const isActive = document.getElementById(`reg-day-${d.key}-active`)?.checked;
+          const openH = document.getElementById(`reg-day-${d.key}-open`)?.value || '08:00';
+          const closeH = document.getElementById(`reg-day-${d.key}-close`)?.value || '20:00';
+          computedSchedule[d.key] = {
+            open: openH,
+            close: closeH,
+            closed: !isActive
+          };
+          if (isActive) activeDayLabels.push(d.label);
+        });
+      } else {
+        const selectedBizDays = [];
+        document.querySelectorAll('input[name="biz_day"]:checked').forEach(cb => {
+          selectedBizDays.push(cb.value);
+        });
+        const openTime = document.getElementById('reg-open')?.value || '08:00';
+        const closeTime = document.getElementById('reg-close')?.value || '20:00';
+
+        dayKeysMap.forEach(d => {
+          const isSelected = selectedBizDays.includes(d.label);
+          computedSchedule[d.key] = {
+            open: openTime,
+            close: closeTime,
+            closed: !isSelected
+          };
+          if (isSelected) activeDayLabels.push(d.label);
+        });
+      }
+
+      const workDays = activeDayLabels.length === 7 ? 'Lunes a Domingo' : (activeDayLabels.length > 0 ? activeDayLabels.join(', ') : 'Lunes a Domingo');
       const web = document.getElementById('reg-web')?.value.trim();
       const insta = document.getElementById('reg-insta')?.value.trim();
       const notes = document.getElementById('reg-notes')?.value.trim();
@@ -3379,15 +3685,7 @@
         cover_images: covers,
         work_days: workDays,
         terms_accepted: true,
-        schedule: {
-          lunes: { open: openTime, close: closeTime, closed: false },
-          martes: { open: openTime, close: closeTime, closed: false },
-          miercoles: { open: openTime, close: closeTime, closed: false },
-          jueves: { open: openTime, close: closeTime, closed: false },
-          viernes: { open: openTime, close: closeTime, closed: false },
-          sabado: { open: openTime, close: closeTime, closed: false },
-          domingo: { open: openTime, close: closeTime, closed: false }
-        },
+        schedule: computedSchedule,
         products: state.menuDraft ? [...state.menuDraft] : []
       };
 
@@ -4148,7 +4446,7 @@
     // =========================================================================
     // GESTIÓN DE CACHÉ Y REGISTRO DE SERVICE WORKER PWA
     // =========================================================================
-    const CURRENT_SW_VERSION = 'cisneros-emprende-v30';
+    const CURRENT_SW_VERSION = 'cisneros-emprende-v31';
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
