@@ -295,7 +295,7 @@
 
             <!-- Acciones Principales -->
             <div class="flex items-center gap-1 sm:gap-2 shrink-0">
-              <button id="btn-suggestion" class="text-xs font-semibold text-slate-600 hover:text-emerald-800 px-2 py-1.5 rounded-lg hover:bg-slate-100 hidden md:flex items-center gap-1">
+              <button id="btn-suggestion" onclick="window.openModal('suggestion')" class="text-xs font-bold text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1.5 rounded-xl hidden sm:flex items-center gap-1 shadow-2xs transition-colors">
                 <span>📬</span> <span>Buzón</span>
               </button>
 
@@ -364,15 +364,18 @@
             </div>
           </div>
 
-          <!-- Buscador móvil -->
-          <div class="px-4 pb-2 sm:hidden">
+          <!-- Buscador móvil con Buzón de Sugerencias en la parte superior -->
+          <div class="px-3 pb-2 sm:hidden flex items-center gap-2">
             <input
               id="search-input-mobile"
               type="text"
               value="${state.searchTerm}"
               placeholder="Buscar en Cisneros..."
-              class="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-100 border border-slate-200 focus:outline-none focus:border-emerald-600"
+              class="flex-1 px-3 py-1.5 text-xs rounded-xl bg-slate-100 border border-slate-200 focus:outline-none focus:border-emerald-600"
             />
+            <button onclick="window.openModal('suggestion')" class="text-xs font-bold text-emerald-900 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 px-2.5 py-1.5 rounded-xl flex items-center gap-1 shrink-0 shadow-2xs transition-colors">
+              <span>📬</span> <span>Buzón</span>
+            </button>
           </div>
         </header>
 
@@ -481,9 +484,6 @@
                 <div class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
                   <button onclick="window.openModal('register')" class="w-full sm:w-auto bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs px-6 py-3 rounded-2xl shadow-md transition-all flex items-center justify-center gap-2">
                     <span>🏪</span> <span>Registrar mi negocio ahora</span>
-                  </button>
-                  <button onclick="window.openModal('suggestion')" class="w-full sm:w-auto bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-5 py-3 rounded-2xl transition-all flex items-center justify-center gap-2">
-                    <span>📬</span> <span>Sugerir un comercio</span>
                   </button>
                 </div>
               </div>
@@ -2742,7 +2742,7 @@
     // =========================================================================
     // GESTIÓN DE CACHÉ Y REGISTRO DE SERVICE WORKER PWA
     // =========================================================================
-    const CURRENT_SW_VERSION = 'cisneros-emprende-v12';
+    const CURRENT_SW_VERSION = 'cisneros-emprende-v13';
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
