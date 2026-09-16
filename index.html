@@ -131,34 +131,7 @@
       });
     }
   </script>
-  <!-- Blindaje de Seguridad: Bloqueo de Clic Derecho, F12 e Inspección -->
-  <script>
-    // Deshabilitar Clic Derecho / Menú Contextual
-    document.addEventListener('contextmenu', function(e) {
-      e.preventDefault();
-      return false;
-    });
-
-    // Deshabilitar teclas de Inspección (F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+U)
-    document.addEventListener('keydown', function(e) {
-      if (
-        e.keyCode === 123 || // F12
-        (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || // Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C
-        (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83)) // Ctrl+U (Ver código fuente), Ctrl+S
-      ) {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      }
-    });
-
-    // Deshabilitar arrastre indebido de imágenes para evitar descargas no deseadas
-    document.addEventListener('dragstart', function(e) {
-      if (e.target.nodeName === 'IMG') {
-        e.preventDefault();
-      }
-    });
-  </script>
+  <!-- Herramientas de desarrollo e inspección estándar habilitadas -->
 </head>
 <body class="min-h-screen w-full max-w-full overflow-x-hidden flex flex-col text-slate-900 selection:bg-emerald-200 bg-slate-50">
 
@@ -280,16 +253,9 @@
       }
     }
 
-    // Limpieza estricta: asegurar que cuentas no deseadas no queden pre-cargadas en local
+    // Carga natural de sesión y cuentas guardadas para cualquier usuario de la comunidad
     let loadedUser = safeJsonParse('cis_user', null);
-    if (loadedUser && loadedUser.email && !loadedUser.email.includes('andresc.15042010@gmail.com')) {
-      loadedUser = null;
-      localStorage.removeItem('cis_user');
-    }
-
     let loadedAccounts = safeJsonParse('cis_saved_accounts', []);
-    loadedAccounts = loadedAccounts.filter(acc => acc.email && acc.email.includes('andresc.15042010@gmail.com'));
-    localStorage.setItem('cis_saved_accounts', JSON.stringify(loadedAccounts));
 
     let state = {
       businesses: safeJsonParse('cis_businesses', INITIAL_BUSINESSES),
@@ -2308,57 +2274,159 @@
       // MODAL LEGAL COMPLETO: TÉRMINOS Y CONDICIONES, POLÍTICA DE COOKIES Y TRATAMIENTO DE DATOS
       if (state.modals.terms) {
         html += `
-          <div class="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-            <div class="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col">
-              <div class="bg-emerald-950 text-white px-5 py-4 flex justify-between items-center border-b border-emerald-800">
-                <div class="flex items-center gap-2">
-                  <span class="text-xl">⚖️</span>
+          <div class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 animate-fade-in">
+            <div class="bg-white rounded-3xl w-full max-w-3xl overflow-hidden shadow-2xl max-h-[92vh] flex flex-col border border-slate-200">
+              <!-- Header Corporativo -->
+              <div class="bg-gradient-to-r from-emerald-950 via-emerald-900 to-teal-950 text-white px-6 py-4 flex justify-between items-center border-b border-emerald-800 shrink-0">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-lg border border-white/15">⚖️</div>
                   <div>
-                    <h3 class="font-extrabold text-sm sm:text-base">Términos, Privacidad & Tratamiento de Datos</h3>
-                    <p class="text-[10px] text-emerald-200">Cisneros Emprende • Municipio de Cisneros, Antioquia</p>
+                    <h3 class="font-black text-sm sm:text-base leading-tight">Marco Legal, Privacidad & Política Integral de Cookies</h3>
+                    <p class="text-[10px] text-emerald-300 font-medium">Cumplimiento Ley 1581 de 2012 (Colombia), Decreto 1377 de 2013, GDPR & Estándares Internacionales</p>
                   </div>
                 </div>
-                <button onclick="window.closeModal('terms')" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center font-bold text-sm">✕</button>
+                <button onclick="window.closeModal('terms')" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center font-bold text-sm transition-colors" title="Cerrar">✕</button>
               </div>
 
-              <div class="p-6 overflow-y-auto space-y-4 text-xs text-slate-600 leading-relaxed">
-                <div class="bg-emerald-50 p-3 rounded-2xl border border-emerald-200 text-emerald-900 font-medium">
-                  <strong>Aviso Importante:</strong> Cisneros Emprende es una plataforma cívica y comunitaria sin ánimo de lucro destinada a visibilizar el comercio local del municipio de Cisneros, Antioquia.
-                </div>
+              <!-- Pestañas de Navegación Rápida del Documento -->
+              <div class="bg-slate-100 border-b border-slate-200 px-6 py-2 flex gap-3 text-[11px] font-bold overflow-x-auto scrollbar-none text-slate-600">
+                <a href="#legal-terms" class="hover:text-emerald-700 whitespace-nowrap">1. Términos de Uso</a>
+                <span class="text-slate-300">•</span>
+                <a href="#legal-habeas" class="hover:text-emerald-700 whitespace-nowrap">2. Habeas Data & Tratamiento</a>
+                <span class="text-slate-300">•</span>
+                <a href="#legal-cookies" class="hover:text-emerald-700 whitespace-nowrap">3. Cookies & Almacenamiento</a>
+                <span class="text-slate-300">•</span>
+                <a href="#legal-security" class="hover:text-emerald-700 whitespace-nowrap">4. Seguridad & Derechos ARCO</a>
+                <span class="text-slate-300">•</span>
+                <a href="#legal-liability" class="hover:text-emerald-700 whitespace-nowrap">5. Deslinde de Responsabilidad</a>
+              </div>
 
-                <div class="space-y-2">
-                  <h4 class="font-bold text-slate-900 text-sm">1. Autorización de Tratamiento de Datos Personales (Ley 1581 de 2012)</h4>
-                  <p>
-                    Al registrar tu comercio, servicio o actividad de transporte en Cisneros Emprende, autorizas expresamente de manera voluntaria, previa e informada el uso y publicación de los datos suministrados (Nombre comercial, WhatsApp, teléfono, dirección descriptiva, horarios de atención y fotografías).
-                  </p>
-                  <p>
-                    Los datos son utilizados con la única finalidad de ponerte en contacto con clientes potenciales y dinamizar la economía del municipio. El titular puede en cualquier momento solicitar la rectificación, actualización o eliminación completa de sus datos a través de la opción "Gestionar Mi Negocio" o mediante el buzón ciudadano del administrador.
-                  </p>
-                </div>
-
-                <div class="space-y-2 pt-2 border-t border-slate-200">
-                  <h4 class="font-bold text-slate-900 text-sm">2. Términos y Condiciones de Uso</h4>
-                  <p>
-                    • <strong>Exoneración de responsabilidad:</strong> Cisneros Emprende actúa exclusivamente como vitrina digital informativa. No intermedia en los pagos, compras, envíos ni transacciones que se efectúen directamente entre comerciantes/transportadores y los consumidores a través de WhatsApp o llamada.
-                  </p>
-                  <p>
-                    • <strong>Veracidad de la información:</strong> Cada comerciante y transportador es el único responsable de la autenticidad, calidad y precios de los productos y servicios que publica.
-                  </p>
-                  <p>
-                    • <strong>Modificación y cancelación:</strong> Como propietario del negocio o transportador, tienes el derecho absoluto de editar tus productos, horarios, o dar de baja el negocio en cualquier momento con el botón de eliminación definitiva.
+              <!-- Contenido Extenso con Desplazamiento Suave -->
+              <div class="p-6 overflow-y-auto space-y-6 text-xs text-slate-700 leading-relaxed scroll-smooth">
+                <!-- Certificación Institucional -->
+                <div class="bg-emerald-50/80 p-4 rounded-2xl border border-emerald-200 text-emerald-950 space-y-1.5 shadow-2xs">
+                  <div class="flex items-center gap-2 font-black text-emerald-900 text-xs uppercase tracking-wide">
+                    <span>🏛️</span> Declaración Oficial de Transparencia Comunitaria y Gobernanza Digital
+                  </div>
+                  <p class="text-[11px]">
+                    El presente instrumento legal rige integralmente el acceso, navegación, registro y uso del ecosistema digital <strong>Cisneros Emprende PWA</strong>. Diseñado como una infraestructura cívico-tecnológica de interés público sin ánimo de lucro en el Municipio de Cisneros, Antioquia, implementa los más rigurosos estándares de protección al consumidor, privacidad por diseño (Privacy by Design) y soberanía de datos personales.
                   </p>
                 </div>
 
-                <div class="space-y-2 pt-2 border-t border-slate-200">
-                  <h4 class="font-bold text-slate-900 text-sm">3. Política de Cookies y Almacenamiento Local</h4>
+                <!-- SECCIÓN 1 -->
+                <section id="legal-terms" class="space-y-3">
+                  <h4 class="font-extrabold text-slate-900 text-sm flex items-center gap-2 border-b pb-1 border-slate-200">
+                    <span class="text-emerald-700">1.</span> Términos y Condiciones Generales de Uso de la Plataforma
+                  </h4>
                   <p>
-                    Esta aplicación progresiva (PWA) utiliza almacenamiento local seguro en el navegador (Local Storage y Cache Storage) para permitirte navegar sin conexión a internet, guardar tus comercios favoritos, mantener la sesión de Google activa y recordar tus preferencias sin recopilar cookies publicitarias de terceros ni vender tus datos.
+                    <strong>1.1. Naturaleza del Servicio:</strong> Cisneros Emprende opera de forma irrestricta y exclusiva como un directorio digital interactivo, catálogo indexado y puente de telecomunicación ciudadana. La plataforma <em>no es tienda intermediaria, ni pasarela de procesamiento financiero, ni entidad de transporte de carga o pasajeros</em>. Todas las coordinaciones, contrataciones, cotizaciones, transacciones dinerarias y acuerdos de entrega ocurren de forma autónoma, soberana y directa entre el usuario adquirente y el establecimiento o transportador a través de canales cifrados de terceros (e.g., WhatsApp Business, llamadas telefónicas o atención presencial).
                   </p>
-                </div>
+                  <p>
+                    <strong>1.2. Reglas de Convivencia y Uso Aceptable:</strong> Queda estrictamente proscrita la publicación de contenidos que promuevan bienes ilícitos, estupefacientes, material explosivo, pirotecnia no autorizada, armas, servicios sexuales no consentidos o explotación de menores, publicidad engañosa, difamación comercial o cualquier conducta tipificada bajo el Código Penal Colombiano (Ley 599 de 2000). La administración de la plataforma se reserva el derecho potestativo e inapelable de suspender, banear o eliminar de forma fulminante cualquier comercio, transportador o reseña que vulnere estos principios.
+                  </p>
+                  <p>
+                    <strong>1.3. Propiedad Intelectual:</strong> Los logotipos, marcas comerciales, nombres de fantasía y fotografías suministrados por los comerciantes permanecen bajo la titularidad exclusiva de sus respectivos creadores o propietarios. Al cargarlos a la plataforma, otorgan una licencia no exclusiva, gratuita, territorialmente ilimitada y temporal para su indexación, redimensionamiento técnico y difusión promocional con fines de fomento local.
+                  </p>
+                </section>
 
-                <div class="pt-3">
-                  <button onclick="window.closeModal('terms')" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3 rounded-xl text-xs shadow-sm">
-                    Entendido y Aceptado
+                <!-- SECCIÓN 2 -->
+                <section id="legal-habeas" class="space-y-3 pt-2">
+                  <h4 class="font-extrabold text-slate-900 text-sm flex items-center gap-2 border-b pb-1 border-slate-200">
+                    <span class="text-emerald-700">2.</span> Política Integral de Tratamiento de Datos Personales (Habeas Data)
+                  </h4>
+                  <p>
+                    En estricto acatamiento del <strong>Artículo 15 de la Constitución Política de Colombia</strong>, la <strong>Ley Estatutaria 1581 de 2012</strong>, los <strong>Decretos Reglamentarios 1377 de 2013 y 1074 de 2015</strong>, y acogiendo principios armonizados del <strong>Reglamento General de Protección de Datos (GDPR - UE 2016/679)</strong>:
+                  </p>
+                  <p>
+                    <strong>2.1. Consentimiento Expreso e Informado:</strong> Al autenticarse mediante Google OAuth, correo electrónico o al registrar un establecimiento o unidad de transporte, el titular otorga su autorización previa, explícita, voluntaria e informada para que sus datos sean recolectados, catalogados, almacenados en repositorios criptográficos seguros (Supabase Cloud) y utilizados con las siguientes finalidades unívocas:
+                  </p>
+                  <ul class="list-disc pl-5 space-y-1 text-slate-600">
+                    <li>Indexar y publicitar la oferta comercial, gastronómica, turística y de transporte en el directorio municipal.</li>
+                    <li>Permitir que la ciudadanía local y turistas contacten al establecimiento mediante enlaces directos a WhatsApp, enlaces telefónicos y geolocalización.</li>
+                    <li>Gestionar el sistema de auditoría, control de calidad comunitaria y moderación de opiniones y calificaciones fidedignas.</li>
+                    <li>Generar métricas estadísticas anónimas y agregadas sobre demanda de servicios, visibilidad y reactivación económica local.</li>
+                  </ul>
+                  <p>
+                    <strong>2.2. No Comercialización ni Enajenación:</strong> Cisneros Emprende declara bajo la gravedad de juramento que <em>jamás venderá, cederá, arrendará, monetizará ni transferirá a título oneroso o gratuito bases de datos o registros personales a empresas de publicidad, corredores de datos (data brokers) o centrales de riesgo crediticio</em>.
+                  </p>
+                </section>
+
+                <!-- SECCIÓN 3 -->
+                <section id="legal-cookies" class="space-y-3 pt-2">
+                  <h4 class="font-extrabold text-slate-900 text-sm flex items-center gap-2 border-b pb-1 border-slate-200">
+                    <span class="text-emerald-700">3.</span> Política de Cookies, Cache Storage y Almacenamiento Local (PWA)
+                  </h4>
+                  <p>
+                    En consonancia con la <strong>Directiva ePrivacy 2002/58/CE</strong> y normativas mundiales sobre privacidad digital en telecomunicaciones:
+                  </p>
+                  <p>
+                    <strong>3.1. Tipología de Tecnologías Empleadas:</strong> Esta Progressive Web App (PWA) emplea mecanismos de almacenamiento del lado del cliente para garantizar alta velocidad, respuesta en redes móviles 3G/4G y resiliencia sin conectividad:
+                  </p>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px] pt-1">
+                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                      <strong class="text-slate-900 block">⚡ Cookies & Storage Técnicos (Esenciales):</strong>
+                      <p class="text-slate-600">Preservan la sesión activa del usuario autenticado, roles administrativos y los tokens criptográficos de Supabase. No pueden ser deshabilitados sin inhabilitar el funcionamiento del aplicativo.</p>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                      <strong class="text-slate-900 block">⭐ Almacenamiento de Preferencias:</strong>
+                      <p class="text-slate-600">Almacenan localmente la lista de negocios favoritos marcados por el usuario, el carrito preliminar de pedidos y las preferencias de filtrado (e.g. Abierto Ahora).</p>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                      <strong class="text-slate-900 block">📦 Cache Storage (Service Worker):</strong>
+                      <p class="text-slate-600">Guarda en memoria local del teléfono o computador la interfaz visual y recursos estáticos esenciales para permitir navegación instantánea sin consumo repetitivo de datos móviles.</p>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                      <strong class="text-slate-900 block">🚫 Cero Cookies de Terceros de Rastreo:</strong>
+                      <p class="text-slate-600">No insertamos píxeles de Facebook Ads, Google Adsense ni scripts intrusivos de seguimiento publicitario intersitios o profiling conductual.</p>
+                    </div>
+                  </div>
+                  <p class="pt-1">
+                    <strong>3.2. Gestión y Revocación del Almacenamiento:</strong> El usuario puede en cualquier momento purgar la totalidad de datos almacenados localmente a través de la configuración de su navegador (Borrar Datos de Navegación / Almacenamiento de Sitio) o seleccionando la opción de Cerrar Sesión en la barra superior.
+                  </p>
+                </section>
+
+                <!-- SECCIÓN 4 -->
+                <section id="legal-security" class="space-y-3 pt-2">
+                  <h4 class="font-extrabold text-slate-900 text-sm flex items-center gap-2 border-b pb-1 border-slate-200">
+                    <span class="text-emerald-700">4.</span> Ejercicio de Derechos ARCO y Mecanismos de Seguridad
+                  </h4>
+                  <p>
+                    <strong>4.1. Derechos del Titular (Acceso, Rectificación, Cancelación y Oposición):</strong> Todo ciudadano o comerciante cuyos datos reposen en Cisneros Emprende tiene derecho a:
+                  </p>
+                  <ol class="list-decimal pl-5 space-y-1 text-slate-600">
+                    <li>Conocer, actualizar y rectificar sus datos personales frente a información inexacta, incompleta o fraccionada.</li>
+                    <li>Solicitar prueba de la autorización otorgada a la plataforma.</li>
+                    <li>Ser informado previa solicitud sobre el uso que se le ha dado a sus registros.</li>
+                    <li>Revocar la autorización o solicitar la supresión definitiva de su comercio o ficha de transporte en cualquier instante mediante el canal de administración o el Buzón Ciudadano de Sugerencias.</li>
+                  </ol>
+                  <p>
+                    <strong>4.2. Medidas de Ciberseguridad Activas:</strong> La plataforma incorpora capas de protección defensiva incluyendo cifrado TLS 1.3 en tránsito, Content Security Policy (CSP) restrictivo, protección contra falsificación de peticiones en sitios cruzados (CSRF), desinfección preventiva contra inyección HTML/XSS mediante codificación de entidades y políticas de bloqueo ante ataques de fuerza bruta en accesos autorizados.
+                  </p>
+                </section>
+
+                <!-- SECCIÓN 5 -->
+                <section id="legal-liability" class="space-y-3 pt-2">
+                  <h4 class="font-extrabold text-slate-900 text-sm flex items-center gap-2 border-b pb-1 border-slate-200">
+                    <span class="text-emerald-700">5.</span> Exoneración, Deslinde de Responsabilidad & Jurisdicción
+                  </h4>
+                  <p>
+                    <strong>5.1. Indemnidad:</strong> Ni los administradores cívicos, ni los desarrolladores técnicos, ni las entidades colaboradoras de Cisneros Emprende asumirán responsabilidad patrimonial, contractual o extracontractual por controversias comerciales, deficiencias en la calidad de bienes o servicios suministrados, incumplimientos en horarios de entrega, accidentes en el transporte o divergencias de precios convenidos entre particulares.
+                  </p>
+                  <p>
+                    <strong>5.2. Ley Aplicable y Solución de Controversias:</strong> El presente convenio se rige, interpreta y ejecuta bajo las leyes de la <strong>República de Colombia</strong>. Cualquier inquietud o reclamación formal de Habeas Data podrá canalizarse mediante el buzón del administrador o ante la Delegatura para la Protección de Datos Personales de la Superintendencia de Industria y Comercio (SIC).
+                  </p>
+                  <p class="text-[10px] text-slate-500 italic pt-1">
+                    Última actualización y revisión legal: Septiembre de 2026 • Versión 27.0 Pro • Cisneros, Antioquia, Colombia.
+                  </p>
+                </section>
+
+                <!-- Botones de Acción -->
+                <div class="pt-4 border-t border-slate-200 flex flex-col sm:flex-row gap-3">
+                  <button onclick="window.closeModal('terms'); window.showToast('✓ Has aceptado los términos y condiciones de Cisneros Emprende.', 'success')" class="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold py-3.5 px-4 rounded-2xl text-xs shadow-md transition-all flex items-center justify-center gap-2">
+                    <span>✓</span> <span>Acepto y Entendido Plenamente</span>
+                  </button>
+                  <button onclick="window.print()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3.5 px-4 rounded-2xl text-xs transition-colors flex items-center justify-center gap-1.5 border border-slate-200">
+                    <span>🖨️</span> <span>Imprimir / Descargar PDF</span>
                   </button>
                 </div>
               </div>
@@ -2366,7 +2434,6 @@
           </div>
         `;
       }
-
       return html;
     }
 
@@ -3926,7 +3993,7 @@
     // =========================================================================
     // GESTIÓN DE CACHÉ Y REGISTRO DE SERVICE WORKER PWA
     // =========================================================================
-    const CURRENT_SW_VERSION = 'cisneros-emprende-v26';
+    const CURRENT_SW_VERSION = 'cisneros-emprende-v27';
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
