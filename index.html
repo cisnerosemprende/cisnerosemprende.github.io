@@ -2400,31 +2400,32 @@
           cropSubtitle = 'Ajusta tu carta o lista de precios para que se lea con total claridad';
         }
 
-        let viewportClasses = 'w-full h-64 sm:h-72 rounded-2xl border-4 border-emerald-500 ring-4 ring-emerald-500/30';
+        let viewportClasses = 'w-full h-52 sm:h-64 rounded-2xl border-4 border-emerald-500 ring-4 ring-emerald-500/30';
         if (isLogo) {
-          viewportClasses = 'w-72 h-72 sm:w-80 sm:h-80 rounded-full border-4 border-emerald-500 ring-4 ring-emerald-500/30';
+          viewportClasses = 'w-60 h-60 sm:w-72 sm:h-72 rounded-full border-4 border-emerald-500 ring-4 ring-emerald-500/30';
         } else if (isMenu) {
-          viewportClasses = 'w-full h-80 sm:h-96 rounded-2xl border-4 border-emerald-500 ring-4 ring-emerald-500/30';
+          viewportClasses = 'w-full max-w-sm h-64 sm:h-80 rounded-2xl border-4 border-emerald-500 ring-4 ring-emerald-500/30';
         }
 
         html += `
-          <div class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
-            <div class="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[95vh]">
-              <div class="bg-slate-900 text-white px-5 py-4 flex justify-between items-center">
+          <div class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+            <div class="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col my-auto max-h-[96vh]">
+              <div class="bg-slate-900 text-white px-5 py-3.5 flex justify-between items-center shrink-0">
                 <div>
-                  <h3 class="font-bold text-base sm:text-lg flex items-center gap-2">
+                  <h3 class="font-bold text-sm sm:text-base flex items-center gap-2">
                     <span>✂️</span> Ajustar ${cropTitle}
                   </h3>
-                  <p class="text-xs text-slate-400 mt-0.5">${cropSubtitle}</p>
+                  <p class="text-[11px] text-slate-400 mt-0.5">${cropSubtitle}</p>
                 </div>
                 <button onclick="window.closeImageAdjuster()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center font-bold text-sm text-slate-300 hover:text-white transition-colors">✕</button>
               </div>
 
-              <div class="p-5 sm:p-6 flex-1 flex flex-col items-center justify-center space-y-4 select-none">
+              <!-- Contenido con scroll independiente si la pantalla es pequeña -->
+              <div class="p-4 sm:p-5 overflow-y-auto flex-1 flex flex-col items-center justify-start space-y-3.5 select-none">
                 <!-- Visor / Viewport de recorte espacioso y cómodo -->
                 <div 
                   id="crop-viewport"
-                  class="relative overflow-hidden bg-slate-950 flex items-center justify-center cursor-move touch-none shadow-2xl ${viewportClasses}"
+                  class="relative overflow-hidden bg-slate-950 flex items-center justify-center cursor-move touch-none shadow-xl shrink-0 ${viewportClasses}"
                   onmousedown="window.startImageDrag(event)"
                   ontouchstart="window.startImageDrag(event)"
                 >
@@ -2435,18 +2436,18 @@
                     class="select-none transition-none"
                     alt="Ajuste"
                   />
-                  <!-- Guía central tenue -->
-                  <div class="absolute inset-0 pointer-events-none border border-white/20 border-dashed rounded-full"></div>
+                  <!-- Guía tenue solo para logos circulares -->
+                  ${isLogo ? '<div class="absolute inset-0 pointer-events-none border-2 border-white/40 border-dashed rounded-full"></div>' : ''}
                 </div>
 
-                <div class="w-full space-y-3 pt-2">
+                <div class="w-full space-y-2.5 pt-1">
                   <div class="flex items-center justify-between text-xs font-bold text-slate-700">
                     <span class="flex items-center gap-1.5">
                       <span>🔍</span> <span>Tamaño y Zoom:</span>
                     </span>
                     <span id="zoom-label" class="bg-emerald-50 text-emerald-800 font-bold px-2 py-0.5 rounded-md border border-emerald-200">${Math.round(state.imageAdjustState.scale * 100)}%</span>
                   </div>
-                  <div class="flex items-center gap-3">
+                  <div class="flex items-center gap-2">
                     <button type="button" onclick="window.adjustZoom(-0.1)" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 font-black text-sm flex items-center justify-center text-slate-800" title="Reducir / Alejar">-</button>
                     <input 
                       type="range" 
@@ -2459,17 +2460,18 @@
                     />
                     <button type="button" onclick="window.adjustZoom(0.1)" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 font-black text-sm flex items-center justify-center text-slate-800" title="Aumentar / Acercar">+</button>
                   </div>
-                  <p class="text-[10px] text-slate-400 text-center">Desliza a la izquierda para alejar (ver todo el logo o portada) o a la derecha para acercar.</p>
-
-                  <div class="grid grid-cols-2 gap-2 pt-1">
-                    <button type="button" onclick="window.resetImageAdjust()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs">
-                      ↺ Centrar Completo
-                    </button>
-                    <button type="button" onclick="window.applyImageCrop()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold py-2.5 rounded-xl text-xs shadow-xs flex items-center justify-center gap-1.5">
-                      <span>✓</span> <span>Guardar Ajuste</span>
-                    </button>
-                  </div>
+                  <p class="text-[10px] text-slate-400 text-center">Arrastra la foto con el dedo o ratón para centrarla. Usa la barra para el tamaño.</p>
                 </div>
+              </div>
+
+              <!-- Barra de botones inferior FIJA (siempre visible sin importar la altura de pantalla) -->
+              <div class="p-3 sm:p-4 bg-slate-50 border-t border-slate-200 shrink-0 grid grid-cols-2 gap-2.5">
+                <button type="button" onclick="window.resetImageAdjust()" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold py-2.5 rounded-xl text-xs transition-colors">
+                  ↺ Centrar Completo
+                </button>
+                <button type="button" onclick="window.applyImageCrop()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold py-2.5 rounded-xl text-xs shadow-md flex items-center justify-center gap-1.5 transition-all active:scale-95">
+                  <span>✓</span> <span>Guardar Ajuste</span>
+                </button>
               </div>
             </div>
           </div>
@@ -4735,7 +4737,7 @@ window.applyImageCrop = function() {
     // =========================================================================
     // GESTIÓN DE CACHÉ Y REGISTRO DE SERVICE WORKER PWA
     // =========================================================================
-    const CURRENT_SW_VERSION = 'cisneros-emprende-v36';
+    const CURRENT_SW_VERSION = 'cisneros-emprende-v37';
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
