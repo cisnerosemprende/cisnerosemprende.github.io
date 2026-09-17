@@ -280,6 +280,9 @@
         rawImageSrc: '',
         type: 'logo', // 'logo' (circular) o 'cover' (rectangular)
         scale: 1,
+        baseScale: 1,
+        naturalWidth: 0,
+        naturalHeight: 0,
         offsetX: 0,
         offsetY: 0,
         isDragging: false,
@@ -2375,7 +2378,7 @@
                   <img 
                     id="crop-target-img" 
                     src="${state.imageAdjustState.rawImageSrc}" 
-                    style="transform: translate(${state.imageAdjustState.offsetX}px, ${state.imageAdjustState.offsetY}px) scale(${state.imageAdjustState.scale}); transform-origin: center center; max-width: none; pointer-events: none;"
+                    style="transform: translate(${state.imageAdjustState.offsetX}px, ${state.imageAdjustState.offsetY}px) scale(${(state.imageAdjustState.baseScale || 1) * state.imageAdjustState.scale}); transform-origin: center center; max-width: none; pointer-events: none;"
                     class="select-none transition-none"
                     alt="Ajuste"
                   />
@@ -2385,29 +2388,32 @@
 
                 <div class="w-full space-y-3 pt-2">
                   <div class="flex items-center justify-between text-xs font-bold text-slate-700">
-                    <span>🔍 Tamaño / Zoom:</span>
-                    <span id="zoom-label">${Math.round(state.imageAdjustState.scale * 100)}%</span>
+                    <span class="flex items-center gap-1.5">
+                      <span>🔍</span> <span>Tamaño y Zoom:</span>
+                    </span>
+                    <span id="zoom-label" class="bg-emerald-50 text-emerald-800 font-bold px-2 py-0.5 rounded-md border border-emerald-200">${Math.round(state.imageAdjustState.scale * 100)}%</span>
                   </div>
                   <div class="flex items-center gap-3">
-                    <button type="button" onclick="window.adjustZoom(-0.15)" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 font-black text-sm flex items-center justify-center text-slate-800">-</button>
+                    <button type="button" onclick="window.adjustZoom(-0.1)" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 font-black text-sm flex items-center justify-center text-slate-800" title="Reducir / Alejar">-</button>
                     <input 
                       type="range" 
-                      min="0.5" 
+                      min="0.2" 
                       max="3.0" 
-                      step="0.05" 
+                      step="0.02" 
                       value="${state.imageAdjustState.scale}" 
                       oninput="window.setImageZoom(this.value)"
                       class="flex-1 accent-emerald-700 cursor-pointer" 
                     />
-                    <button type="button" onclick="window.adjustZoom(0.15)" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 font-black text-sm flex items-center justify-center text-slate-800">+</button>
+                    <button type="button" onclick="window.adjustZoom(0.1)" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 font-black text-sm flex items-center justify-center text-slate-800" title="Aumentar / Acercar">+</button>
                   </div>
+                  <p class="text-[10px] text-slate-400 text-center">Desliza a la izquierda para alejar (ver todo el logo o portada) o a la derecha para acercar.</p>
 
                   <div class="grid grid-cols-2 gap-2 pt-1">
-                    <button type="button" onclick="window.resetImageAdjust()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 rounded-xl text-xs">
-                      ↺ Centrar
+                    <button type="button" onclick="window.resetImageAdjust()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs">
+                      ↺ Centrar Completo
                     </button>
-                    <button type="button" onclick="window.applyImageCrop()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold py-2 rounded-xl text-xs shadow-xs">
-                      ✓ Guardar Ajuste
+                    <button type="button" onclick="window.applyImageCrop()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold py-2.5 rounded-xl text-xs shadow-xs flex items-center justify-center gap-1.5">
+                      <span>✓</span> <span>Guardar Ajuste</span>
                     </button>
                   </div>
                 </div>
@@ -2967,17 +2973,32 @@
       state.imageAdjustState.filename = file.name || 'image.jpg';
       const reader = new FileReader();
       reader.onload = function(e) {
-        state.imageAdjustState.rawImageSrc = e.target.result;
-        state.imageAdjustState.targetInputId = targetInputId;
-        state.imageAdjustState.previewId = previewId;
-        state.imageAdjustState.type = type;
-        state.imageAdjustState.scale = 1;
-        state.imageAdjustState.offsetX = 0;
-        state.imageAdjustState.offsetY = 0;
+        const rawSrc = e.target.result;
+        const testImg = new Image();
+        testImg.onload = function() {
+          state.imageAdjustState.rawImageSrc = rawSrc;
+          state.imageAdjustState.targetInputId = targetInputId;
+          state.imageAdjustState.previewId = previewId;
+          state.imageAdjustState.type = type;
+          state.imageAdjustState.naturalWidth = testImg.naturalWidth || testImg.width;
+          state.imageAdjustState.naturalHeight = testImg.naturalHeight || testImg.height;
 
-        // Abrir ajustador para encuadrarla inmediatamente
-        state.modals.imageAdjust = true;
-        renderApp();
+          // Calcular escala base para que la imagen completa quepa en el visor
+          const isLogo = type === 'logo';
+          const vpW = isLogo ? 320 : 480;
+          const vpH = isLogo ? 320 : 270;
+          const fitScale = Math.min(vpW / state.imageAdjustState.naturalWidth, vpH / state.imageAdjustState.naturalHeight);
+          
+          state.imageAdjustState.baseScale = fitScale;
+          state.imageAdjustState.scale = 1; // 100% de la escala de encuadre
+          state.imageAdjustState.offsetX = 0;
+          state.imageAdjustState.offsetY = 0;
+
+          // Abrir ajustador para encuadrarla inmediatamente
+          state.modals.imageAdjust = true;
+          renderApp();
+        };
+        testImg.src = rawSrc;
       };
       reader.readAsDataURL(file);
     };
@@ -2989,15 +3010,28 @@
         window.showToast('Primero selecciona una foto de tu celular o PC.', 'info');
         return;
       }
-      state.imageAdjustState.rawImageSrc = curSrc;
-      state.imageAdjustState.targetInputId = targetInputId;
-      state.imageAdjustState.previewId = previewId;
-      state.imageAdjustState.type = type;
-      state.imageAdjustState.scale = 1;
-      state.imageAdjustState.offsetX = 0;
-      state.imageAdjustState.offsetY = 0;
-      state.modals.imageAdjust = true;
-      renderApp();
+      const testImg = new Image();
+      testImg.onload = function() {
+        state.imageAdjustState.rawImageSrc = curSrc;
+        state.imageAdjustState.targetInputId = targetInputId;
+        state.imageAdjustState.previewId = previewId;
+        state.imageAdjustState.type = type;
+        state.imageAdjustState.naturalWidth = testImg.naturalWidth || testImg.width;
+        state.imageAdjustState.naturalHeight = testImg.naturalHeight || testImg.height;
+
+        const isLogo = type === 'logo';
+        const vpW = isLogo ? 320 : 480;
+        const vpH = isLogo ? 320 : 270;
+        const fitScale = Math.min(vpW / state.imageAdjustState.naturalWidth, vpH / state.imageAdjustState.naturalHeight);
+
+        state.imageAdjustState.baseScale = fitScale;
+        state.imageAdjustState.scale = 1;
+        state.imageAdjustState.offsetX = 0;
+        state.imageAdjustState.offsetY = 0;
+        state.modals.imageAdjust = true;
+        renderApp();
+      };
+      testImg.src = curSrc;
     };
 
     window.closeImageAdjuster = function() {
@@ -3011,15 +3045,18 @@
       state.imageAdjustState.scale = parseFloat(val);
       const img = document.getElementById('crop-target-img');
       const lbl = document.getElementById('zoom-label');
+      const effScale = (state.imageAdjustState.baseScale || 1) * state.imageAdjustState.scale;
       if (img) {
-        img.style.transform = `translate(${state.imageAdjustState.offsetX}px, ${state.imageAdjustState.offsetY}px) scale(${state.imageAdjustState.scale})`;
+        img.style.transform = `translate(${state.imageAdjustState.offsetX}px, ${state.imageAdjustState.offsetY}px) scale(${effScale})`;
       }
       if (lbl) lbl.textContent = `${Math.round(state.imageAdjustState.scale * 100)}%`;
     };
 
     window.adjustZoom = function(delta) {
-      let newScale = Math.min(3.0, Math.max(0.5, state.imageAdjustState.scale + delta));
+      let newScale = Math.min(3.0, Math.max(0.2, state.imageAdjustState.scale + delta));
       window.setImageZoom(newScale);
+      const slider = document.querySelector('input[type="range"][oninput*="setImageZoom"]');
+      if (slider) slider.value = newScale;
     };
 
     window.resetImageAdjust = function() {
@@ -3028,10 +3065,13 @@
       state.imageAdjustState.offsetY = 0;
       const img = document.getElementById('crop-target-img');
       const lbl = document.getElementById('zoom-label');
+      const effScale = state.imageAdjustState.baseScale || 1;
       if (img) {
-        img.style.transform = `translate(0px, 0px) scale(1)`;
+        img.style.transform = `translate(0px, 0px) scale(${effScale})`;
       }
       if (lbl) lbl.textContent = '100%';
+      const slider = document.querySelector('input[type="range"][oninput*="setImageZoom"]');
+      if (slider) slider.value = 1;
     };
 
     window.startImageDrag = function(e) {
@@ -3049,7 +3089,8 @@
         state.imageAdjustState.offsetY = curY - state.imageAdjustState.startY;
         const img = document.getElementById('crop-target-img');
         if (img) {
-          img.style.transform = `translate(${state.imageAdjustState.offsetX}px, ${state.imageAdjustState.offsetY}px) scale(${state.imageAdjustState.scale})`;
+          const effScale = (state.imageAdjustState.baseScale || 1) * state.imageAdjustState.scale;
+        img.style.transform = `translate(${state.imageAdjustState.offsetX}px, ${state.imageAdjustState.offsetY}px) scale(${effScale})`;
         }
       };
 
@@ -3185,7 +3226,8 @@ window.applyImageCrop = function() {
 
         ctx.save();
         ctx.translate(outWidth / 2 + (state.imageAdjustState.offsetX * scaleRatio), outHeight / 2 + (state.imageAdjustState.offsetY * scaleRatio));
-        ctx.scale(state.imageAdjustState.scale * scaleRatio, state.imageAdjustState.scale * scaleRatio);
+        const finalDrawScale = (state.imageAdjustState.baseScale || 1) * state.imageAdjustState.scale * scaleRatio;
+        ctx.scale(finalDrawScale, finalDrawScale);
         ctx.drawImage(img, -img.width / 2, -img.height / 2);
         ctx.restore();
 
@@ -4568,7 +4610,7 @@ window.applyImageCrop = function() {
     // =========================================================================
     // GESTIÓN DE CACHÉ Y REGISTRO DE SERVICE WORKER PWA
     // =========================================================================
-    const CURRENT_SW_VERSION = 'cisneros-emprende-v33';
+    const CURRENT_SW_VERSION = 'cisneros-emprende-v34';
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
