@@ -4433,6 +4433,28 @@ window.applyImageCrop = function() {
       b.avg_rating = Number(avg);
       b.total_reviews = bizReviews.length;
 
+      // Guardar reseña en Supabase Cloud
+      if (supabaseClient) {
+        try {
+          supabaseClient.from('reviews').insert([{
+            business_id: b.id,
+            user_id: state.currentUser?.id || null,
+            rating,
+            comment
+          }]).then(({ error }) => {
+            if (error) console.warn('Supabase review insert notice:', error);
+          });
+
+          // Actualizar rating acumulado en el negocio
+          supabaseClient.from('businesses').update({
+            avg_rating: b.avg_rating,
+            total_reviews: b.total_reviews
+          }).eq('id', b.id).then(() => {});
+        } catch (e) {
+          console.warn('Review save cloud notice:', e);
+        }
+      }
+
       saveState();
       window.showToast('¡Tu reseña ha sido publicada con éxito!', "info");
       state.modals.review = false;
@@ -4537,6 +4559,23 @@ window.applyImageCrop = function() {
         details: detail,
         created_at: new Date().toISOString().split('T')[0]
       });
+
+      // Guardar reporte en Supabase Cloud
+      if (supabaseClient) {
+        try {
+          supabaseClient.from('reports').insert([{
+            business_id: b.id,
+            user_id: state.currentUser?.id || null,
+            reason: reason || 'other',
+            details: detail
+          }]).then(({ error }) => {
+            if (error) console.warn('Supabase report notice:', error);
+          });
+        } catch (e) {
+          console.warn('Report save cloud notice:', e);
+        }
+      }
+
       saveState();
       window.showToast('Reporte enviado a moderación. Gracias por ayudar a la comunidad de Cisneros.', "info");
       state.modals.report = false;
@@ -4666,6 +4705,30 @@ window.applyImageCrop = function() {
         if (!errTrans && cloudTrans) {
           state.transporters = cloudTrans;
           saveState();
+        }
+
+        // 4. Cargar reseñas de la nube
+        const { data: cloudRev, error: errRev } = await supabaseClient
+          .from('reviews')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (!errRev && cloudRev && cloudRev.length > 0) {
+          state.reviews = cloudRev;
+          saveState();
+        }
+
+        // 5. Cargar reportes de la nube (para moderación de administradores)
+        if (state.currentUser?.role === 'admin') {
+          const { data: cloudRep, error: errRep } = await supabaseClient
+            .from('reports')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+          if (!errRep && cloudRep) {
+            state.reports = cloudRep;
+            saveState();
+          }
         }
 
         renderApp();
@@ -5106,7 +5169,7 @@ window.applyImageCrop = function() {
     // =========================================================================
     // GESTIÓN DE CACHÉ Y REGISTRO DE SERVICE WORKER PWA
     // =========================================================================
-    const CURRENT_SW_VERSION = 'cisneros-emprende-v44';
+    const CURRENT_SW_VERSION = 'cisneros-emprende-v45';
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
