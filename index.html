@@ -167,16 +167,16 @@
         .replace(/`/g, '&#96;');
     }
 
-    // Valida que una URL sea segura (solo http/https, no javascript:, data:, etc.)
+    // Valida que una URL sea segura (http/https, data:image/ para fotos locales/recortadas, o rutas relativas)
     function sanitizeUrl(url) {
       if (!url) return '#';
+      if (url.startsWith('data:image/')) return url;
+      if (url.startsWith('/') || url.startsWith('./')) return url;
       try {
         const u = new URL(url);
         if (u.protocol !== 'https:' && u.protocol !== 'http:') return '#';
         return u.href;
       } catch {
-        // Si no es una URL absoluta válida, rechazarla
-        if (url.startsWith('/') || url.startsWith('./')) return url;
         return '#';
       }
     }
@@ -4737,7 +4737,7 @@ window.applyImageCrop = function() {
     // =========================================================================
     // GESTIÓN DE CACHÉ Y REGISTRO DE SERVICE WORKER PWA
     // =========================================================================
-    const CURRENT_SW_VERSION = 'cisneros-emprende-v37';
+    const CURRENT_SW_VERSION = 'cisneros-emprende-v38';
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
