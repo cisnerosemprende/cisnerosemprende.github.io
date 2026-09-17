@@ -309,7 +309,17 @@
         admin: false,
         imageAdjust: false,
         transporterRegister: false,
-        terms: false
+        terms: false,
+        confirm: false
+      },
+      termsAccepted: safeJsonParse('cis_terms_accepted', false),
+      confirmState: {
+        title: 'Confirmar Acción',
+        message: '',
+        confirmText: 'Aceptar',
+        cancelText: 'Cancelar',
+        confirmColor: 'bg-emerald-700 hover:bg-emerald-800',
+        onConfirm: null
       },
       imageAdjustState: {
         targetInputId: '',
@@ -328,6 +338,11 @@
       }
     };
 
+    // Verificación de términos obligatorios al iniciar: si no están aceptados, abrir modal legal
+    if (!state.termsAccepted) {
+      state.modals.terms = true;
+    }
+
     // Render inmediato de arranque
     setTimeout(() => {
       try { renderApp(); } catch(e) { console.warn('Early render:', e); }
@@ -345,6 +360,7 @@
       localStorage.setItem('cis_transporters', JSON.stringify(state.transporters));
       localStorage.setItem('cis_banned_users', JSON.stringify(state.bannedUsers));
       localStorage.setItem('cis_saved_accounts', JSON.stringify(state.savedAccounts || []));
+      localStorage.setItem('cis_terms_accepted', JSON.stringify(state.termsAccepted));
     }
 
     // =========================================================================
@@ -1455,6 +1471,15 @@
                     <label class="block font-bold text-slate-700 mb-0.5">Contraseña: *</label>
                     <input id="auth-password" type="password" placeholder="Tu contraseña segura" minlength="6" class="w-full p-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-emerald-600 bg-white" required />
                   </div>
+
+                  ${state.authPendingType === 'signup' ? `
+                    <div class="flex items-start gap-2 pt-1 text-[11px] text-slate-600 bg-emerald-50/70 p-2.5 rounded-xl border border-emerald-200">
+                      <input id="auth-accept-terms" type="checkbox" required class="mt-0.5 w-4 h-4 rounded text-emerald-700 border-slate-300 focus:ring-emerald-500 cursor-pointer" />
+                      <label for="auth-accept-terms" class="cursor-pointer leading-tight">
+                        He leído y acepto los <a href="javascript:void(0)" onclick="window.openModal('terms')" class="text-emerald-700 font-bold underline hover:text-emerald-800">Términos, Privacidad y Cookies</a> de la plataforma. *
+                      </label>
+                    </div>
+                  ` : ''}
 
                   <button type="submit" id="btn-submit-auth" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold py-3 rounded-xl text-xs shadow-md transition-all flex items-center justify-center gap-2">
                     <span>${state.authPendingType === 'signup' ? '✨ Crear Mi Cuenta' : '🔑 Entrar con Mi Correo'}</span>
@@ -2656,7 +2681,11 @@
                     <p class="text-[10px] text-emerald-300 font-medium">Cumplimiento Ley 1581 de 2012 (Colombia), Decreto 1377 de 2013, GDPR & Estándares Internacionales</p>
                   </div>
                 </div>
-                <button onclick="window.closeModal('terms')" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center font-bold text-sm transition-colors" title="Cerrar">✕</button>
+                ${state.termsAccepted ? `
+                  <button onclick="window.closeModal('terms')" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center font-bold text-sm transition-colors" title="Cerrar">✕</button>
+                ` : `
+                  <span class="text-[11px] bg-amber-400/20 text-amber-300 font-bold px-2.5 py-1 rounded-lg border border-amber-400/30">Requerido</span>
+                `}
               </div>
 
               <!-- Pestañas de Navegación Rápida del Documento -->
@@ -2687,7 +2716,7 @@
                 <!-- SECCIÓN 1 -->
                 <section id="legal-terms" class="space-y-3">
                   <h4 class="font-extrabold text-slate-900 text-sm flex items-center gap-2 border-b pb-1 border-slate-200">
-                    <span class="text-emerald-700">1.</span> Términos y Condiciones Generales de Uso de la Plataforma
+                    <span class="text-emerald-700">1.</span> Términos de Servicio y Reglas de la Plataforma
                   </h4>
                   <p>
                     <strong>1.1. Naturaleza del Servicio:</strong> Cisneros Emprende opera de forma irrestricta y exclusiva como un directorio digital interactivo, catálogo indexado y puente de telecomunicación ciudadana. La plataforma <em>no es tienda intermediaria, ni pasarela de procesamiento financiero, ni entidad de transporte de carga o pasajeros</em>. Todas las coordinaciones, contrataciones, cotizaciones, transacciones dinerarias y acuerdos de entrega ocurren de forma autónoma, soberana y directa entre el usuario adquirente y el establecimiento o transportador a través de canales cifrados de terceros (e.g., WhatsApp Business, llamadas telefónicas o atención presencial).
@@ -2792,14 +2821,56 @@
                 </section>
 
                 <!-- Botones de Acción -->
-                <div class="pt-4 border-t border-slate-200 flex flex-col sm:flex-row gap-3">
-                  <button onclick="window.closeModal('terms'); window.showToast('✓ Has aceptado los términos y condiciones de Cisneros Emprende.', 'success')" class="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold py-3.5 px-4 rounded-2xl text-xs shadow-md transition-all flex items-center justify-center gap-2">
-                    <span>✓</span> <span>Acepto y Entendido Plenamente</span>
+                <div class="pt-4 border-t border-slate-200 flex flex-col sm:flex-row gap-2.5">
+                  <button type="button" onclick="window.acceptTerms()" class="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold py-3.5 px-4 rounded-2xl text-xs shadow-md transition-all flex items-center justify-center gap-2">
+                    <span>✓</span> <span>Acepto Términos y Condiciones</span>
                   </button>
-                  <button onclick="window.print()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3.5 px-4 rounded-2xl text-xs transition-colors flex items-center justify-center gap-1.5 border border-slate-200">
-                    <span>🖨️</span> <span>Imprimir / Descargar PDF</span>
+                  <button type="button" onclick="window.rejectTerms()" class="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold py-3.5 px-4 rounded-2xl text-xs transition-colors flex items-center justify-center gap-1.5">
+                    <span>✕</span> <span>No Acepto / Salir</span>
+                  </button>
+                  <button type="button" onclick="window.print()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3.5 px-4 rounded-2xl text-xs transition-colors flex items-center justify-center gap-1.5 border border-slate-200">
+                    <span>🖨️</span> <span>Imprimir / PDF</span>
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // MODAL DE CONFIRMACIÓN ELEGANTE (REEMPLAZA EL CONFIRM FEO DEL NAVEGADOR)
+      if (state.modals.confirm) {
+        const c = state.confirmState || {};
+        html += `
+          <div class="fixed inset-0 z-60 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+            <div class="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl border border-slate-200 flex flex-col animate-scale-in text-center">
+              <div class="p-6 space-y-3">
+                <div class="w-12 h-12 mx-auto rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center text-xl shadow-xs">
+                  <span>⚠️</span>
+                </div>
+                <h3 class="font-extrabold text-base text-slate-900 leading-snug">
+                  ${esc(c.title || 'Confirmar Acción')}
+                </h3>
+                <p class="text-xs text-slate-600 leading-relaxed">
+                  ${esc(c.message || '¿Deseas continuar con esta acción?')}
+                </p>
+              </div>
+
+              <div class="p-4 bg-slate-50 border-t border-slate-100 grid grid-cols-2 gap-2.5">
+                <button 
+                  type="button" 
+                  onclick="window.closeConfirmModal(false)" 
+                  class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold py-2.5 rounded-xl text-xs transition-colors"
+                >
+                  ${esc(c.cancelText || 'Cancelar')}
+                </button>
+                <button 
+                  type="button" 
+                  onclick="window.closeConfirmModal(true)" 
+                  class="${c.confirmColor || 'bg-rose-600 hover:bg-rose-700'} text-white font-extrabold py-2.5 rounded-xl text-xs shadow-md transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                >
+                  <span>✓</span> <span>${esc(c.confirmText || 'Aceptar')}</span>
+                </button>
               </div>
             </div>
           </div>
@@ -2905,27 +2976,38 @@
       const b = state.selectedBusiness;
       if (!b) return;
 
-      if (state.currentBusinessInCart && state.currentBusinessInCart.id !== b.id) {
-        if (state.cart.length > 0) {
-          if (!confirm(`Tienes productos de "${state.currentBusinessInCart.name}". ¿Deseas vaciar el carrito para pedir en "${esc(b.name)}"?`)) {
-            return;
+      const proceedAdd = () => {
+        state.currentBusinessInCart = b;
+        const product = b.products.find(p => p.id === productId);
+        if (product) {
+          const existing = state.cart.find(i => i.id === product.id);
+          if (existing) {
+            existing.quantity += 1;
+          } else {
+            state.cart.push({ ...product, quantity: 1 });
           }
-          state.cart = [];
+          saveState();
+          renderApp();
+          window.showToast(`Agregaste "${product.name}" al carrito`, 'success');
         }
+      };
+
+      if (state.currentBusinessInCart && state.currentBusinessInCart.id !== b.id && state.cart.length > 0) {
+        window.showConfirmDialog({
+          title: '¿Cambiar de Comercio?',
+          message: `Tienes productos de "${state.currentBusinessInCart.name}". ¿Deseas vaciar el carrito para pedir en "${esc(b.name)}"?`,
+          confirmText: 'Sí, Vaciar y Pedir',
+          cancelText: 'Cancelar',
+          confirmColor: 'bg-emerald-700 hover:bg-emerald-800',
+          onConfirm: () => {
+            state.cart = [];
+            proceedAdd();
+          }
+        });
+        return;
       }
 
-      state.currentBusinessInCart = b;
-      const product = b.products.find(p => p.id === productId);
-      if (product) {
-        const existing = state.cart.find(i => i.id === product.id);
-        if (existing) {
-          existing.quantity += 1;
-        } else {
-          state.cart.push({ ...product, quantity: 1 });
-        }
-        saveState();
-        renderApp();
-      }
+      proceedAdd();
     };
 
     window.updateCartQty = function(productId, qty) {
@@ -3018,8 +3100,63 @@
     };
 
     window.closeModal = function(name) {
+      if (name === 'terms' && !state.termsAccepted) {
+        window.showToast('Debes aceptar los Términos y Condiciones para utilizar la plataforma.', 'warning');
+        return;
+      }
       state.modals[name] = false;
       renderApp();
+    };
+
+    window.acceptTerms = function() {
+      state.termsAccepted = true;
+      saveState();
+      state.modals.terms = false;
+      renderApp();
+      window.showToast('✓ Has aceptado los términos y condiciones de Cisneros Emprende. ¡Bienvenido/a!', 'success');
+    };
+
+    window.rejectTerms = function() {
+      window.showConfirmDialog({
+        title: '¿Rechazar Términos y Condiciones?',
+        message: 'Para garantizar la seguridad, privacidad y convivencia de la comunidad, es indispensable aceptar los términos y condiciones. Si los rechazas, no podrás utilizar los servicios de la plataforma.',
+        confirmText: 'Entendido, Cerrar Sesión',
+        cancelText: 'Volver y Revisar',
+        confirmColor: 'bg-slate-700 hover:bg-slate-800',
+        onConfirm: () => {
+          state.termsAccepted = false;
+          saveState();
+          if (state.currentUser) {
+            window.logoutCurrentAccount();
+          }
+          state.modals.terms = true;
+          renderApp();
+          window.showToast('Acceso restringido hasta que aceptes los términos y condiciones.', 'warning');
+        }
+      });
+    };
+
+    // Modal de confirmación estilizado nativo de Cisneros Emprende (cero alert/confirm feo)
+    window.showConfirmDialog = function({ title, message, confirmText = 'Aceptar', cancelText = 'Cancelar', confirmColor = 'bg-rose-600 hover:bg-rose-700', onConfirm }) {
+      state.confirmState = {
+        title,
+        message,
+        confirmText,
+        cancelText,
+        confirmColor,
+        onConfirm
+      };
+      state.modals.confirm = true;
+      renderApp();
+    };
+
+    window.closeConfirmModal = function(accepted) {
+      const cb = state.confirmState?.onConfirm;
+      state.modals.confirm = false;
+      renderApp();
+      if (accepted && typeof cb === 'function') {
+        cb();
+      }
     };
 
     // =========================================================================
@@ -3482,25 +3619,33 @@ window.applyImageCrop = function() {
       }, 50);
     };
 
-    window.deleteTransporter = async function(id) {
+    window.deleteTransporter = function(id) {
       const t = state.transporters.find(item => item.id === id);
       const name = t ? t.full_name : 'este registro';
-      if (!confirm(`¿Deseas eliminar el registro de transporte de "${name}"?`)) return;
 
-      state.transporters = state.transporters.filter(item => item.id !== id);
-      saveState();
+      window.showConfirmDialog({
+        title: '¿Eliminar Transporte?',
+        message: `¿Deseas eliminar permanentemente el registro de transporte de "${name}"?`,
+        confirmText: 'Sí, Eliminar',
+        cancelText: 'Cancelar',
+        confirmColor: 'bg-rose-600 hover:bg-rose-700',
+        onConfirm: async () => {
+          state.transporters = state.transporters.filter(item => item.id !== id);
+          saveState();
 
-      if (supabaseClient) {
-        try {
-          await supabaseClient.from('transporters').delete().eq('id', id);
-        } catch (e) {
-          console.warn('Error deleting transporter in Supabase:', e);
+          if (supabaseClient) {
+            try {
+              await supabaseClient.from('transporters').delete().eq('id', id);
+            } catch (e) {
+              console.warn('Error deleting transporter in Supabase:', e);
+            }
+          }
+
+          window.showToast('Registro de transporte eliminado.', 'info');
+          state.modals.transporterRegister = false;
+          renderApp();
         }
-      }
-
-      window.showToast('Registro de transporte eliminado.', 'info');
-      state.modals.transporterRegister = false;
-      renderApp();
+      });
     };
 
     window.submitTransporter = async function() {
@@ -3863,43 +4008,44 @@ window.applyImageCrop = function() {
       }, 50);
     };
 
-    window.deleteBusiness = async function(id) {
-      if (!state.currentUser || state.currentUser.role !== 'admin') {
-        window.showToast('⛔ Acceso denegado.', 'error');
-        return;
-      }
-      if (!confirm('¿Eliminar este comercio definitivamente? Esta acción no se puede deshacer.')) return;
+    window.deleteBusiness = function(id) {
       if (!state.currentUser || state.currentUser.role !== 'admin') {
         window.showToast('⛔ Acceso denegado. Esta acción es solo para administradores.', 'error');
         return;
       }
       const b = state.businesses.find(item => item.id === id);
       const name = b ? b.name : 'este negocio';
-      if (!confirm(`¿Estás completamente seguro de que deseas eliminar permanentemente "${name}"? Esta acción no se puede deshacer.`)) {
-        return;
-      }
 
-      // Remover del estado local
-      state.businesses = state.businesses.filter(item => item.id !== id);
-      if (state.selectedBusiness && state.selectedBusiness.id === id) {
-        state.selectedBusiness = null;
-        state.activeView = 'home';
-      }
-      state.modals.register = false;
-      saveState();
+      window.showConfirmDialog({
+        title: '¿Eliminar Negocio?',
+        message: `¿Estás seguro de que deseas eliminar permanentemente "${name}"? Esta acción no se puede deshacer.`,
+        confirmText: 'Sí, Eliminar',
+        cancelText: 'Cancelar',
+        confirmColor: 'bg-rose-600 hover:bg-rose-700',
+        onConfirm: async () => {
+          // Remover del estado local
+          state.businesses = state.businesses.filter(item => item.id !== id);
+          if (state.selectedBusiness && state.selectedBusiness.id === id) {
+            state.selectedBusiness = null;
+            state.activeView = 'home';
+          }
+          state.modals.register = false;
+          saveState();
 
-      // Eliminar de Supabase Cloud
-      if (supabaseClient) {
-        try {
-          const { error } = await supabaseClient.from('businesses').delete().eq('id', id);
-          if (error) console.warn('Supabase delete error:', error);
-        } catch (e) {
-          console.warn('Error deleting business in cloud:', e);
+          // Eliminar de Supabase Cloud
+          if (supabaseClient) {
+            try {
+              const { error } = await supabaseClient.from('businesses').delete().eq('id', id);
+              if (error) console.warn('Supabase delete error:', error);
+            } catch (e) {
+              console.warn('Error deleting business in cloud:', e);
+            }
+          }
+
+          window.showToast(`El negocio "${name}" ha sido eliminado exitosamente.`, 'info');
+          renderApp();
         }
-      }
-
-      window.showToast(`El negocio "${name}" ha sido eliminado exitosamente.`, 'info');
-      renderApp();
+      });
     };
 
     window.submitBusiness = async function() {
@@ -4137,27 +4283,35 @@ window.applyImageCrop = function() {
       renderApp();
     };
 
-    window.banUser = async function(id, email) {
+    window.banUser = function(id, email) {
       if (!state.currentUser || state.currentUser.role !== 'admin') {
         window.showToast('⛔ Acceso denegado. Esta acción es solo para administradores.', 'error');
         return;
       }
-      if (!confirm(`¿Deseas bloquear y banear a este usuario? Ya no podrá iniciar sesión ni dejar opiniones.`)) return;
 
-      if (id && !state.bannedUsers.includes(id)) state.bannedUsers.push(id);
-      if (email && !state.bannedUsers.includes(email)) state.bannedUsers.push(email);
-      saveState();
+      window.showConfirmDialog({
+        title: '¿Bloquear Usuario?',
+        message: '¿Deseas bloquear y banear a este usuario? Ya no podrá iniciar sesión ni dejar opiniones en Cisneros Emprende.',
+        confirmText: 'Sí, Bloquear',
+        cancelText: 'Cancelar',
+        confirmColor: 'bg-rose-600 hover:bg-rose-700',
+        onConfirm: async () => {
+          if (id && !state.bannedUsers.includes(id)) state.bannedUsers.push(id);
+          if (email && !state.bannedUsers.includes(email)) state.bannedUsers.push(email);
+          saveState();
 
-      if (supabaseClient) {
-        try {
-          await supabaseClient.from('banned_users').insert([{ user_id: id, email: email, banned_at: new Date().toISOString() }]);
-        } catch (e) {
-          console.warn('Notice saving ban to cloud:', e);
+          if (supabaseClient) {
+            try {
+              await supabaseClient.from('banned_users').insert([{ user_id: id, email: email, banned_at: new Date().toISOString() }]);
+            } catch (e) {
+              console.warn('Notice saving ban to cloud:', e);
+            }
+          }
+
+          window.showToast('⛔ Usuario bloqueado exitosamente.', 'warning');
+          renderApp();
         }
-      }
-
-      window.showToast('⛔ Usuario bloqueado exitosamente.', 'warning');
-      renderApp();
+      });
     };
 
     window.unbanUser = async function(target) {
@@ -4176,21 +4330,29 @@ window.applyImageCrop = function() {
       renderApp();
     };
 
-    window.deleteReview = async function(id) {
-      if (!confirm('¿Deseas eliminar permanentemente esta reseña?')) return;
-      state.reviews = state.reviews.filter(r => r.id !== id);
-      saveState();
+    window.deleteReview = function(id) {
+      window.showConfirmDialog({
+        title: '¿Eliminar Reseña?',
+        message: '¿Deseas eliminar permanentemente esta reseña?',
+        confirmText: 'Sí, Eliminar',
+        cancelText: 'Cancelar',
+        confirmColor: 'bg-rose-600 hover:bg-rose-700',
+        onConfirm: async () => {
+          state.reviews = state.reviews.filter(r => r.id !== id);
+          saveState();
 
-      if (supabaseClient) {
-        try {
-          await supabaseClient.from('reviews').delete().eq('id', id);
-        } catch (e) {
-          console.warn('Notice deleting review in cloud:', e);
+          if (supabaseClient) {
+            try {
+              await supabaseClient.from('reviews').delete().eq('id', id);
+            } catch (e) {
+              console.warn('Notice deleting review in cloud:', e);
+            }
+          }
+
+          window.showToast('Reseña eliminada.', 'info');
+          renderApp();
         }
-      }
-
-      window.showToast('Reseña eliminada.', 'info');
-      renderApp();
+      });
     };
 
     window.submitReport = function() {
@@ -4570,6 +4732,14 @@ window.applyImageCrop = function() {
         return;
       }
 
+      if (state.authPendingType === 'signup') {
+        const termsCheck = document.getElementById('auth-accept-terms');
+        if (termsCheck && !termsCheck.checked) {
+          window.showToast('Debes aceptar los Términos y Condiciones para registrarte.', 'warning');
+          return;
+        }
+      }
+
       if (submitBtn) {
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span>⏳ Conectando...</span>';
@@ -4629,6 +4799,10 @@ window.applyImageCrop = function() {
             state.savedAccounts[existsIdx] = newAccountObj;
           } else {
             state.savedAccounts.push(newAccountObj);
+          }
+
+          if (state.authPendingType === 'signup') {
+            state.termsAccepted = true;
           }
 
           saveState();
@@ -4768,7 +4942,7 @@ window.applyImageCrop = function() {
     // =========================================================================
     // GESTIÓN DE CACHÉ Y REGISTRO DE SERVICE WORKER PWA
     // =========================================================================
-    const CURRENT_SW_VERSION = 'cisneros-emprende-v39';
+    const CURRENT_SW_VERSION = 'cisneros-emprende-v40';
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
