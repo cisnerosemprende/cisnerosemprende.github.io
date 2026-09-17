@@ -291,6 +291,9 @@
         facade: '',
         menu: ''
       },
+      transporterDraft: {
+        photo: ''
+      },
       editingBusinessId: null,
       editingTransporterId: null,
       transporters: safeJsonParse('cis_transporters', []),
@@ -2444,106 +2447,13 @@
         `;
       }
 
-      // MODAL AJUSTADOR DE IMAGEN (ZOOM, TAMAÑO Y POSICIÓN DRAG & DROP)
-      if (state.modals.imageAdjust) {
-        const cropType = state.imageAdjustState.type || 'cover';
-        const isLogo = cropType === 'logo';
-        const isMenu = cropType === 'menu';
-        const isFacade = cropType === 'facade';
-        
-        let cropTitle = 'Foto de Portada';
-        let cropSubtitle = 'Arrastra libremente para encuadrar y usa el zoom para agrandar o achicar';
-        if (isLogo) {
-          cropTitle = 'Logo del Negocio (Círculo)';
-        } else if (isFacade) {
-          cropTitle = 'Foto de la Fachada / Local';
-        } else if (isMenu) {
-          cropTitle = 'Foto de la Carta / Menú';
-          cropSubtitle = 'Ajusta tu carta o lista de precios para que se lea con total claridad';
-        }
 
-        let viewportClasses = 'w-full h-52 sm:h-64 rounded-2xl border-4 border-emerald-500 ring-4 ring-emerald-500/30';
-        if (isLogo) {
-          viewportClasses = 'w-60 h-60 sm:w-72 sm:h-72 rounded-full border-4 border-emerald-500 ring-4 ring-emerald-500/30';
-        } else if (isMenu) {
-          viewportClasses = 'w-full max-w-sm h-64 sm:h-80 rounded-2xl border-4 border-emerald-500 ring-4 ring-emerald-500/30';
-        }
-
-        html += `
-          <div class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-            <div class="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col my-auto max-h-[96vh]">
-              <div class="bg-slate-900 text-white px-5 py-3.5 flex justify-between items-center shrink-0">
-                <div>
-                  <h3 class="font-bold text-sm sm:text-base flex items-center gap-2">
-                    <span>✂️</span> Ajustar ${cropTitle}
-                  </h3>
-                  <p class="text-[11px] text-slate-400 mt-0.5">${cropSubtitle}</p>
-                </div>
-                <button onclick="window.closeImageAdjuster()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center font-bold text-sm text-slate-300 hover:text-white transition-colors">✕</button>
-              </div>
-
-              <!-- Contenido con scroll independiente si la pantalla es pequeña -->
-              <div class="p-4 sm:p-5 overflow-y-auto flex-1 flex flex-col items-center justify-start space-y-3.5 select-none">
-                <!-- Visor / Viewport de recorte espacioso y cómodo -->
-                <div 
-                  id="crop-viewport"
-                  class="relative overflow-hidden bg-slate-950 flex items-center justify-center cursor-move touch-none shadow-xl shrink-0 ${viewportClasses}"
-                  onmousedown="window.startImageDrag(event)"
-                  ontouchstart="window.startImageDrag(event)"
-                >
-                  <img 
-                    id="crop-target-img" 
-                    src="${state.imageAdjustState.rawImageSrc}" 
-                    style="transform: translate(${state.imageAdjustState.offsetX}px, ${state.imageAdjustState.offsetY}px) scale(${(state.imageAdjustState.baseScale || 1) * state.imageAdjustState.scale}); transform-origin: center center; max-width: none; pointer-events: none;"
-                    class="select-none transition-none"
-                    alt="Ajuste"
-                  />
-                  <!-- Guía tenue solo para logos circulares -->
-                  ${isLogo ? '<div class="absolute inset-0 pointer-events-none border-2 border-white/40 border-dashed rounded-full"></div>' : ''}
-                </div>
-
-                <div class="w-full space-y-2.5 pt-1">
-                  <div class="flex items-center justify-between text-xs font-bold text-slate-700">
-                    <span class="flex items-center gap-1.5">
-                      <span>🔍</span> <span>Tamaño y Zoom:</span>
-                    </span>
-                    <span id="zoom-label" class="bg-emerald-50 text-emerald-800 font-bold px-2 py-0.5 rounded-md border border-emerald-200">${Math.round(state.imageAdjustState.scale * 100)}%</span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button type="button" onclick="window.adjustZoom(-0.1)" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 font-black text-sm flex items-center justify-center text-slate-800" title="Reducir / Alejar">-</button>
-                    <input 
-                      type="range" 
-                      min="0.2" 
-                      max="3.0" 
-                      step="0.02" 
-                      value="${state.imageAdjustState.scale}" 
-                      oninput="window.setImageZoom(this.value)"
-                      class="flex-1 accent-emerald-700 cursor-pointer" 
-                    />
-                    <button type="button" onclick="window.adjustZoom(0.1)" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 font-black text-sm flex items-center justify-center text-slate-800" title="Aumentar / Acercar">+</button>
-                  </div>
-                  <p class="text-[10px] text-slate-400 text-center">Arrastra la foto con el dedo o ratón para centrarla. Usa la barra para el tamaño.</p>
-                </div>
-              </div>
-
-              <!-- Barra de botones inferior FIJA (siempre visible sin importar la altura de pantalla) -->
-              <div class="p-3 sm:p-4 bg-slate-50 border-t border-slate-200 shrink-0 grid grid-cols-2 gap-2.5">
-                <button type="button" onclick="window.resetImageAdjust()" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold py-2.5 rounded-xl text-xs transition-colors">
-                  ↺ Centrar Completo
-                </button>
-                <button type="button" onclick="window.applyImageCrop()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold py-2.5 rounded-xl text-xs shadow-md flex items-center justify-center gap-1.5 transition-all active:scale-95">
-                  <span>✓</span> <span>Guardar Ajuste</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        `;
-      }
 
       // MODAL REGISTRO / GESTIÓN DE TRANSPORTADORES (MOTOCARROS, MOTOTAXIS, MOTOCARGUEROS)
       if (state.modals.transporterRegister) {
         const isEditing = Boolean(state.editingTransporterId);
         const t = isEditing ? state.transporters.find(item => item.id === state.editingTransporterId) : null;
+        const activePhoto = state.transporterDraft?.photo || t?.photo_url || '';
         html += `
           <div class="fixed inset-0 z-50 bg-black/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
             <div class="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl max-h-[92vh] flex flex-col">
@@ -2631,16 +2541,69 @@
                 </div>
 
                 <!-- Foto del vehículo o conductor -->
-                <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-2">
-                  <label class="font-bold text-slate-800 block">📷 Foto del Vehículo o Conductor:</label>
-                  <input id="trans-photo" type="hidden" value="${t?.photo_url || ''}" />
-                  <input type="file" accept="image/*" onchange="window.handleImageUpload(event, 'trans-photo', 'preview-trans-photo', 'logo')" class="block w-full text-[10px] text-slate-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[10px] file:font-bold file:bg-amber-600 file:text-white hover:file:bg-amber-700 cursor-pointer" />
-                  <div class="flex items-center gap-3 mt-2">
-                    <div class="w-14 h-14 rounded-full border-2 border-amber-500 overflow-hidden bg-slate-100 flex items-center justify-center shrink-0 shadow-xs">
-                      <img id="preview-trans-photo" src="${t?.photo_url || ''}" class="${t?.photo_url ? '' : 'hidden'} w-full h-full object-cover" alt="Foto" />
-                      <span id="preview-trans-placeholder" class="${t?.photo_url ? 'hidden' : ''} text-[10px] text-slate-400 font-bold">Foto</span>
+                <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2.5">
+                  <div class="flex items-center justify-between">
+                    <label class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                      <span>📷</span> <span>Foto del Vehículo o Conductor:</span>
+                    </label>
+                    <span class="text-[9px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Recomendado</span>
+                  </div>
+                  
+                  <input id="trans-photo" type="hidden" value="${activePhoto}" />
+
+                  <div class="flex items-center gap-3.5 bg-white p-3 rounded-xl border border-slate-200/90 shadow-2xs">
+                    <!-- Círculo de vista previa interactivo: si hay foto abre el ajustador, si no abre el selector de archivo -->
+                    <div 
+                      class="relative w-16 h-16 rounded-full border-2 border-amber-500 overflow-hidden bg-slate-100 flex items-center justify-center shrink-0 shadow-xs cursor-pointer group"
+                      onclick="const cur = document.getElementById('trans-photo')?.value; if (cur) { window.openImageAdjuster('trans-photo', 'preview-trans-photo', 'transporter'); } else { document.getElementById('trans-photo-file')?.click(); }"
+                      title="Toca para subir o recortar foto"
+                    >
+                      <img id="preview-trans-photo" src="${activePhoto}" class="${activePhoto ? '' : 'hidden'} w-full h-full object-cover" alt="Foto transporte" />
+                      <div id="preview-trans-placeholder" class="${activePhoto ? 'hidden' : ''} text-center text-slate-400">
+                        <span class="text-xl block">🛵</span>
+                        <span class="text-[9px] font-bold block">Subir</span>
+                      </div>
+                      <div class="absolute inset-0 bg-black/55 text-white text-[9px] font-bold opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-center transition-opacity p-0.5">
+                        <span>✂️</span>
+                        <span>Ajustar</span>
+                      </div>
                     </div>
-                    <span class="text-[10px] text-slate-500 leading-tight">Sube una foto clara de tu motocarro o de ti para generar confianza a los clientes.</span>
+
+                    <div class="flex-1 min-w-0 space-y-1.5">
+                      <span class="text-[11px] font-bold text-slate-800 block truncate">Foto de perfil o vehículo</span>
+                      <p class="text-[10px] text-slate-500 leading-tight">Sube una foto de tu motocarro, mototaxi o de ti para generar confianza.</p>
+                      
+                      <div class="flex items-center gap-2 flex-wrap pt-0.5">
+                        <!-- Botón directo de subir / cambiar foto -->
+                        <button 
+                          type="button" 
+                          onclick="document.getElementById('trans-photo-file')?.click()" 
+                          class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 px-2.5 py-1 rounded-lg transition-colors shadow-2xs"
+                        >
+                          <span>📸</span> <span>${activePhoto ? 'Cambiar Foto' : 'Seleccionar Foto'}</span>
+                        </button>
+
+                        <!-- Botón para ajustar / encuadrar si ya hay foto -->
+                        <button 
+                          type="button" 
+                          id="btn-adjust-trans-photo" 
+                          onclick="window.openImageAdjuster('trans-photo', 'preview-trans-photo', 'transporter')" 
+                          class="${activePhoto ? 'inline-flex' : 'hidden'} text-[10px] font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-lg transition-colors items-center gap-1 shadow-2xs"
+                        >
+                          <span>✂️</span> <span>Centrar / Zoom</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Input file oculto pero accesible -->
+                  <div class="hidden">
+                    <input 
+                      type="file" 
+                      id="trans-photo-file" 
+                      accept="image/*" 
+                      onchange="window.handleImageUpload(event, 'trans-photo', 'preview-trans-photo', 'transporter')" 
+                    />
                   </div>
                 </div>
 
@@ -2876,6 +2839,107 @@
                   class="${c.confirmColor || 'bg-rose-600 hover:bg-rose-700'} text-white font-extrabold py-2.5 rounded-xl text-xs shadow-md transition-all active:scale-95 flex items-center justify-center gap-1.5"
                 >
                   <span>✓</span> <span>${esc(c.confirmText || 'Aceptar')}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      // MODAL AJUSTADOR DE IMAGEN (ZOOM, TAMAÑO Y POSICIÓN DRAG & DROP)
+      if (state.modals.imageAdjust) {
+        const cropType = state.imageAdjustState.type || 'cover';
+        const isLogo = cropType === 'logo';
+        const isMenu = cropType === 'menu';
+        const isFacade = cropType === 'facade';
+        const isTrans = cropType === 'transporter' || state.imageAdjustState.targetInputId === 'trans-photo';
+
+        let cropTitle = 'Foto de Portada';
+        let cropSubtitle = 'Arrastra libremente para encuadrar y usa el zoom para agrandar o achicar';
+        if (isTrans) {
+          cropTitle = 'Foto de Vehículo o Conductor';
+          cropSubtitle = 'Ajusta la foto de tu transporte para que se vea nítida en el directorio';
+        } else if (isLogo) {
+          cropTitle = 'Logo del Negocio (Círculo)';
+        } else if (isFacade) {
+          cropTitle = 'Foto de la Fachada / Local';
+        } else if (isMenu) {
+          cropTitle = 'Foto de la Carta / Menú';
+          cropSubtitle = 'Ajusta tu carta o lista de precios para que se lea con total claridad';
+        }
+
+        let viewportClasses = 'w-full h-52 sm:h-64 rounded-2xl border-4 border-emerald-500 ring-4 ring-emerald-500/30';
+        if (isTrans) {
+          viewportClasses = 'w-60 h-60 sm:w-72 sm:h-72 rounded-full border-4 border-amber-500 ring-4 ring-amber-500/30';
+        } else if (isLogo) {
+          viewportClasses = 'w-60 h-60 sm:w-72 sm:h-72 rounded-full border-4 border-emerald-500 ring-4 ring-emerald-500/30';
+        } else if (isMenu) {
+          viewportClasses = 'w-full max-w-sm h-64 sm:h-80 rounded-2xl border-4 border-emerald-500 ring-4 ring-emerald-500/30';
+        }
+
+        const themeBgBtn = isTrans ? 'bg-amber-600 hover:bg-amber-700' : 'bg-emerald-700 hover:bg-emerald-800';
+        const themeAccent = isTrans ? 'accent-amber-600' : 'accent-emerald-700';
+        const themeBadge = isTrans ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200';
+
+        html += `
+          <div class="fixed inset-0 z-[70] bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+            <div class="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col my-auto max-h-[96vh]">
+              <div class="bg-slate-900 text-white px-5 py-3.5 flex justify-between items-center shrink-0">
+                <div>
+                  <h3 class="font-bold text-sm sm:text-base flex items-center gap-2">
+                    <span>✂️</span> Ajustar ${cropTitle}
+                  </h3>
+                  <p class="text-[11px] text-slate-400 mt-0.5">${cropSubtitle}</p>
+                </div>
+                <button onclick="window.closeImageAdjuster()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center font-bold text-sm text-slate-300 hover:text-white transition-colors">✕</button>
+              </div>
+
+              <div class="p-4 sm:p-5 overflow-y-auto flex-1 flex flex-col items-center justify-start space-y-3.5 select-none">
+                <div 
+                  id="crop-viewport"
+                  class="relative overflow-hidden bg-slate-950 flex items-center justify-center cursor-move touch-none shadow-xl shrink-0 ${viewportClasses}"
+                  onmousedown="window.startImageDrag(event)"
+                  ontouchstart="window.startImageDrag(event)"
+                >
+                  <img 
+                    id="crop-target-img" 
+                    src="${state.imageAdjustState.rawImageSrc}" 
+                    style="transform: translate(${state.imageAdjustState.offsetX}px, ${state.imageAdjustState.offsetY}px) scale(${(state.imageAdjustState.baseScale || 1) * state.imageAdjustState.scale}); transform-origin: center center; max-width: none; pointer-events: none;"
+                    class="select-none transition-none"
+                    alt="Ajuste"
+                  />
+                  ${(isLogo || isTrans) ? '<div class="absolute inset-0 pointer-events-none border-2 border-white/40 border-dashed rounded-full"></div>' : ''}
+                </div>
+
+                <div class="w-full space-y-2.5 pt-1">
+                  <div class="flex items-center justify-between text-xs font-bold text-slate-700">
+                    <span class="flex items-center gap-1.5">
+                      <span>🔍</span> <span>Tamaño y Zoom:</span>
+                    </span>
+                    <span id="zoom-label" class="${themeBadge} font-bold px-2 py-0.5 rounded-md border">${Math.round(state.imageAdjustState.scale * 100)}%</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button type="button" onclick="window.adjustZoom(-0.1)" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 font-black text-sm flex items-center justify-center text-slate-800" title="Reducir / Alejar">-</button>
+                    <input 
+                      type="range" 
+                      min="0.2" 
+                      max="3.0" 
+                      step="0.02" 
+                      value="${state.imageAdjustState.scale}" 
+                      oninput="window.setImageZoom(this.value)"
+                      class="flex-1 ${themeAccent} cursor-pointer" 
+                    />
+                    <button type="button" onclick="window.adjustZoom(0.1)" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 font-black text-sm flex items-center justify-center text-slate-800" title="Aumentar / Acercar">+</button>
+                  </div>
+                  <p class="text-[10px] text-slate-400 text-center">Arrastra la foto con el dedo o ratón para centrarla. Usa la barra para el tamaño.</p>
+                </div>
+              </div>
+
+              <div class="p-3 sm:p-4 bg-slate-50 border-t border-slate-200 shrink-0 grid grid-cols-2 gap-2.5">
+                <button type="button" onclick="window.resetImageAdjust()" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold py-2.5 rounded-xl text-xs transition-colors">
+                  ↺ Centrar Completo
+                </button>
+                <button type="button" onclick="window.applyImageCrop()" class="${themeBgBtn} text-white font-extrabold py-2.5 rounded-xl text-xs shadow-md flex items-center justify-center gap-1.5 transition-all active:scale-95">
+                  <span>✓</span> <span>Guardar Ajuste</span>
                 </button>
               </div>
             </div>
@@ -3215,8 +3279,9 @@
           // Calcular escala base para que la imagen completa quepa en el visor según el tipo
           const isLogo = type === 'logo';
           const isMenu = type === 'menu';
-          const vpW = isLogo ? 320 : 480;
-          const vpH = isLogo ? 320 : (isMenu ? 380 : 270);
+          const isTrans = type === 'transporter' || targetInputId === 'trans-photo';
+          const vpW = (isLogo || isTrans) ? 320 : 480;
+          const vpH = (isLogo || isTrans) ? 320 : (isMenu ? 380 : 270);
           const fitScale = Math.min(vpW / state.imageAdjustState.naturalWidth, vpH / state.imageAdjustState.naturalHeight);
           
           state.imageAdjustState.baseScale = fitScale;
@@ -3253,8 +3318,9 @@
 
         const isLogo = type === 'logo';
         const isMenu = type === 'menu';
-        const vpW = isLogo ? 320 : 480;
-        const vpH = isLogo ? 320 : (isMenu ? 380 : 270);
+        const isTrans = type === 'transporter' || targetInputId === 'trans-photo';
+        const vpW = (isLogo || isTrans) ? 320 : 480;
+        const vpH = (isLogo || isTrans) ? 320 : (isMenu ? 380 : 270);
         const fitScale = Math.min(vpW / state.imageAdjustState.naturalWidth, vpH / state.imageAdjustState.naturalHeight);
 
         state.imageAdjustState.baseScale = fitScale;
@@ -3378,10 +3444,49 @@
         };
       });
 
+      // Captura también datos del formulario de transporte si está activo
+      const transSnap = {
+        name: document.getElementById('trans-name')?.value || '',
+        type: document.getElementById('trans-type')?.value || 'chivero',
+        phone: document.getElementById('trans-phone')?.value || '',
+        open: document.getElementById('trans-open')?.value || '06:00',
+        close: document.getElementById('trans-close')?.value || '20:00',
+        photo: document.getElementById('trans-photo')?.value || state.transporterDraft?.photo || '',
+        days: Array.from(document.querySelectorAll('input[name="trans_day"]:checked')).map(cb => cb.value)
+      };
+
       if (callback) callback();
 
       // Restaurar en el nuevo tick del DOM
       setTimeout(() => {
+        // Restaurar formulario de transporte si está abierto
+        if (state.modals.transporterRegister) {
+          if (document.getElementById('trans-name')) document.getElementById('trans-name').value = transSnap.name;
+          if (document.getElementById('trans-type')) document.getElementById('trans-type').value = transSnap.type;
+          if (document.getElementById('trans-phone')) document.getElementById('trans-phone').value = transSnap.phone;
+          if (document.getElementById('trans-open')) document.getElementById('trans-open').value = transSnap.open;
+          if (document.getElementById('trans-close')) document.getElementById('trans-close').value = transSnap.close;
+          
+          if (transSnap.days && transSnap.days.length > 0) {
+            document.querySelectorAll('input[name="trans_day"]').forEach(cb => {
+              cb.checked = transSnap.days.includes(cb.value);
+            });
+          }
+
+          const activeTransPhoto = state.transporterDraft?.photo || transSnap.photo;
+          if (document.getElementById('trans-photo')) {
+            document.getElementById('trans-photo').value = activeTransPhoto;
+          }
+          const pt = document.getElementById('preview-trans-photo');
+          const ph = document.getElementById('preview-trans-placeholder');
+          const btnAdjust = document.getElementById('btn-adjust-trans-photo');
+          if (activeTransPhoto) {
+            if (pt) { pt.src = activeTransPhoto; pt.classList.remove('hidden'); }
+            if (ph) ph.classList.add('hidden');
+            if (btnAdjust) { btnAdjust.classList.remove('hidden'); btnAdjust.classList.add('inline-flex'); }
+          }
+        }
+
         if (!state.modals.register) return;
         if (document.getElementById('reg-name')) document.getElementById('reg-name').value = snap.name;
         if (document.getElementById('reg-cat')) document.getElementById('reg-cat').value = snap.cat;
@@ -3473,10 +3578,12 @@ window.applyImageCrop = function() {
       const img = new Image();
       img.onload = function() {
         const canvas = document.createElement('canvas');
-        const isLogo = state.imageAdjustState.type === 'logo';
-        const isMenu = state.imageAdjustState.type === 'menu';
-        const outWidth = isLogo ? 400 : 800;
-        const outHeight = isLogo ? 400 : (isMenu ? 1000 : 450);
+        const cropType = state.imageAdjustState.type || 'cover';
+        const isLogo = cropType === 'logo';
+        const isMenu = cropType === 'menu';
+        const isTrans = cropType === 'transporter' || state.imageAdjustState.targetInputId === 'trans-photo';
+        const outWidth = (isLogo || isTrans) ? 500 : 800;
+        const outHeight = (isLogo || isTrans) ? 500 : (isMenu ? 1000 : 450);
         canvas.width = outWidth;
         canvas.height = outHeight;
         const ctx = canvas.getContext('2d');
@@ -3501,6 +3608,8 @@ window.applyImageCrop = function() {
         const targetInput = document.getElementById(state.imageAdjustState.targetInputId);
         if (targetInput) targetInput.value = croppedBase64;
 
+        const currentPreviewId = state.imageAdjustState.previewId;
+
         // Persistir en el estado global para que nunca se borre al ajustar otra foto
         if (!state.registerDraft) state.registerDraft = {};
         if (state.imageAdjustState.targetInputId === 'reg-cover') {
@@ -3511,9 +3620,10 @@ window.applyImageCrop = function() {
           state.registerDraft.facade = croppedBase64;
         } else if (state.imageAdjustState.targetInputId === 'reg-menu-img') {
           state.registerDraft.menu = croppedBase64;
+        } else if (state.imageAdjustState.targetInputId === 'trans-photo' || currentPreviewId === 'preview-trans-photo') {
+          if (!state.transporterDraft) state.transporterDraft = {};
+          state.transporterDraft.photo = croppedBase64;
         }
-
-        const currentPreviewId = state.imageAdjustState.previewId;
 
         // Actualizar vista previa en el DOM
         if (currentPreviewId === 'preview-logo') {
@@ -3547,8 +3657,10 @@ window.applyImageCrop = function() {
         } else if (currentPreviewId === 'preview-trans-photo') {
           const pt = document.getElementById('preview-trans-photo');
           const phTrans = document.getElementById('preview-trans-placeholder');
+          const btnTrans = document.getElementById('btn-adjust-trans-photo');
           if (pt) { pt.src = croppedBase64; pt.classList.remove('hidden'); }
           if (phTrans) phTrans.classList.add('hidden');
+          if (btnTrans) { btnTrans.classList.remove('hidden'); btnTrans.classList.add('inline-flex'); }
         }
 
         // Intento asíncrono de subir a Supabase Storage en segundo plano
@@ -3584,6 +3696,7 @@ window.applyImageCrop = function() {
         return;
       }
       state.editingTransporterId = null;
+      state.transporterDraft = { photo: '' };
       window.openModal('transporterRegister');
     };
 
@@ -3598,6 +3711,7 @@ window.applyImageCrop = function() {
         return;
       }
       state.editingTransporterId = id;
+      state.transporterDraft = { photo: t.photo_url || '' };
       window.openModal('transporterRegister');
       setTimeout(() => {
         if (document.getElementById('trans-name')) document.getElementById('trans-name').value = t.full_name || '';
@@ -3618,8 +3732,10 @@ window.applyImageCrop = function() {
         if (t.photo_url) {
           const pt = document.getElementById('preview-trans-photo');
           const ph = document.getElementById('preview-trans-placeholder');
+          const btnAdjust = document.getElementById('btn-adjust-trans-photo');
           if (pt) { pt.src = t.photo_url; pt.classList.remove('hidden'); }
           if (ph) ph.classList.add('hidden');
+          if (btnAdjust) { btnAdjust.classList.remove('hidden'); btnAdjust.classList.add('inline-flex'); }
         }
 
       }, 50);
@@ -3660,7 +3776,7 @@ window.applyImageCrop = function() {
       const phone = document.getElementById('trans-phone')?.value.trim();
       const openTime = document.getElementById('trans-open')?.value || '06:00';
       const closeTime = document.getElementById('trans-close')?.value || '20:00';
-      const photo = document.getElementById('trans-photo')?.value.trim();
+      const photo = document.getElementById('trans-photo')?.value.trim() || state.transporterDraft?.photo || '';
 
 
       // Recoger los días seleccionados
@@ -3712,6 +3828,7 @@ window.applyImageCrop = function() {
       }
 
       state.editingTransporterId = null;
+      state.transporterDraft = { photo: '' };
       saveState();
       state.modals.transporterRegister = false;
       renderApp();
@@ -4943,7 +5060,7 @@ window.applyImageCrop = function() {
     // =========================================================================
     // GESTIÓN DE CACHÉ Y REGISTRO DE SERVICE WORKER PWA
     // =========================================================================
-    const CURRENT_SW_VERSION = 'cisneros-emprende-v41';
+    const CURRENT_SW_VERSION = 'cisneros-emprende-v43';
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
