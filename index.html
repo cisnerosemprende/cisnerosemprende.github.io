@@ -110,7 +110,38 @@
       });
     }
   </script>
-  <!-- Herramientas de desarrollo e inspección estándar habilitadas -->
+  <!-- Protección de Interfaz PWA: Bloqueo de Menú Contextual e Inspección -->
+  <script>
+    // Bloquear clic derecho (menú contextual)
+    document.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+      return false;
+    });
+
+    // Bloquear teclas de atajo de desarrollador (F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U, Ctrl+S)
+    document.addEventListener('keydown', function(e) {
+      // F12
+      if (e.key === 'F12' || e.keyCode === 123) {
+        e.preventDefault();
+        return false;
+      }
+      // Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C
+      if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) {
+        e.preventDefault();
+        return false;
+      }
+      // Ctrl+U (Ver código fuente)
+      if (e.ctrlKey && (e.key === 'U' || e.key === 'u')) {
+        e.preventDefault();
+        return false;
+      }
+      // Ctrl+S (Guardar página)
+      if (e.ctrlKey && (e.key === 'S' || e.key === 's')) {
+        e.preventDefault();
+        return false;
+      }
+    });
+  </script>
 </head>
 <body class="min-h-screen w-full max-w-full overflow-x-hidden flex flex-col text-slate-900 selection:bg-emerald-200 bg-slate-50">
 
@@ -4737,7 +4768,7 @@ window.applyImageCrop = function() {
     // =========================================================================
     // GESTIÓN DE CACHÉ Y REGISTRO DE SERVICE WORKER PWA
     // =========================================================================
-    const CURRENT_SW_VERSION = 'cisneros-emprende-v38';
+    const CURRENT_SW_VERSION = 'cisneros-emprende-v39';
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
