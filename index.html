@@ -398,22 +398,50 @@
     function getTransporterStatus(t) {
       if (!t) return { isOpen: true, label: '🟢 Disponible', color: 'bg-emerald-50 text-emerald-800 border-emerald-300' };
       const now = new Date();
-      const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+      const dayNames = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
       const today = dayNames[now.getDay()];
 
+      const normalizeStr = (s) => (s || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
       // Verificar si labora hoy
-      const worksToday = !t.work_days || t.work_days.includes('Todos') || t.work_days.includes(today);
+      const workDaysNorm = normalizeStr(t.work_days);
+      const worksToday = !t.work_days || workDaysNorm.includes('todos') || workDaysNorm.includes(today);
       if (!worksToday) {
         return { isOpen: false, label: '🔴 No labora hoy', color: 'bg-rose-50 text-rose-700 border-rose-200' };
       }
 
-      const openStr = t.work_open || '06:00';
-      const closeStr = t.work_close || '20:00';
-      const [oh, om] = openStr.split(':').map(Number);
-      const [ch, cm] = closeStr.split(':').map(Number);
+      // Extraer horas de apertura y cierre
+      let openStr = t.work_open;
+      let closeStr = t.work_close;
+
+      if (!openStr || !closeStr) {
+        if (t.work_hours && t.work_hours.includes('-')) {
+          const parts = t.work_hours.split('-').map(p => p.trim());
+          openStr = openStr || parts[0];
+          closeStr = closeStr || parts[1];
+        }
+      }
+
+      openStr = openStr || '06:00';
+      closeStr = closeStr || '20:00';
+
+      const parseTimeToMinutes = (timeStr) => {
+        if (!timeStr) return 0;
+        const str = timeStr.trim().toLowerCase();
+        const isPM = str.includes('pm') || str.includes('p.m.');
+        const isAM = str.includes('am') || str.includes('a.m.');
+        const clean = str.replace(/[^\d:]/g, '');
+        const parts = clean.split(':').map(Number);
+        let h = parts[0] || 0;
+        const m = parts[1] || 0;
+        if (isPM && h < 12) h += 12;
+        if (isAM && h === 12) h = 0;
+        return (h * 60) + m;
+      };
+
       const currentMin = (now.getHours() * 60) + now.getMinutes();
-      const openMin = (oh * 60) + om;
-      const closeMin = (ch * 60) + cm;
+      const openMin = parseTimeToMinutes(openStr);
+      const closeMin = parseTimeToMinutes(closeStr);
 
       if (currentMin >= openMin && currentMin < closeMin) {
         return { isOpen: true, label: `🟢 En servicio ahora (hasta ${closeStr})`, color: 'bg-emerald-50 text-emerald-800 border-emerald-300' };
@@ -3808,10 +3836,28 @@ window.applyImageCrop = function() {
 
       if (supabaseClient) {
         try {
+          // Payload adaptado al esquema real de Supabase
+          const cloudPayload = {
+            id: targetId,
+            full_name: name,
+            vehicle_type: type,
+            phone_number: phone,
+            whatsapp_number: phone,
+            work_days: daysStr,
+            work_hours: `${openTime} - ${closeTime}`,
+            photo_url: photo || null,
+            status: 'approved'
+          };
+          if (state.currentUser?.id) {
+            cloudPayload.owner_id = state.currentUser.id;
+          }
+
           if (isEditing) {
-            await supabaseClient.from('transporters').update(transData).eq('id', targetId);
+            const { error: updErr } = await supabaseClient.from('transporters').update(cloudPayload).eq('id', targetId);
+            if (updErr) console.warn('Supabase transporter update error:', updErr);
           } else {
-            await supabaseClient.from('transporters').insert([transData]);
+            const { error: insErr } = await supabaseClient.from('transporters').insert([cloudPayload]);
+            if (insErr) console.warn('Supabase transporter insert error:', insErr);
           }
         } catch (e) {
           console.warn('Supabase transporter save error:', e);
@@ -5060,7 +5106,7 @@ window.applyImageCrop = function() {
     // =========================================================================
     // GESTIÓN DE CACHÉ Y REGISTRO DE SERVICE WORKER PWA
     // =========================================================================
-    const CURRENT_SW_VERSION = 'cisneros-emprende-v43';
+    const CURRENT_SW_VERSION = 'cisneros-emprende-v44';
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
