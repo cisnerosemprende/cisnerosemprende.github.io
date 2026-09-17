@@ -50,6 +50,12 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
+    html, body {
+      max-width: 100vw;
+      overflow-x: hidden;
+      margin: 0;
+      padding: 0;
+    }
     body { font-family: 'Poppins', 'Inter', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
     .scrollbar-none::-webkit-scrollbar { display: none; }
     .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
@@ -498,29 +504,29 @@
 
       appContainer.innerHTML = `
         <!-- NAVBAR -->
-        <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-2xs">
-          <div class="max-w-6xl mx-auto px-4 py-2 flex items-center justify-between gap-3">
+        <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-2xs w-full overflow-hidden">
+          <div class="max-w-6xl mx-auto px-2.5 sm:px-4 py-2 flex items-center justify-between gap-1.5 sm:gap-3">
             <!-- Brand con Logotipo Propio de Cisneros Emprende -->
-            <div id="nav-brand" class="flex items-center gap-2.5 cursor-pointer">
-              <div class="w-11 h-11 rounded-xl bg-white border border-slate-200 p-0.5 shadow-sm flex items-center justify-center overflow-hidden hover:scale-105 transition-transform">
+            <div id="nav-brand" class="flex items-center gap-1.5 sm:gap-2.5 cursor-pointer shrink-0">
+              <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-white border border-slate-200 p-0.5 shadow-sm flex items-center justify-center overflow-hidden hover:scale-105 transition-transform shrink-0">
                 <img src="icons/icon-192.svg" alt="Cisneros Emprende" class="w-full h-full object-contain" onerror="this.onerror=null; this.src='public/icons/icon-192.svg';" />
               </div>
-              <div>
-                <div class="flex items-center gap-2">
-                  <h1 class="font-black text-sm sm:text-base md:text-lg text-emerald-950 tracking-tight leading-none">
-                    Cisneros<span class="text-amber-600 hidden min-[400px]:inline"> Emprende</span>
+              <div class="leading-none">
+                <div class="flex items-center gap-1 sm:gap-2">
+                  <h1 class="font-black text-xs sm:text-base md:text-lg text-emerald-950 tracking-tight leading-none">
+                    Cisneros<span class="text-amber-600 hidden min-[480px]:inline"> Emprende</span>
                   </h1>
                   <!-- Contador de personas en línea para todos los usuarios -->
-                  <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-[10px] font-black text-emerald-800 shadow-2xs select-none animate-fade-in" title="Personas explorando Cisneros Emprende en este momento">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span class="inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-[9px] sm:text-[10px] font-black text-emerald-800 shadow-2xs select-none" title="Personas explorando Cisneros Emprende en este momento">
+                    <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                     <span id="live-online-count">${state.onlineUsersCount || 1} en línea</span>
                   </span>
                 </div>
               </div>
             </div>
 
-            <!-- Buscador Central -->
-            <div class="flex-1 max-w-sm hidden sm:block">
+            <!-- Buscador Central (Desktop) -->
+            <div class="flex-1 max-w-sm hidden md:block">
               <input
                 id="search-input"
                 type="text"
@@ -531,13 +537,13 @@
             </div>
 
             <!-- Acciones Principales -->
-            <div class="flex items-center gap-1 sm:gap-2 shrink-0">
-              <button id="btn-suggestion" onclick="window.openModal('suggestion')" class="text-xs font-bold text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1.5 rounded-xl hidden sm:flex items-center gap-1 shadow-2xs transition-colors">
+            <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
+              <button id="btn-suggestion" onclick="window.openModal('suggestion')" class="text-[11px] sm:text-xs font-bold text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 sm:px-2.5 py-1.5 rounded-xl hidden md:flex items-center gap-1 shadow-2xs transition-colors">
                 <span>📬</span> <span>Buzón</span>
               </button>
 
               <!-- Botón Instalar App Móvil PWA -->
-              <button id="btn-install-app" onclick="window.installAppPrompt()" class="${state.canInstallApp ? 'flex' : 'hidden'} text-[11px] sm:text-xs font-black bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-2.5 sm:px-3 py-1.5 rounded-xl items-center gap-1 shadow-xs hover:from-emerald-700 hover:to-teal-700 transition-all animate-bounce">
+              <button id="btn-install-app" onclick="window.installAppPrompt()" class="${state.canInstallApp ? 'flex' : 'hidden'} text-[10px] sm:text-xs font-black bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-2 sm:px-3 py-1.5 rounded-xl items-center gap-1 shadow-xs hover:from-emerald-700 hover:to-teal-700 transition-all animate-bounce">
                 <span>📲</span> <span class="hidden sm:inline">Instalar</span> <span>App</span>
               </button>
 
@@ -546,13 +552,13 @@
                 const myTrans = state.transporters.find(t => state.currentUser && (t.owner_id === state.currentUser.id || t.owner_id === state.currentUser.email));
                 if (myTrans) {
                   return `
-                    <button onclick="window.editTransporter('${myTrans.id}')" class="text-[11px] sm:text-xs font-bold bg-amber-500 hover:bg-amber-600 text-amber-950 px-2 sm:px-3 py-1.5 rounded-xl flex items-center gap-1 shadow-xs transition-colors whitespace-nowrap">
+                    <button onclick="window.editTransporter('${myTrans.id}')" class="text-[10px] sm:text-xs font-bold bg-amber-500 hover:bg-amber-600 text-amber-950 px-1.5 sm:px-3 py-1.5 rounded-xl flex items-center gap-1 shadow-xs transition-colors whitespace-nowrap">
                       <span>🛵</span> <span class="hidden sm:inline">Gestionar </span><span>Transporte</span>
                     </button>
                   `;
                 } else {
                   return `
-                    <button onclick="window.openTransporterRegister()" class="text-[11px] sm:text-xs font-bold bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 px-2 sm:px-3 py-1.5 rounded-xl flex items-center gap-1 shadow-2xs transition-colors whitespace-nowrap">
+                    <button onclick="window.openTransporterRegister()" class="text-[10px] sm:text-xs font-bold bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 px-1.5 sm:px-3 py-1.5 rounded-xl flex items-center gap-1 shadow-2xs transition-colors whitespace-nowrap">
                       <span>🛵</span> <span class="hidden sm:inline">Registrar </span><span>Transporte</span>
                     </button>
                   `;
@@ -564,13 +570,13 @@
                 const myBiz = state.businesses.find(b => state.currentUser && (b.owner_id === state.currentUser.id || b.owner_id === state.currentUser.email));
                 if (myBiz) {
                   return `
-                    <button onclick="window.editBusiness('${myBiz.id}')" class="text-[11px] sm:text-xs font-black bg-emerald-700 hover:bg-emerald-800 text-white px-2 sm:px-3 py-1.5 rounded-xl flex items-center gap-1 shadow-sm transition-colors border border-emerald-600 whitespace-nowrap">
+                    <button onclick="window.editBusiness('${myBiz.id}')" class="text-[10px] sm:text-xs font-black bg-emerald-700 hover:bg-emerald-800 text-white px-1.5 sm:px-3 py-1.5 rounded-xl flex items-center gap-1 shadow-sm transition-colors border border-emerald-600 whitespace-nowrap">
                       <span>⚙️</span> <span class="hidden sm:inline">Gestionar </span><span>Negocio</span>
                     </button>
                   `;
                 } else {
                   return `
-                    <button id="btn-register-biz" onclick="window.startRegisterBusiness()" class="text-[11px] sm:text-xs font-bold bg-emerald-700 text-white px-2 sm:px-3 py-1.5 rounded-xl hover:bg-emerald-800 flex items-center gap-1 shadow-xs transition-colors whitespace-nowrap">
+                    <button id="btn-register-biz" onclick="window.startRegisterBusiness()" class="text-[10px] sm:text-xs font-bold bg-emerald-700 text-white px-1.5 sm:px-3 py-1.5 rounded-xl hover:bg-emerald-800 flex items-center gap-1 shadow-xs transition-colors whitespace-nowrap">
                       <span>🏪</span> <span class="hidden sm:inline">Registrar </span><span>Negocio</span>
                     </button>
                   `;
@@ -578,31 +584,31 @@
               })()}
 
               ${state.currentUser?.role === 'admin' ? `
-                <button id="btn-admin-panel" class="text-[11px] sm:text-xs font-black bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-amber-950 px-2 sm:px-2.5 py-1.5 rounded-xl shadow-xs flex items-center gap-1 transition-all whitespace-nowrap">
-                  <span>👑</span> <span class="hidden md:inline">Panel</span>
+                <button id="btn-admin-panel" class="text-[10px] sm:text-xs font-black bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-amber-950 px-1.5 sm:px-2.5 py-1.5 rounded-xl shadow-xs flex items-center gap-1 transition-all whitespace-nowrap">
+                  <span>👑</span> <span class="hidden sm:inline">Panel</span>
                   ${state.businesses.filter(b => b.status === 'pending').length > 0 ? `
-                    <span class="bg-rose-600 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full animate-pulse">${state.businesses.filter(b => b.status === 'pending').length}</span>
+                    <span class="bg-rose-600 text-white text-[9px] sm:text-[10px] font-black px-1.5 py-0.2 rounded-full animate-pulse">${state.businesses.filter(b => b.status === 'pending').length}</span>
                   ` : ''}
                 </button>
               ` : ''}
 
               <!-- Autenticación Google / Perfil (Ajuste para que NUNCA se desborde el botón Salir) -->
-              <div class="flex items-center gap-1 pl-1 sm:pl-2 border-l border-slate-200 shrink-0">
+              <div class="flex items-center gap-1 pl-1 sm:pl-1.5 border-l border-slate-200 shrink-0">
                 ${state.currentUser ? `
-                  <div class="flex items-center gap-1.5">
-                    <button onclick="window.openModal('accountSwitcher')" class="flex items-center gap-1 p-0.5 rounded-full hover:ring-2 hover:ring-emerald-500 transition-all cursor-pointer group" title="Cambiar o gestionar cuentas">
-                      <img src="${state.currentUser?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'}" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-emerald-600 object-cover shrink-0 shadow-2xs group-hover:scale-105 transition-transform" />
-                      <span class="text-[10px] text-slate-500 group-hover:text-emerald-700 font-bold hidden sm:inline">▼</span>
+                  <div class="flex items-center gap-1">
+                    <button onclick="window.openModal('accountSwitcher')" class="flex items-center gap-0.5 p-0.5 rounded-full hover:ring-2 hover:ring-emerald-500 transition-all cursor-pointer group shrink-0" title="Cambiar o gestionar cuentas">
+                      <img src="${state.currentUser?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'}" class="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-emerald-600 object-cover shrink-0 shadow-2xs group-hover:scale-105 transition-transform" />
+                      <span class="text-[9px] text-slate-500 group-hover:text-emerald-700 font-bold hidden sm:inline">▼</span>
                     </button>
-                    <span class="text-xs font-bold text-slate-800 hidden lg:inline max-w-[100px] truncate">${state.currentUser.full_name?.split(' ')[0]}</span>
-                    <button id="btn-toggle-auth" class="text-[11px] sm:text-xs text-rose-600 hover:text-rose-800 font-bold bg-rose-50 hover:bg-rose-100 px-1.5 sm:px-2 py-1 rounded-lg border border-rose-200 transition-colors whitespace-nowrap" title="Cerrar sesión actual">
+                    <span class="text-xs font-bold text-slate-800 hidden lg:inline max-w-[90px] truncate">${state.currentUser.full_name?.split(' ')[0]}</span>
+                    <button id="btn-toggle-auth" class="text-[10px] sm:text-xs text-rose-600 hover:text-rose-800 font-bold bg-rose-50 hover:bg-rose-100 px-1.5 sm:px-2 py-1 rounded-lg border border-rose-200 transition-colors whitespace-nowrap shrink-0" title="Cerrar sesión actual">
                       Salir
                     </button>
                   </div>
                 ` : `
-                  <button id="btn-toggle-auth" class="text-[11px] sm:text-xs font-bold bg-white text-slate-800 border border-slate-300 hover:bg-slate-50 px-2 sm:px-2.5 py-1.5 rounded-xl shadow-2xs flex items-center gap-1 transition-colors whitespace-nowrap">
+                  <button id="btn-toggle-auth" class="text-[10px] sm:text-xs font-bold bg-white text-slate-800 border border-slate-300 hover:bg-slate-50 px-1.5 sm:px-2.5 py-1.5 rounded-xl shadow-2xs flex items-center gap-1 transition-colors whitespace-nowrap shrink-0">
                     <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-                    <span class="hidden xs:inline">Ingresar</span>
+                    <span class="hidden sm:inline">Ingresar</span>
                   </button>
                 `}
               </div>
@@ -4470,15 +4476,10 @@ window.applyImageCrop = function() {
           .select('*')
           .order('created_at', { ascending: false });
 
-        if (!errBiz && cloudBiz && cloudBiz.length > 0) {
-          // Fusionar con negocios locales
-          const merged = [...cloudBiz];
-          state.businesses.forEach(localB => {
-            if (!merged.some(cb => cb.id === localB.id)) {
-              merged.push(localB);
-            }
-          });
-          state.businesses = merged;
+        if (!errBiz && cloudBiz) {
+          // La base de datos en la nube es la fuente oficial de verdad:
+          // Si un negocio fue eliminado de la nube, se elimina de todos los dispositivos al sincronizar
+          state.businesses = cloudBiz;
           saveState();
         }
 
@@ -4942,7 +4943,7 @@ window.applyImageCrop = function() {
     // =========================================================================
     // GESTIÓN DE CACHÉ Y REGISTRO DE SERVICE WORKER PWA
     // =========================================================================
-    const CURRENT_SW_VERSION = 'cisneros-emprende-v40';
+    const CURRENT_SW_VERSION = 'cisneros-emprende-v41';
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
