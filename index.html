@@ -250,7 +250,9 @@
       menuDraft: [],
       registerDraft: {
         cover: '',
-        logo: ''
+        logo: '',
+        facade: '',
+        menu: ''
       },
       editingBusinessId: null,
       editingTransporterId: null,
@@ -1617,9 +1619,23 @@
                   
                   <div>
                     <label class="block text-[10px] font-semibold text-emerald-900 mb-0.5">Foto de la Fachada / Referencia del Local (Opcional):</label>
-                    <input id="reg-loc-photo" type="text" placeholder="Foto o video de fachada (enlace o sube archivo abajo)" class="w-full p-2 rounded-lg border border-slate-300 bg-white text-[11px]" />
-                    <input type="file" id="reg-loc-photo-file" accept="image/*" onchange="window.handleImageUpload(event, 'reg-loc-photo', 'preview-loc-photo')" class="mt-1.5 block w-full text-[10px] text-slate-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[10px] file:font-bold file:bg-emerald-700 file:text-white hover:file:bg-emerald-800 cursor-pointer" />
-                    <img id="preview-loc-photo" class="hidden mt-2 w-full h-24 object-cover rounded-xl border border-emerald-300 shadow-2xs" alt="Vista previa fachada" />
+                    <p class="text-[10px] text-slate-500 mb-1.5">Ayuda a los clientes y repartidores a reconocer tu establecimiento en la calle.</p>
+                    
+                    <input id="reg-loc-photo" type="hidden" value="${state.registerDraft?.facade || ''}" />
+                    
+                    <div id="facade-preview-wrapper" class="relative w-full h-32 rounded-xl overflow-hidden border-2 border-dashed border-emerald-300/80 bg-white flex items-center justify-center group shadow-inner mb-2">
+                      <img id="preview-loc-photo" src="${state.registerDraft?.facade || ''}" class="${state.registerDraft?.facade ? '' : 'hidden'} w-full h-full object-cover" alt="Vista previa fachada" />
+                      <div id="preview-loc-photo-placeholder" class="${state.registerDraft?.facade ? 'hidden' : ''} text-center p-2 text-slate-400">
+                        <span class="text-2xl block mb-0.5">🏬</span>
+                        <span class="text-[11px] font-medium block">Sin foto de fachada</span>
+                        <span class="text-[9px] text-slate-400 block">Toca el botón verde abajo para subir la foto del local</span>
+                      </div>
+                      <button type="button" id="btn-adjust-facade" onclick="window.openImageAdjuster('reg-loc-photo', 'preview-loc-photo', 'facade')" class="${state.registerDraft?.facade ? 'inline-flex' : 'hidden'} absolute bottom-2 right-2 bg-black/80 hover:bg-black text-white text-[10px] font-bold px-2.5 py-1 rounded-lg backdrop-blur-xs items-center gap-1 shadow-md transition-all">
+                        <span>✂️ Ajustar / Recortar</span>
+                      </button>
+                    </div>
+
+                    <input type="file" id="reg-loc-photo-file" accept="image/*" onchange="window.handleImageUpload(event, 'reg-loc-photo', 'preview-loc-photo', 'facade')" class="block w-full text-[10px] text-slate-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[10px] file:font-bold file:bg-emerald-700 file:text-white hover:file:bg-emerald-800 cursor-pointer" />
                   </div>
                 </div>
 
@@ -1725,9 +1741,22 @@
                       <span>📜</span> <span>Foto de la Carta / Menú Completo (Opcional pero muy recomendado):</span>
                     </label>
                     <p class="text-[10px] text-slate-500 mt-0.5">Puedes subir una foto de tu carta, pendón o lista de precios tomada con tu celular:</p>
-                    <input id="reg-menu-img" type="text" placeholder="https://... o sube la foto del menú abajo" class="mt-1.5 w-full p-2 rounded-lg border border-slate-300 bg-white text-[11px]" />
-                    <input type="file" id="reg-menu-img-file" accept="image/*" onchange="window.handleImageUpload(event, 'reg-menu-img', 'preview-menu-img')" class="mt-1.5 block w-full text-[10px] text-slate-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[10px] file:font-bold file:bg-emerald-700 file:text-white hover:file:bg-emerald-800 cursor-pointer" />
-                    <img id="preview-menu-img" class="hidden mt-2 w-full max-h-48 object-contain rounded-xl border border-emerald-300 bg-white p-1 shadow-2xs" alt="Vista previa carta/menú" />
+                    
+                    <input id="reg-menu-img" type="hidden" value="${state.registerDraft?.menu || ''}" />
+                    
+                    <div id="menu-preview-wrapper" class="relative w-full max-h-56 min-h-[120px] rounded-xl overflow-hidden border-2 border-dashed border-emerald-300/80 bg-white flex items-center justify-center group shadow-inner mt-2 mb-2 p-1">
+                      <img id="preview-menu-img" src="${state.registerDraft?.menu || ''}" class="${state.registerDraft?.menu ? '' : 'hidden'} w-full max-h-52 object-contain rounded-lg" alt="Vista previa carta/menú" />
+                      <div id="preview-menu-img-placeholder" class="${state.registerDraft?.menu ? 'hidden' : ''} text-center p-3 text-slate-400">
+                        <span class="text-2xl block mb-0.5">📜</span>
+                        <span class="text-[11px] font-medium block">Sin foto de carta / menú</span>
+                        <span class="text-[9px] text-slate-400 block">Toca el botón verde abajo para subirla</span>
+                      </div>
+                      <button type="button" id="btn-adjust-menu" onclick="window.openImageAdjuster('reg-menu-img', 'preview-menu-img', 'menu')" class="${state.registerDraft?.menu ? 'inline-flex' : 'hidden'} absolute bottom-2 right-2 bg-black/80 hover:bg-black text-white text-[10px] font-bold px-2.5 py-1 rounded-lg backdrop-blur-xs items-center gap-1 shadow-md transition-all">
+                        <span>✂️ Ajustar / Recortar</span>
+                      </button>
+                    </div>
+
+                    <input type="file" id="reg-menu-img-file" accept="image/*" onchange="window.handleImageUpload(event, 'reg-menu-img', 'preview-menu-img', 'menu')" class="block w-full text-[10px] text-slate-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[10px] file:font-bold file:bg-emerald-700 file:text-white hover:file:bg-emerald-800 cursor-pointer" />
                   </div>
 
                   <div class="pt-2 border-t border-slate-200">
@@ -2355,16 +2384,38 @@
 
       // MODAL AJUSTADOR DE IMAGEN (ZOOM, TAMAÑO Y POSICIÓN DRAG & DROP)
       if (state.modals.imageAdjust) {
-        const isLogo = state.imageAdjustState.type === 'logo';
+        const cropType = state.imageAdjustState.type || 'cover';
+        const isLogo = cropType === 'logo';
+        const isMenu = cropType === 'menu';
+        const isFacade = cropType === 'facade';
+        
+        let cropTitle = 'Foto de Portada';
+        let cropSubtitle = 'Arrastra libremente para encuadrar y usa el zoom para agrandar o achicar';
+        if (isLogo) {
+          cropTitle = 'Logo del Negocio (Círculo)';
+        } else if (isFacade) {
+          cropTitle = 'Foto de la Fachada / Local';
+        } else if (isMenu) {
+          cropTitle = 'Foto de la Carta / Menú';
+          cropSubtitle = 'Ajusta tu carta o lista de precios para que se lea con total claridad';
+        }
+
+        let viewportClasses = 'w-full h-64 sm:h-72 rounded-2xl border-4 border-emerald-500 ring-4 ring-emerald-500/30';
+        if (isLogo) {
+          viewportClasses = 'w-72 h-72 sm:w-80 sm:h-80 rounded-full border-4 border-emerald-500 ring-4 ring-emerald-500/30';
+        } else if (isMenu) {
+          viewportClasses = 'w-full h-80 sm:h-96 rounded-2xl border-4 border-emerald-500 ring-4 ring-emerald-500/30';
+        }
+
         html += `
           <div class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
             <div class="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[95vh]">
               <div class="bg-slate-900 text-white px-5 py-4 flex justify-between items-center">
                 <div>
                   <h3 class="font-bold text-base sm:text-lg flex items-center gap-2">
-                    <span>✂️</span> Ajustar ${isLogo ? 'Logo (Círculo)' : 'Foto de Portada'}
+                    <span>✂️</span> Ajustar ${cropTitle}
                   </h3>
-                  <p class="text-xs text-slate-400 mt-0.5">Arrastra libremente para encuadrar y usa el zoom para agrandar o achicar</p>
+                  <p class="text-xs text-slate-400 mt-0.5">${cropSubtitle}</p>
                 </div>
                 <button onclick="window.closeImageAdjuster()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center font-bold text-sm text-slate-300 hover:text-white transition-colors">✕</button>
               </div>
@@ -2373,9 +2424,7 @@
                 <!-- Visor / Viewport de recorte espacioso y cómodo -->
                 <div 
                   id="crop-viewport"
-                  class="relative overflow-hidden bg-slate-950 flex items-center justify-center cursor-move touch-none shadow-2xl ${
-                    isLogo ? 'w-72 h-72 sm:w-80 sm:h-80 rounded-full border-4 border-emerald-500 ring-4 ring-emerald-500/30' : 'w-full h-64 sm:h-72 rounded-2xl border-4 border-emerald-500 ring-4 ring-emerald-500/30'
-                  }"
+                  class="relative overflow-hidden bg-slate-950 flex items-center justify-center cursor-move touch-none shadow-2xl ${viewportClasses}"
                   onmousedown="window.startImageDrag(event)"
                   ontouchstart="window.startImageDrag(event)"
                 >
@@ -2957,7 +3006,7 @@
           return pubUrl?.publicUrl || null;
         }
       } catch (err) {
-        console.warn('Storage upload fallback:', err);
+        // Silencioso si el bucket de storage aún no ha sido creado en Supabase por el usuario
       }
       return null;
     };
@@ -2987,10 +3036,11 @@
           state.imageAdjustState.naturalWidth = testImg.naturalWidth || testImg.width;
           state.imageAdjustState.naturalHeight = testImg.naturalHeight || testImg.height;
 
-          // Calcular escala base para que la imagen completa quepa en el visor
+          // Calcular escala base para que la imagen completa quepa en el visor según el tipo
           const isLogo = type === 'logo';
+          const isMenu = type === 'menu';
           const vpW = isLogo ? 320 : 480;
-          const vpH = isLogo ? 320 : 270;
+          const vpH = isLogo ? 320 : (isMenu ? 380 : 270);
           const fitScale = Math.min(vpW / state.imageAdjustState.naturalWidth, vpH / state.imageAdjustState.naturalHeight);
           
           state.imageAdjustState.baseScale = fitScale;
@@ -2998,9 +3048,11 @@
           state.imageAdjustState.offsetX = 0;
           state.imageAdjustState.offsetY = 0;
 
-          // Abrir ajustador para encuadrarla inmediatamente
-          state.modals.imageAdjust = true;
-          renderApp();
+          // Guardar valores actuales del formulario para no perder datos escritos antes de abrir el ajustador
+          window.preserveAndRestoreRegisterForm(() => {
+            state.modals.imageAdjust = true;
+            renderApp();
+          });
         };
         testImg.src = rawSrc;
       };
@@ -3024,16 +3076,20 @@
         state.imageAdjustState.naturalHeight = testImg.naturalHeight || testImg.height;
 
         const isLogo = type === 'logo';
+        const isMenu = type === 'menu';
         const vpW = isLogo ? 320 : 480;
-        const vpH = isLogo ? 320 : 270;
+        const vpH = isLogo ? 320 : (isMenu ? 380 : 270);
         const fitScale = Math.min(vpW / state.imageAdjustState.naturalWidth, vpH / state.imageAdjustState.naturalHeight);
 
         state.imageAdjustState.baseScale = fitScale;
         state.imageAdjustState.scale = 1;
         state.imageAdjustState.offsetX = 0;
         state.imageAdjustState.offsetY = 0;
-        state.modals.imageAdjust = true;
-        renderApp();
+        
+        window.preserveAndRestoreRegisterForm(() => {
+          state.modals.imageAdjust = true;
+          renderApp();
+        });
       };
       testImg.src = curSrc;
     };
@@ -3121,9 +3177,11 @@
         desc: document.getElementById('reg-desc')?.value || '',
         cover: document.getElementById('reg-cover')?.value || state.registerDraft?.cover || '',
         logo: document.getElementById('reg-logo')?.value || state.registerDraft?.logo || '',
+        facade: document.getElementById('reg-loc-photo')?.value || state.registerDraft?.facade || '',
+        menu: document.getElementById('reg-menu-img')?.value || state.registerDraft?.menu || '',
         addr: document.getElementById('reg-addr')?.value || '',
         ref: document.getElementById('reg-ref')?.value || '',
-        locPhoto: document.getElementById('reg-loc-photo')?.value || '',
+        locPhoto: document.getElementById('reg-loc-photo')?.value || state.registerDraft?.facade || '',
         hasDel: document.getElementById('reg-has-delivery')?.value || 'si',
         delCost: document.getElementById('reg-delivery-cost')?.value || '0',
         delMin: document.getElementById('reg-delivery-min')?.value || '',
@@ -3155,7 +3213,8 @@
         if (document.getElementById('reg-desc')) document.getElementById('reg-desc').value = snap.desc;
         if (document.getElementById('reg-addr')) document.getElementById('reg-addr').value = snap.addr;
         if (document.getElementById('reg-ref')) document.getElementById('reg-ref').value = snap.ref;
-        if (document.getElementById('reg-loc-photo')) document.getElementById('reg-loc-photo').value = snap.locPhoto;
+        if (document.getElementById('reg-loc-photo')) document.getElementById('reg-loc-photo').value = snap.facade || snap.locPhoto;
+        if (document.getElementById('reg-menu-img')) document.getElementById('reg-menu-img').value = snap.menu;
         if (document.getElementById('reg-has-delivery')) document.getElementById('reg-has-delivery').value = snap.hasDel;
         if (document.getElementById('reg-delivery-cost')) document.getElementById('reg-delivery-cost').value = snap.delCost;
         if (document.getElementById('reg-delivery-min')) document.getElementById('reg-delivery-min').value = snap.delMin;
@@ -3166,25 +3225,51 @@
         if (document.getElementById('reg-notes')) document.getElementById('reg-notes').value = snap.notes;
 
         // Restaurar portada
-        if (snap.cover && document.getElementById('reg-cover')) {
-          document.getElementById('reg-cover').value = snap.cover;
+        const activeCover = snap.cover || state.registerDraft?.cover;
+        if (activeCover && document.getElementById('reg-cover')) {
+          document.getElementById('reg-cover').value = activeCover;
           const pc = document.getElementById('preview-cover');
           const phCover = document.getElementById('preview-cover-placeholder');
           const btnCover = document.getElementById('btn-adjust-cover');
-          if (pc) { pc.src = snap.cover; pc.classList.remove('hidden'); }
+          if (pc) { pc.src = activeCover; pc.classList.remove('hidden'); }
           if (phCover) phCover.classList.add('hidden');
           if (btnCover) { btnCover.classList.remove('hidden'); btnCover.classList.add('inline-flex'); }
         }
 
         // Restaurar logo
-        if (snap.logo && document.getElementById('reg-logo')) {
-          document.getElementById('reg-logo').value = snap.logo;
+        const activeLogo = snap.logo || state.registerDraft?.logo;
+        if (activeLogo && document.getElementById('reg-logo')) {
+          document.getElementById('reg-logo').value = activeLogo;
           const pl = document.getElementById('preview-logo');
           const phLogo = document.getElementById('preview-logo-placeholder');
           const btnLogo = document.getElementById('btn-adjust-logo');
-          if (pl) { pl.src = snap.logo; pl.classList.remove('hidden'); }
+          if (pl) { pl.src = activeLogo; pl.classList.remove('hidden'); }
           if (phLogo) phLogo.classList.add('hidden');
           if (btnLogo) { btnLogo.classList.remove('hidden'); btnLogo.classList.add('inline-flex'); }
+        }
+
+        // Restaurar fachada
+        const activeFacade = snap.facade || snap.locPhoto || state.registerDraft?.facade;
+        if (activeFacade && document.getElementById('reg-loc-photo')) {
+          document.getElementById('reg-loc-photo').value = activeFacade;
+          const pf = document.getElementById('preview-loc-photo');
+          const phFacade = document.getElementById('preview-loc-photo-placeholder');
+          const btnFacade = document.getElementById('btn-adjust-facade');
+          if (pf) { pf.src = activeFacade; pf.classList.remove('hidden'); }
+          if (phFacade) phFacade.classList.add('hidden');
+          if (btnFacade) { btnFacade.classList.remove('hidden'); btnFacade.classList.add('inline-flex'); }
+        }
+
+        // Restaurar carta / menú
+        const activeMenu = snap.menu || state.registerDraft?.menu;
+        if (activeMenu && document.getElementById('reg-menu-img')) {
+          document.getElementById('reg-menu-img').value = activeMenu;
+          const pm = document.getElementById('preview-menu-img');
+          const phMenu = document.getElementById('preview-menu-img-placeholder');
+          const btnMenu = document.getElementById('btn-adjust-menu');
+          if (pm) { pm.src = activeMenu; pm.classList.remove('hidden'); }
+          if (phMenu) phMenu.classList.add('hidden');
+          if (btnMenu) { btnMenu.classList.remove('hidden'); btnMenu.classList.add('inline-flex'); }
         }
 
         // Restaurar modo de horario
@@ -3213,8 +3298,9 @@ window.applyImageCrop = function() {
       img.onload = function() {
         const canvas = document.createElement('canvas');
         const isLogo = state.imageAdjustState.type === 'logo';
+        const isMenu = state.imageAdjustState.type === 'menu';
         const outWidth = isLogo ? 400 : 800;
-        const outHeight = isLogo ? 400 : 450;
+        const outHeight = isLogo ? 400 : (isMenu ? 1000 : 450);
         canvas.width = outWidth;
         canvas.height = outHeight;
         const ctx = canvas.getContext('2d');
@@ -3239,12 +3325,16 @@ window.applyImageCrop = function() {
         const targetInput = document.getElementById(state.imageAdjustState.targetInputId);
         if (targetInput) targetInput.value = croppedBase64;
 
-        // Persistir en el estado global para que nunca se borre al ajustar la otra foto
+        // Persistir en el estado global para que nunca se borre al ajustar otra foto
         if (!state.registerDraft) state.registerDraft = {};
         if (state.imageAdjustState.targetInputId === 'reg-cover') {
           state.registerDraft.cover = croppedBase64;
         } else if (state.imageAdjustState.targetInputId === 'reg-logo') {
           state.registerDraft.logo = croppedBase64;
+        } else if (state.imageAdjustState.targetInputId === 'reg-loc-photo') {
+          state.registerDraft.facade = croppedBase64;
+        } else if (state.imageAdjustState.targetInputId === 'reg-menu-img') {
+          state.registerDraft.menu = croppedBase64;
         }
 
         const currentPreviewId = state.imageAdjustState.previewId;
@@ -3254,35 +3344,34 @@ window.applyImageCrop = function() {
           const pl = document.getElementById('preview-logo');
           const phLogo = document.getElementById('preview-logo-placeholder');
           const btnLogo = document.getElementById('btn-adjust-logo');
-          if (pl) {
-            pl.src = croppedBase64;
-            pl.classList.remove('hidden');
-          }
+          if (pl) { pl.src = croppedBase64; pl.classList.remove('hidden'); }
           if (phLogo) phLogo.classList.add('hidden');
-          if (btnLogo) {
-            btnLogo.classList.remove('hidden');
-            btnLogo.classList.add('inline-flex');
-          }
+          if (btnLogo) { btnLogo.classList.remove('hidden'); btnLogo.classList.add('inline-flex'); }
         } else if (currentPreviewId === 'preview-cover') {
           const pc = document.getElementById('preview-cover');
           const phCover = document.getElementById('preview-cover-placeholder');
           const btnCover = document.getElementById('btn-adjust-cover');
-          if (pc) {
-            pc.src = croppedBase64;
-            pc.classList.remove('hidden');
-          }
+          if (pc) { pc.src = croppedBase64; pc.classList.remove('hidden'); }
           if (phCover) phCover.classList.add('hidden');
-          if (btnCover) {
-            btnCover.classList.remove('hidden');
-            btnCover.classList.add('inline-flex');
-          }
+          if (btnCover) { btnCover.classList.remove('hidden'); btnCover.classList.add('inline-flex'); }
+        } else if (currentPreviewId === 'preview-loc-photo') {
+          const pf = document.getElementById('preview-loc-photo');
+          const phFacade = document.getElementById('preview-loc-photo-placeholder');
+          const btnFacade = document.getElementById('btn-adjust-facade');
+          if (pf) { pf.src = croppedBase64; pf.classList.remove('hidden'); }
+          if (phFacade) phFacade.classList.add('hidden');
+          if (btnFacade) { btnFacade.classList.remove('hidden'); btnFacade.classList.add('inline-flex'); }
+        } else if (currentPreviewId === 'preview-menu-img') {
+          const pm = document.getElementById('preview-menu-img');
+          const phMenu = document.getElementById('preview-menu-img-placeholder');
+          const btnMenu = document.getElementById('btn-adjust-menu');
+          if (pm) { pm.src = croppedBase64; pm.classList.remove('hidden'); }
+          if (phMenu) phMenu.classList.add('hidden');
+          if (btnMenu) { btnMenu.classList.remove('hidden'); btnMenu.classList.add('inline-flex'); }
         } else if (currentPreviewId === 'preview-trans-photo') {
           const pt = document.getElementById('preview-trans-photo');
           const phTrans = document.getElementById('preview-trans-placeholder');
-          if (pt) {
-            pt.src = croppedBase64;
-            pt.classList.remove('hidden');
-          }
+          if (pt) { pt.src = croppedBase64; pt.classList.remove('hidden'); }
           if (phTrans) phTrans.classList.add('hidden');
         }
 
@@ -3611,7 +3700,7 @@ window.applyImageCrop = function() {
     window.startRegisterBusiness = function() {
       state.editingBusinessId = null;
       state.menuDraft = [];
-      state.registerDraft = { cover: '', logo: '' };
+      state.registerDraft = { cover: '', logo: '', facade: '', menu: '' };
       window.openModal('register');
     };
 
@@ -3626,9 +3715,12 @@ window.applyImageCrop = function() {
       }
       state.editingBusinessId = id;
       state.menuDraft = (b.products && Array.isArray(b.products)) ? JSON.parse(JSON.stringify(b.products)) : [];
+      const facadeImg = (b.cover_images && b.cover_images.length > 1) ? b.cover_images[1] : (b.facade_image_url || '');
       state.registerDraft = {
         cover: (b.cover_images && b.cover_images[0]) || '',
-        logo: b.logo_url || ''
+        logo: b.logo_url || '',
+        facade: facadeImg,
+        menu: b.menu_image_url || ''
       };
       window.openModal('register');
 
@@ -3662,12 +3754,27 @@ window.applyImageCrop = function() {
             if (btn) btn.classList.remove('hidden');
           }
         }
+        if (document.getElementById('reg-loc-photo')) {
+          document.getElementById('reg-loc-photo').value = facadeImg;
+          if (facadeImg) {
+            const pf = document.getElementById('preview-loc-photo');
+            const ph = document.getElementById('preview-loc-photo-placeholder');
+            const btn = document.getElementById('btn-adjust-facade');
+            if (pf) { pf.src = facadeImg; pf.classList.remove('hidden'); }
+            if (ph) ph.classList.add('hidden');
+            if (btn) btn.classList.remove('hidden');
+          }
+        }
         if (document.getElementById('reg-days')) document.getElementById('reg-days').value = b.work_days || 'Lunes a Domingo (Todos los días)';
         if (document.getElementById('reg-menu-img')) {
           document.getElementById('reg-menu-img').value = b.menu_image_url || '';
           if (b.menu_image_url) {
             const pm = document.getElementById('preview-menu-img');
+            const ph = document.getElementById('preview-menu-img-placeholder');
+            const btn = document.getElementById('btn-adjust-menu');
             if (pm) { pm.src = b.menu_image_url; pm.classList.remove('hidden'); }
+            if (ph) ph.classList.add('hidden');
+            if (btn) btn.classList.remove('hidden');
           }
         }
         if (document.getElementById('reg-has-delivery')) document.getElementById('reg-has-delivery').value = b.delivery_available ? 'si' : 'no';
@@ -3932,6 +4039,7 @@ window.applyImageCrop = function() {
       }
 
       state.menuDraft = [];
+      state.registerDraft = { cover: '', logo: '', facade: '', menu: '' };
       state.editingBusinessId = null;
       saveState();
 
@@ -4627,7 +4735,7 @@ window.applyImageCrop = function() {
     // =========================================================================
     // GESTIÓN DE CACHÉ Y REGISTRO DE SERVICE WORKER PWA
     // =========================================================================
-    const CURRENT_SW_VERSION = 'cisneros-emprende-v35';
+    const CURRENT_SW_VERSION = 'cisneros-emprende-v36';
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
