@@ -248,6 +248,10 @@
       currentUser: loadedUser,
       savedAccounts: loadedAccounts,
       menuDraft: [],
+      registerDraft: {
+        cover: '',
+        logo: ''
+      },
       editingBusinessId: null,
       editingTransporterId: null,
       transporters: safeJsonParse('cis_transporters', []),
@@ -1541,17 +1545,17 @@
                         <p class="text-[10px] text-slate-500">Es la imagen grande que todos verán en el catálogo.</p>
                       </div>
 
-                      <input id="reg-cover" type="hidden" />
+                      <input id="reg-cover" type="hidden" value="${state.registerDraft?.cover || ''}" />
                       
                       <!-- Vista previa rectangular interactiva -->
                       <div id="cover-preview-wrapper" class="relative w-full h-32 rounded-xl overflow-hidden border-2 border-dashed border-emerald-300/80 bg-slate-50 flex items-center justify-center group shadow-inner">
-                        <img id="preview-cover" class="hidden w-full h-full object-cover" alt="Vista previa portada" />
-                        <div id="preview-cover-placeholder" class="text-center p-2 text-slate-400">
+                        <img id="preview-cover" src="${state.registerDraft?.cover || ''}" class="${state.registerDraft?.cover ? '' : 'hidden'} w-full h-full object-cover" alt="Vista previa portada" />
+                        <div id="preview-cover-placeholder" class="${state.registerDraft?.cover ? 'hidden' : ''} text-center p-2 text-slate-400">
                           <span class="text-2xl block mb-0.5">🏞️</span>
                           <span class="text-[11px] font-medium block">Sin foto de portada seleccionada</span>
                           <span class="text-[9px] text-slate-400 block">Toca el botón verde abajo para elegir</span>
                         </div>
-                        <button type="button" id="btn-adjust-cover" onclick="window.openImageAdjuster('reg-cover', 'preview-cover', 'cover')" class="hidden absolute bottom-2 right-2 bg-black/80 hover:bg-black text-white text-[10px] font-bold px-2.5 py-1 rounded-lg backdrop-blur-xs flex items-center gap-1 shadow-md transition-all">
+                        <button type="button" id="btn-adjust-cover" onclick="window.openImageAdjuster('reg-cover', 'preview-cover', 'cover')" class="${state.registerDraft?.cover ? 'inline-flex' : 'hidden'} absolute bottom-2 right-2 bg-black/80 hover:bg-black text-white text-[10px] font-bold px-2.5 py-1 rounded-lg backdrop-blur-xs items-center gap-1 shadow-md transition-all">
                           <span>✂️ Ajustar / Recortar</span>
                         </button>
                       </div>
@@ -1573,13 +1577,13 @@
                         <p class="text-[10px] text-slate-500">Aparecerá en círculo en tu perfil y publicaciones.</p>
                       </div>
 
-                      <input id="reg-logo" type="hidden" />
+                      <input id="reg-logo" type="hidden" value="${state.registerDraft?.logo || ''}" />
 
                       <!-- Contenedor centralizado para el Logo -->
                       <div class="flex items-center gap-3.5 bg-slate-50 p-2.5 rounded-xl border border-slate-200/80">
                         <div class="relative w-20 h-20 rounded-full border-2 border-emerald-500 overflow-hidden bg-white flex items-center justify-center shrink-0 shadow-md cursor-pointer group" onclick="window.openImageAdjuster('reg-logo', 'preview-logo', 'logo')">
-                          <img id="preview-logo" class="w-full h-full object-cover hidden" alt="Vista previa logo" />
-                          <div id="preview-logo-placeholder" class="text-center text-slate-400">
+                          <img id="preview-logo" src="${state.registerDraft?.logo || ''}" class="${state.registerDraft?.logo ? '' : 'hidden'} w-full h-full object-cover" alt="Vista previa logo" />
+                          <div id="preview-logo-placeholder" class="${state.registerDraft?.logo ? 'hidden' : ''} text-center text-slate-400">
                             <span class="text-xl block">👤</span>
                             <span class="text-[9px] font-bold block">Logo</span>
                           </div>
@@ -1590,7 +1594,7 @@
                         <div class="flex-1 min-w-0 space-y-1">
                           <span class="text-[11px] font-bold text-slate-700 block truncate">Círculo de identidad</span>
                           <span class="text-[10px] text-slate-500 block leading-tight">Se ajusta a un círculo perfecto sin deformarse.</span>
-                          <button type="button" id="btn-adjust-logo" onclick="window.openImageAdjuster('reg-logo', 'preview-logo', 'logo')" class="hidden text-[10px] font-bold text-emerald-800 bg-emerald-100 hover:bg-emerald-200 px-2.5 py-1 rounded-lg transition-colors items-center gap-1 shadow-2xs">
+                          <button type="button" id="btn-adjust-logo" onclick="window.openImageAdjuster('reg-logo', 'preview-logo', 'logo')" class="${state.registerDraft?.logo ? 'inline-flex' : 'hidden'} text-[10px] font-bold text-emerald-800 bg-emerald-100 hover:bg-emerald-200 px-2.5 py-1 rounded-lg transition-colors items-center gap-1 shadow-2xs">
                             ✂️ Centrar / Zoom
                           </button>
                         </div>
@@ -3115,8 +3119,8 @@
         cat: document.getElementById('reg-cat')?.value || '',
         wa: document.getElementById('reg-wa')?.value || '',
         desc: document.getElementById('reg-desc')?.value || '',
-        cover: document.getElementById('reg-cover')?.value || '',
-        logo: document.getElementById('reg-logo')?.value || '',
+        cover: document.getElementById('reg-cover')?.value || state.registerDraft?.cover || '',
+        logo: document.getElementById('reg-logo')?.value || state.registerDraft?.logo || '',
         addr: document.getElementById('reg-addr')?.value || '',
         ref: document.getElementById('reg-ref')?.value || '',
         locPhoto: document.getElementById('reg-loc-photo')?.value || '',
@@ -3234,6 +3238,14 @@ window.applyImageCrop = function() {
         const croppedBase64 = canvas.toDataURL('image/jpeg', 0.88);
         const targetInput = document.getElementById(state.imageAdjustState.targetInputId);
         if (targetInput) targetInput.value = croppedBase64;
+
+        // Persistir en el estado global para que nunca se borre al ajustar la otra foto
+        if (!state.registerDraft) state.registerDraft = {};
+        if (state.imageAdjustState.targetInputId === 'reg-cover') {
+          state.registerDraft.cover = croppedBase64;
+        } else if (state.imageAdjustState.targetInputId === 'reg-logo') {
+          state.registerDraft.logo = croppedBase64;
+        }
 
         const currentPreviewId = state.imageAdjustState.previewId;
 
@@ -3599,6 +3611,7 @@ window.applyImageCrop = function() {
     window.startRegisterBusiness = function() {
       state.editingBusinessId = null;
       state.menuDraft = [];
+      state.registerDraft = { cover: '', logo: '' };
       window.openModal('register');
     };
 
@@ -3613,6 +3626,10 @@ window.applyImageCrop = function() {
       }
       state.editingBusinessId = id;
       state.menuDraft = (b.products && Array.isArray(b.products)) ? JSON.parse(JSON.stringify(b.products)) : [];
+      state.registerDraft = {
+        cover: (b.cover_images && b.cover_images[0]) || '',
+        logo: b.logo_url || ''
+      };
       window.openModal('register');
 
       // Prellenar campos en el siguiente tick del DOM
@@ -4610,7 +4627,7 @@ window.applyImageCrop = function() {
     // =========================================================================
     // GESTIÓN DE CACHÉ Y REGISTRO DE SERVICE WORKER PWA
     // =========================================================================
-    const CURRENT_SW_VERSION = 'cisneros-emprende-v34';
+    const CURRENT_SW_VERSION = 'cisneros-emprende-v35';
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
