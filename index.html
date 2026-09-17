@@ -3124,22 +3124,22 @@
         if (snap.cover && document.getElementById('reg-cover')) {
           document.getElementById('reg-cover').value = snap.cover;
           const pc = document.getElementById('preview-cover');
-          const ph = document.getElementById('preview-cover-placeholder');
-          const btn = document.getElementById('btn-adjust-cover');
+          const phCover = document.getElementById('preview-cover-placeholder');
+          const btnCover = document.getElementById('btn-adjust-cover');
           if (pc) { pc.src = snap.cover; pc.classList.remove('hidden'); }
-          if (ph) ph.classList.add('hidden');
-          if (btn) { btn.classList.remove('hidden'); btn.classList.add('inline-flex'); }
+          if (phCover) phCover.classList.add('hidden');
+          if (btnCover) { btnCover.classList.remove('hidden'); btnCover.classList.add('inline-flex'); }
         }
 
         // Restaurar logo
         if (snap.logo && document.getElementById('reg-logo')) {
           document.getElementById('reg-logo').value = snap.logo;
           const pl = document.getElementById('preview-logo');
-          const ph = document.getElementById('preview-logo-placeholder');
-          const btn = document.getElementById('btn-adjust-logo');
+          const phLogo = document.getElementById('preview-logo-placeholder');
+          const btnLogo = document.getElementById('btn-adjust-logo');
           if (pl) { pl.src = snap.logo; pl.classList.remove('hidden'); }
-          if (ph) ph.classList.add('hidden');
-          if (btn) { btn.classList.remove('hidden'); btn.classList.add('inline-flex'); }
+          if (phLogo) phLogo.classList.add('hidden');
+          if (btnLogo) { btnLogo.classList.remove('hidden'); btnLogo.classList.add('inline-flex'); }
         }
 
         // Restaurar modo de horario
@@ -3193,10 +3193,43 @@ window.applyImageCrop = function() {
         const targetInput = document.getElementById(state.imageAdjustState.targetInputId);
         if (targetInput) targetInput.value = croppedBase64;
 
-        const previewEl = document.getElementById(state.imageAdjustState.previewId);
-        if (previewEl) {
-          previewEl.src = croppedBase64;
-          previewEl.classList.remove('hidden');
+        const currentPreviewId = state.imageAdjustState.previewId;
+
+        // Actualizar vista previa en el DOM
+        if (currentPreviewId === 'preview-logo') {
+          const pl = document.getElementById('preview-logo');
+          const phLogo = document.getElementById('preview-logo-placeholder');
+          const btnLogo = document.getElementById('btn-adjust-logo');
+          if (pl) {
+            pl.src = croppedBase64;
+            pl.classList.remove('hidden');
+          }
+          if (phLogo) phLogo.classList.add('hidden');
+          if (btnLogo) {
+            btnLogo.classList.remove('hidden');
+            btnLogo.classList.add('inline-flex');
+          }
+        } else if (currentPreviewId === 'preview-cover') {
+          const pc = document.getElementById('preview-cover');
+          const phCover = document.getElementById('preview-cover-placeholder');
+          const btnCover = document.getElementById('btn-adjust-cover');
+          if (pc) {
+            pc.src = croppedBase64;
+            pc.classList.remove('hidden');
+          }
+          if (phCover) phCover.classList.add('hidden');
+          if (btnCover) {
+            btnCover.classList.remove('hidden');
+            btnCover.classList.add('inline-flex');
+          }
+        } else if (currentPreviewId === 'preview-trans-photo') {
+          const pt = document.getElementById('preview-trans-photo');
+          const phTrans = document.getElementById('preview-trans-placeholder');
+          if (pt) {
+            pt.src = croppedBase64;
+            pt.classList.remove('hidden');
+          }
+          if (phTrans) phTrans.classList.add('hidden');
         }
 
         // Intento asíncrono de subir a Supabase Storage en segundo plano
@@ -3210,74 +3243,12 @@ window.applyImageCrop = function() {
           }
         }, 'image/jpeg', 0.88);
 
-        // Mostrar botones de ajuste rápido
-        if (state.imageAdjustState.previewId === 'preview-logo') {
-          const ph = document.getElementById('preview-logo-placeholder');
-          if (ph) ph.classList.add('hidden');
-          const btn = document.getElementById('btn-adjust-logo');
-          if (btn) btn.classList.remove('hidden');
-        } else if (state.imageAdjustState.previewId === 'preview-cover') {
-          const ph = document.getElementById('preview-cover-placeholder');
-          if (ph) ph.classList.add('hidden');
-          const btn = document.getElementById('btn-adjust-cover');
-          if (btn) btn.classList.remove('hidden');
-        } else if (state.imageAdjustState.previewId === 'preview-trans-photo') {
-          const ph = document.getElementById('preview-trans-placeholder');
-          if (ph) ph.classList.add('hidden');
-        }
-
         state.modals.imageAdjust = false;
-        
-        // Si el formulario de registro está abierto en el DOM, actualizamos directamente sin resetear inputs
-        const targetInput = document.getElementById(state.imageAdjustState.targetInputId);
-        const previewEl = document.getElementById(state.imageAdjustState.previewId);
-        
-        if (targetInput) targetInput.value = croppedBase64;
-        
-        if (state.imageAdjustState.previewId === 'preview-logo') {
-          const pl = document.getElementById('preview-logo');
-          const ph = document.getElementById('preview-logo-placeholder');
-          const btn = document.getElementById('btn-adjust-logo');
-          if (pl) {
-            pl.src = croppedBase64;
-            pl.classList.remove('hidden');
-          }
-          if (ph) ph.classList.add('hidden');
-          if (btn) {
-            btn.classList.remove('hidden');
-            btn.classList.add('inline-flex');
-          }
-        } else if (state.imageAdjustState.previewId === 'preview-cover') {
-          const pc = document.getElementById('preview-cover');
-          const ph = document.getElementById('preview-cover-placeholder');
-          const btn = document.getElementById('btn-adjust-cover');
-          if (pc) {
-            pc.src = croppedBase64;
-            pc.classList.remove('hidden');
-          }
-          if (ph) ph.classList.add('hidden');
-          if (btn) {
-            btn.classList.remove('hidden');
-            btn.classList.add('inline-flex');
-          }
-        } else if (state.imageAdjustState.previewId === 'preview-trans-photo') {
-          const pt = document.getElementById('preview-trans-photo');
-          if (pt) {
-            pt.src = croppedBase64;
-            pt.classList.remove('hidden');
-          }
-        }
 
-        // Si el modal de recorte está montado como elemento modal, cerramos solo ese modal
-        const adjustModalEl = document.getElementById('modal-image-adjust-container');
-        if (adjustModalEl) {
-          adjustModalEl.remove();
-        } else {
-          // Si no había contenedor dedicado, guardar valores actuales del form antes de renderApp
-          window.preserveAndRestoreRegisterForm(() => {
-            renderApp();
-          });
-        }
+        // Cerrar ajustador y preservar campos del formulario
+        window.preserveAndRestoreRegisterForm(() => {
+          renderApp();
+        });
 
         window.showToast('¡Imagen ajustada y guardada con éxito!', 'success');
       };
@@ -4597,7 +4568,7 @@ window.applyImageCrop = function() {
     // =========================================================================
     // GESTIÓN DE CACHÉ Y REGISTRO DE SERVICE WORKER PWA
     // =========================================================================
-    const CURRENT_SW_VERSION = 'cisneros-emprende-v32';
+    const CURRENT_SW_VERSION = 'cisneros-emprende-v33';
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
